@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${pageTitle != null ? pageTitle : 'Sistema de Gestión de Visitas'}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.css">
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
     <script defer>
@@ -42,15 +42,15 @@
         });
     </script>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar bg-body-tertiary px-3" style="margin: 1rem 1rem 0; border-radius: 1rem; box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.06); border: 1px solid #dee2e6;">
+<nav class="navbar px-3" style="background:#ffffff; margin: 1rem 1rem 0; border-radius: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06); border: none;">
     <div class="d-flex align-items-center gap-3">
         <button class="navbar-toggler d-md-none border-0" id="sidebarToggle" type="button" aria-label="Abrir menú">
             <span class="navbar-toggler-icon"></span>
         </button>
         <a class="navbar-brand mb-0" href="${pageContext.request.contextPath}/">
-            <img src="https://www.utez.edu.mx:13055/assets/logoutez-BAoIkhx6.png"
+            <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png"
                  alt="Logo UTEZ" width="70" height="34" class="d-inline-block align-text-top">
             Sistema de Gestión de Visitas
         </a>

@@ -21,24 +21,20 @@
         </li>
         <li class="nav-item m-2">
             <a class="nav-link rounded-2" href="#">
-                <i class="bi bi-calendar-check me-2"></i>Visitas
+                <i class="bi bi-calendar-check me-2"></i>Solicitudes
             </a>
         </li>
         <li class="nav-item m-2">
             <a class="nav-link rounded-2" href="#">
-                <i class="bi bi-people me-2"></i>Alumnos
+                <i class="bi bi-people me-2"></i>Reportes
             </a>
         </li>
         <li class="nav-item m-2">
             <a class="nav-link rounded-2" href="#">
-                <i class="bi bi-person-badge me-2"></i>Profesores
+                <i class="bi bi-person-badge me-2"></i>Historico
             </a>
         </li>
-        <li class="nav-item m-2">
-            <a class="nav-link rounded-2" href="#">
-                <i class="bi bi-gear me-2"></i>Configuraci&oacute;n
-            </a>
-        </li>
+
     </ul>
     <div class="border-top px-3 py-2 small text-muted">
         UTEZ &copy; 2026
