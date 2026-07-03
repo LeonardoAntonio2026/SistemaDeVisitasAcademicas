@@ -9,6 +9,8 @@
 
 <main class="container my-4">
 
+    <form action="SolicitudServlet" method="POST">
+
     <h4 class="page-title text-title-request mb-4">Nueva Solicitud</h4>
 
     <%-- ── Card 1: Datos del lugar ── --%>
@@ -17,43 +19,43 @@
 
         <div class="mb-3">
             <label class="form-label">Nombre de la empresa o actividad</label>
-            <input type="text" class="form-control" placeholder="ej. CISCO">
+            <input type="text" class="form-control" name="nombreEmpresa" placeholder="ej. CISCO">
         </div>
 
         <div class="mb-3">
             <label class="form-label">Lugar o dirección</label>
-            <input type="text" class="form-control" placeholder="ej. Av. Insurgentes">
+            <input type="text" class="form-control" name="lugarDireccion" placeholder="ej. Av. Insurgentes">
         </div>
 
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="form-label">Teléfonos del contacto</label>
-                <input type="text" class="form-control" placeholder="ej. 7776268823">
+                <input type="text" class="form-control" name="telefonoContacto" placeholder="ej. 7776268823">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Correo electrónico del contacto</label>
-                <input type="email" class="form-control" placeholder="contacto@empresa.com">
+                <input type="email" class="form-control" name="correoContacto" placeholder="contacto@empresa.com">
             </div>
         </div>
 
         <div class="row g-3 mb-3">
             <div class="col-md-4">
                 <label class="form-label">Fecha de inicio</label>
-                <input type="date" class="form-control" placeholder="ejemplo">
+                <input type="date" class="form-control" name="fechaInicio" placeholder="ejemplo">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Fecha de término</label>
-                <input type="date" class="form-control" placeholder="ejemplo">
+                <input type="date" class="form-control" name="fechaTermino" placeholder="ejemplo">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Hora de la visita</label>
-                <input type="time" class="form-control" placeholder="ejemplo">
+                <input type="time" class="form-control" name="horaVisita" placeholder="ejemplo">
             </div>
         </div>
 
         <div class="mb-1">
             <label class="form-label">Objetivo de la visita</label>
-            <textarea class="form-control" rows="3" placeholder="Describe el objetivo académico de la visita"></textarea>
+            <textarea class="form-control" name="objetivoVisita" rows="3" placeholder="Describe el objetivo académico de la visita"></textarea>
         </div>
     </div>
 
@@ -64,22 +66,22 @@
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="form-label">Área solicitante</label>
-                <input type="text" class="form-control" placeholder="ej. 7776268823">
+                <input type="text" class="form-control" name="areaSolicitante" placeholder="ej. 7776268823">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Docente responsable de la visita</label>
-                <input type="text" class="form-control" placeholder="Nombre del docente">
+                <input type="text" class="form-control" name="docenteResponsable" placeholder="Nombre del docente">
             </div>
         </div>
 
         <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <label class="form-label">Celular del docente <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" placeholder="ej. 7776268823">
+                <input type="text" class="form-control" name="celularDocente" placeholder="ej. 7776268823">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Docentes acompañantes</label>
-                <input type="text" class="form-control" placeholder="Nombres separados por ,">
+                <input type="text" class="form-control" name="docentesAcompanantes" placeholder="Nombres separados por ,">
             </div>
         </div>
 
@@ -94,11 +96,11 @@
                     <span>Total</span>
                 </div>
                 <div class="division-inputs">
-                    <input type="number" class="form-control" value="0" min="0">
-                    <input type="number" class="form-control" value="0" min="0">
-                    <input type="number" class="form-control" value="0" min="0">
-                    <input type="number" class="form-control" value="0" min="0">
-                    <input type="number" class="form-control division-total" value="0" readonly tabindex="-1">
+                    <input type="number" class="form-control" name="estudiantesDACEA" value="0" min="0">
+                    <input type="number" class="form-control" name="estudiantesDATEFI" value="0" min="0">
+                    <input type="number" class="form-control" name="estudiantesDATID" value="0" min="0">
+                    <input type="number" class="form-control" name="estudiantesDAMI" value="0" min="0">
+                    <input type="number" class="form-control division-total" name="estudiantesTotal" value="0" readonly tabindex="-1">
                 </div>
             </div>
         </div>
@@ -171,10 +173,12 @@
         </div>
     </div>
     <div class="contenedor-boton">
-        <button type="button" class="btncrear">
+        <button type="submit" class="btncrear">
             <i class="bi bi-send"></i> Crear Solicitud
         </button>
     </div>
+
+    </form>
 
 </main>
 </div><%-- #wrapper --%>
