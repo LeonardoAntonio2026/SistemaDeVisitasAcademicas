@@ -5,6 +5,7 @@
 
 <link rel="stylesheet" href="css/form.css">
 <link rel="stylesheet" href="css/card.css">
+<link rel="stylesheet" href="css/layout.css">
 
 <main class="container my-4">
 
@@ -169,10 +170,13 @@
             </div>
         </div>
     </div>
+    <div class="contenedor-boton">
+        <button type="button" class="btncrear">
+            <i class="bi bi-send"></i> Crear Solicitud
+        </button>
+    </div>
 
 </main>
-<script defer src="js/visitas-form.js"></script>
-
 </div><%-- #wrapper --%>
 </body>
 </html>
