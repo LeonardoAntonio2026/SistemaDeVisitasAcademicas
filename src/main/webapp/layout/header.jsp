@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
     <script defer></script>
 </head>
-<body>
+<body style="background-color: #F2F2F7">
 
 <nav class="navbar px-3" style="background:#ffffff; margin: 1rem 1rem 0; border-radius: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06); border: none;">
     <div class="d-flex align-items-center gap-3">

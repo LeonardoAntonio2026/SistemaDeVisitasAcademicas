@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="css/form.css">
 <link rel="stylesheet" href="css/card.css">
 
-<main class="container my-4">
+<main class="form-content my-4">
 
     <h4 class="page-title text-title-request mb-4">Nueva Solicitud</h4>
 

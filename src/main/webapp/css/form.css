@@ -2,6 +2,7 @@
     background: #ffffff;
     border-radius: 12px;
     padding: 24px 28px;
+    width: 100%;
     margin-bottom: 20px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
     border: none;
@@ -54,6 +55,21 @@
 
 .text-title-request {
     color: #2C5084;
+}
+
+.form-content {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .form-content {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
 }
 
 /* ── División académica ── */
