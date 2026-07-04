@@ -223,3 +223,25 @@
     min-width: 120px;
     padding: 2px 0;
 }
+.contenedor-boton {
+    display: flex !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+    margin-top: 1.5rem;
+}
+
+.btncrear {
+    width: 188px !important;
+    height: 47px !important;
+    border-radius: 15px !important;
+    background-color: #183052 !important;
+    color: white !important;
+    border: none !important;
+
+    display: flex !important;
+    justify-content: center !important; /* Centra el texto horizontalmente */
+    align-items: center !important;     /* Centra el texto verticalmente */
+    text-align: center !important;
+    gap: 8px;
+    cursor: pointer;
+}

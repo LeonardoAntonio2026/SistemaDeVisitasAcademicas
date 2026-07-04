@@ -25,6 +25,7 @@
         <div class="ubicacion">
             <i class="bi bi-pin-map" id="icono"></i>
             <span>Ciudad de México</span>
+            <div class="progreso"></div>
         </div>
     </div>
 </div>
