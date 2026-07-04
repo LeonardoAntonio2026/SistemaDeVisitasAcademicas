@@ -1,0 +1,15 @@
+,,,
+,Tipo de recurso,Ubicación,Uso
+,CSS,src/main/webapp/css/bootstrap/bootstrap.min.css,Framework de estilos base y sistema de rejilla (grid)
+,CSS,src/main/webapp/css/layout.css,"Estilos del layout general (header, sidebar, wrapper responsivo)"
+,CSS,src/main/webapp/css/form.css,Estilos del formulario de solicitud de visita (inputs; tags; tabla de divisiones)
+,CSS,src/main/webapp/css/card.css,Estilos de las tarjetas (card-custom) usadas en el formulario
+,CSS,src/main/webapp/css/auth.css,"Estilos de las páginas de autenticación (Login y Recuperar contraseña)"
+,Javascript,src/main/webapp/js/visitas-form.js,"Validaciones e interacciones del formulario (agregar/eliminar filas; tags; totales)"
+,Javascript,src/main/webapp/js/bootstrap.bundle.min.js,"Componentes interactivos de Bootstrap (menú lateral, dropdowns)"
+,Fuente de iconos,src/main/webapp/fonts/bootstrap-icons.woff(2),"Iconografía utilizada en botones, sidebar y formularios de acceso"
+,Imágenes,src/main/webapp/img/Logotipo-UTEZ.png,"Logotipo institucional mostrado en header y páginas de autenticación"
+,Plantillas JSP,src/main/webapp/layout/header.jsp,Encabezado común incluido en las vistas del sistema
+,Plantillas JSP,src/main/webapp/layout/sidebar.jsp,Menú lateral de navegación incluido en las vistas del sistema
+,Plantillas JSP,src/main/webapp/layout/contenido.jsp,"Bloque de bienvenida/resumen incluido en el dashboard (index.jsp)"
+
