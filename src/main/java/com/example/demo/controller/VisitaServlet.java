@@ -16,7 +16,6 @@ public class VisitaServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Recorrer y mapear los campos (Sincronizados con los 'name' de tu JSP)
         String nombreEmpresa = request.getParameter("nombreEmpresa");
         String direccion = request.getParameter("direccionLugar");
         String telefono = request.getParameter("telefonoContacto");
@@ -30,7 +29,6 @@ public class VisitaServlet extends HttpServlet {
         String celularDocente = request.getParameter("celularDocente");
         String docentesAcompanantes = request.getParameter("docentesAcompanantes");
 
-        // 2. Llenar el objeto Visita
         Visita nuevaVisita = new Visita();
         nuevaVisita.setNombreEmpresa(nombreEmpresa);
         nuevaVisita.setDireccion(direccion);
@@ -45,7 +43,6 @@ public class VisitaServlet extends HttpServlet {
         nuevaVisita.setCelularDocente(celularDocente);
         nuevaVisita.setDocentesAcompanantes(docentesAcompanantes);
 
-        // 3. Llamar al DAO para guardar en Oracle Cloud
         VisitaDao dao = new VisitaDao();
         boolean guardado = dao.insertar(nuevaVisita);
 

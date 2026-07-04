@@ -13,7 +13,6 @@ public class VisitaDao {
                 + "fecha_termino, hora_visita, objetivo, area_solicitante, docente_responsable, "
                 + "celular_docente, docentes_acompanantes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        // 👈 CAMBIADO: Ahora usamos tu SQLConnector.getConnection()
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 

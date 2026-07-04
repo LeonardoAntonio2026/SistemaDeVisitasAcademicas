@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>${pageTitle != null ? pageTitle : 'Sistema de Gestión de Visitas'}</title>
 
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap.min.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
         <script defer src="${pageContext.request.contextPath}/js/bootstrap.bundle.min.js"></script>

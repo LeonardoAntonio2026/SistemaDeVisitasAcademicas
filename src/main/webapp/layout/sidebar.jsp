@@ -20,7 +20,7 @@
             </a>
         </li>
         <li class="nav-item m-2">
-            <a class="nav-link rounded-2" href="#">
+            <a class="nav-link rounded-2" href="${pageContext.request.contextPath}/SolicitudDocente.jsp">
                 <i class="bi bi-calendar-check me-2"></i>Solicitudes
             </a>
         </li>

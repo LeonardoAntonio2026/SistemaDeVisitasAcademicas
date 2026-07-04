@@ -16,7 +16,6 @@ public class SQLConnector {
 
     static {
         try {
-            // 1. Localizar mis conjuntos de Wallet
             ClassLoader classLoader = SQLConnector.class.getClassLoader();
             URL walletUrl = classLoader.getResource("wallet/");
 
@@ -27,16 +26,13 @@ public class SQLConnector {
             String walletPath = new File(walletUrl.toURI()).getAbsolutePath();
             walletPath = walletPath.replace("\\", "/");
 
-            // 2. Intentar leer credenciales y nombre de BD desde el entorno
             String dbUser = System.getenv("db_user");
             String dbPass = System.getenv("db_pass");
             String dbName = System.getenv("db_name");
 
-            // Si falta alguno en el entorno, buscamos en el archivo .properties real
             if (dbUser == null || dbPass == null || dbName == null) {
                 System.err.println("Advertencia: Faltan variables de entorno de la BD. Buscando en credentials.properties...");
                 Properties creds = new Properties();
-                // 👇 CORREGIDO: Buscamos "credentials.properties" directamente
                 try (InputStream is = classLoader.getResourceAsStream("credentials.properties")) {
                     if (is == null) {
                         throw new RuntimeException("No se encontró el archivo credentials.properties ni las variables de entorno.");

@@ -15,7 +15,6 @@ public class Visita implements Serializable {
     private String docenteResponsable;
     private String celularDocente;
     private String docentesAcompanantes;
-    // ... Campos para las divisiones académicas o asignaturas si van en la misma tabla
 
     public Visita() {}
 

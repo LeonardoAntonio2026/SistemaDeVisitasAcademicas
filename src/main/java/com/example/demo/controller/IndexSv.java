@@ -25,7 +25,6 @@ public class IndexSv extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Redirección simple en caso de peticiones post accidentales al index
         resp.sendRedirect("index.jsp");
     }
 }
