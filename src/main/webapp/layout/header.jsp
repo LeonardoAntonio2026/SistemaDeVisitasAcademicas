@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>${pageTitle != null ? pageTitle : 'Sistema de Gestión de Visitas'}</title>
 
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap.min.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
         <script defer src="${pageContext.request.contextPath}/js/bootstrap.bundle.min.js"></script>
@@ -45,7 +45,7 @@
         });
     </script>
 </head>
-<body>
+<body style="background-color: #F2F2F7">
 
 <nav class="navbar px-3" style="background:#ffffff; margin: 1rem 1rem 0; border-radius: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06); border: none;">
     <div class="d-flex align-items-center gap-3">

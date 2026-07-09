@@ -2,6 +2,7 @@
     background: #ffffff;
     border-radius: 12px;
     padding: 24px 28px;
+    width: 100%;
     margin-bottom: 20px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
     border: none;
@@ -46,7 +47,6 @@
     outline: none;
 }
 
-/* ── Page title ── */
 .page-title {
     font-size: 1.35rem;
     font-weight: 700;
@@ -56,7 +56,21 @@
     color: #2C5084;
 }
 
-/* ── División académica ── */
+.form-content {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .form-content {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+}
+
 .division-table {
     border: 1.5px solid #c7c7cc;
     border-radius: 8px;
@@ -106,7 +120,6 @@
     cursor: default;
 }
 
-/* ── Programa educativo rows ── */
 .programa-header,
 .programa-row {
     display: grid;
@@ -134,7 +147,6 @@
 
 .btn-delete-row:hover { background: #ffcccc; }
 
-/* ── Agregar grupo ── */
 .btn-add-row {
     display: inline-flex;
     align-items: center;
@@ -152,7 +164,6 @@
 
 .btn-add-row:hover { background: #22634a; }
 
-/* ── Tags / chips input ── */
 .tags-input-wrapper {
     display: flex;
     flex-wrap: wrap;
@@ -223,8 +234,8 @@
     border: none !important;
 
     display: flex !important;
-    justify-content: center !important; /* Centra el texto horizontalmente */
-    align-items: center !important;     /* Centra el texto verticalmente */
+    justify-content: center !important;
+    align-items: center !important;
     text-align: center !important;
     gap: 8px;
     cursor: pointer;
