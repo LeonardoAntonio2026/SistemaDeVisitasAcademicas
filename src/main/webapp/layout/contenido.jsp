@@ -18,7 +18,7 @@
         <p>Aqui puedes gestionar tus visitas academicas</p>
     </div>
 
-    <button type="button" class="botonnueva">Nueva Solicitud</button>
+    <a href="${pageContext.request.contextPath}/index.jsp" class="botonnueva">Nueva Solicitud</a>
 
     <div class="cardcontendo">
         <h2>Solicitudes</h2>
