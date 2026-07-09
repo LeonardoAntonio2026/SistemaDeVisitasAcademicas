@@ -9,7 +9,8 @@
 
 <main class="form-content my-4">
 
-    <form action="VisitaServlet" method="POST">
+    <form action="visita" method="POST">
+        <input type="hidden" name="action" value="create">
 
         <h4 class="page-title text-title-request mb-4">Nueva Solicitud</h4>
 

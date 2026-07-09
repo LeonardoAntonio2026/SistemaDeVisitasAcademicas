@@ -14,13 +14,13 @@
 <div style="width: 100%; padding: 0 20px;">
 
     <div class="superior">
-        <h2>!Bienvenido Leonardo Antonio!</h2>
+        <h2>¡Bienvenido Leonardo Antonio!</h2>
         <p>Aqui puedes gestionar tus visitas academicas</p>
     </div>
 
     <button type="button" class="botonnueva">Nueva Solicitud</button>
 
-    <div class="cardcontendo">
+    <div class="cardcustom">
         <h2>Solicitudes</h2>
         <div class="ubicacion">
             <i class="bi bi-pin-map" id="icono"></i>

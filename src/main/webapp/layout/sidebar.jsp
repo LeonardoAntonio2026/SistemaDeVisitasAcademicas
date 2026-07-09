@@ -7,7 +7,7 @@
                 <i class="bi bi-person-fill text-dark" style="font-size: 1.4rem;"></i>
             </div>
             <div>
-                <div class="mb-0" style="font-size: 0.75rem;">Leonardo Antonio</div>
+                <div class="mb-0" style="font-size: 0.75rem;">${sessionScope.nombreUsuario != null ? sessionScope.nombreUsuario : 'Invitado'}</div>
                 <div class="text-white-50 fw-normal" style="font-size: 0.7rem;">Docente</div>
             </div>
         </div>
@@ -32,6 +32,12 @@
         <li class="nav-item m-2">
             <a class="nav-link rounded-2" href="#">
                 <i class="bi bi-person-badge me-2"></i>Historico
+            </a>
+        </li>
+
+        <li class="nav-item m-2">
+            <a class="nav-link rounded-2 text-danger" href="${pageContext.request.contextPath}/logout">
+                <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
             </a>
         </li>
 
