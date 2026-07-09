@@ -145,4 +145,36 @@ public class VisitaDao implements Dao<Visita, Integer> {
         v.setDocentesAcompanantes(rs.getString("docentes_acompanantes"));
         return v;
     }
+
+    public List<Visita> getByDocente(int idDocente) {
+        List<Visita> datos = new ArrayList<>();
+        String sql = "SELECT * FROM visitas WHERE docente_responsable = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idDocente);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) datos.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return datos;
+    }
+
+    public List<Visita> getByArea(String area) {
+        List<Visita> datos = new ArrayList<>();
+        String sql = "SELECT * FROM visitas WHERE area_solicitante = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, area);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) datos.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return datos;
+    }
 }
+
+
