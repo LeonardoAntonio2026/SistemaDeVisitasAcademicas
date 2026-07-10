@@ -3,23 +3,29 @@
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
+<link rel="stylesheet" href="css/form.css">
+<link rel="stylesheet" href="css/card.css">
 <link rel="stylesheet" href="css/layout.css">
 
-<main class="container my-4">
+<main class="form-content my-4">
 
-    <div class="superior">
-        <h2>¡Bienvenido ${sessionScope.nombreUsuario != null ? sessionScope.nombreUsuario : 'Invitado'}!</h2>
-        <p>Aqui puedes gestionar tus visitas academicas</p>
-    </div>
+    <h4 class="page-title text-title-request mb-1">
+        ¡Bienvenido ${sessionScope.nombreUsuario != null ? sessionScope.nombreUsuario : 'Invitado'}!
+    </h4>
+    <p class="text-muted mb-4">Aquí puedes gestionar tus visitas académicas</p>
 
-    <a href="${pageContext.request.contextPath}/SolicitudDocente.jsp" class="botonnueva">Nueva Solicitud</a>
+    <div class="card-custom">
+        <h6 class="card-title">Solicitudes</h6>
 
-    <div class="cardcustom">
-        <h2>Solicitudes</h2>
-        <div class="ubicacion">
-            <i class="bi bi-pin-map" id="icono"></i>
+        <div class="d-flex align-items-center gap-2 mb-3 text-muted">
+            <i class="bi bi-pin-map" style="font-size: 1.1rem;"></i>
             <span>Ciudad de México</span>
-            <div class="progreso"></div>
+        </div>
+
+        <div class="contenedor-boton">
+            <a href="${pageContext.request.contextPath}/SolicitudDocente.jsp" class="btncrear text-decoration-none">
+                <i class="bi bi-plus-lg"></i> Nueva Solicitud
+            </a>
         </div>
     </div>
 
