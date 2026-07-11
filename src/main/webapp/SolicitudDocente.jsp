@@ -11,7 +11,12 @@
     <form action="visita" method="POST">
         <input type="hidden" name="action" value="create">
 
-        <h4 class="page-title text-title-request mb-4">Nueva Solicitud</h4>
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="${pageContext.request.contextPath}/" class="btn-volver text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            <h4 class="page-title text-title-request mb-0">Nueva Solicitud</h4>
+        </div>
 
         <div class="card-custom">
             <h6 class="card-title">Datos del lugar a visitar</h6>

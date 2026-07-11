@@ -225,6 +225,27 @@
     margin-top: 1.5rem;
 }
 
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #183052 !important;
+    border: 1.5px solid #c7c7cc;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn-volver:hover {
+    background-color: #F2F2F7;
+    border-color: #183052;
+}
+
 .btncrear {
     width: 188px !important;
     height: 47px !important;
