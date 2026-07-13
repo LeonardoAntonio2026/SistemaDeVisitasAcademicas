@@ -56,19 +56,13 @@
     color: #2C5084;
 }
 
-.form-content {
-    margin-left: 0;
-    margin-right: 0;
-    max-width: none;
-    padding-left: 2.5rem;
-    padding-right: 1rem;
-}
-
-@media (max-width: 767.98px) {
-    .form-content {
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
-    }
+/* Barra de acciones al final del formulario: Volver a la izquierda, acción principal a la derecha */
+.acciones-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 1.5rem;
 }
 
 .division-table {
@@ -218,11 +212,25 @@
     min-width: 120px;
     padding: 2px 0;
 }
-.contenedor-boton {
-    display: flex !important;
-    justify-content: flex-end !important;
-    width: 100% !important;
-    margin-top: 1.5rem;
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #183052 !important;
+    border: 1.5px solid #c7c7cc;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn-volver:hover {
+    background-color: #F2F2F7;
+    border-color: #183052;
 }
 
 .btncrear {

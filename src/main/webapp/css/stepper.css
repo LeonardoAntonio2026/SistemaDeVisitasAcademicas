@@ -1,0 +1,103 @@
+/* Stepper de progreso de la solicitud (componente reutilizable) */
+
+.stepper {
+    display: flex;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.step {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    min-width: 0;
+}
+
+/* Línea que conecta cada paso con el anterior */
+.step::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: calc(-50% + 9px);
+    width: calc(100% - 18px);
+    height: 3px;
+    background-color: #D8D8DC;
+    border-radius: 2px;
+}
+
+.step:first-child::before {
+    display: none;
+}
+
+.step-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #D8D8DC;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.step-label {
+    font-size: 12px;
+    color: #8A8A8A;
+    margin-top: 6px;
+    line-height: 1.25;
+}
+
+/* Paso completado */
+.step.done .step-dot,
+.step.done::before {
+    background-color: #2a7a5a;
+}
+
+.step.done .step-label {
+    color: #2a7a5a;
+    font-weight: 600;
+}
+
+/* Paso en curso: punto verde con aro */
+.step.current .step-dot {
+    background-color: #2a7a5a;
+    box-shadow: 0 0 0 4px rgba(42, 122, 90, 0.25);
+}
+
+.step.current::before {
+    background-color: #2a7a5a;
+}
+
+.step.current .step-label {
+    color: #183052;
+    font-weight: 600;
+}
+
+/* Paso donde la solicitud fue rechazada */
+.step.danger .step-dot {
+    background-color: #B02A37;
+    box-shadow: 0 0 0 4px rgba(176, 42, 55, 0.2);
+}
+
+.step.danger::before {
+    background-color: #B02A37;
+}
+
+.step.danger .step-label {
+    color: #B02A37;
+    font-weight: 600;
+}
+
+/* Versión compacta dentro de las tarjetas de solicitud */
+.solicitud-card .stepper {
+    margin: 1rem 0 0.25rem;
+}
+
+.solicitud-card .step-label {
+    font-size: 11px;
+}
+
+@media (max-width: 575.98px) {
+    .step-label {
+        display: none;
+    }
+}

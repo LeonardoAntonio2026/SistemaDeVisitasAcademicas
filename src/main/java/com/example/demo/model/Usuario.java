@@ -4,19 +4,22 @@ import java.io.Serializable;
 
 public class Usuario implements Serializable {
     private int id;
+    private int idRol;
     private String nombre;
-    private String apellidos;
     private String correo;
+
+    // Campos de apoyo: nombreRol viene del JOIN con ROL;
+    // contrasena solo se usa en memoria para registro/login (en BD vive en CONTRASENA como hash)
+    private String nombreRol;
     private String contrasena;
 
     public Usuario() {}
 
-    public Usuario(int id, String nombre, String apellidos, String correo, String contrasena) {
+    public Usuario(int id, int idRol, String nombre, String correo) {
         this.id = id;
+        this.idRol = idRol;
         this.nombre = nombre;
-        this.apellidos = apellidos;
         this.correo = correo;
-        this.contrasena = contrasena;
     }
 
     public int getId() {
@@ -27,6 +30,14 @@ public class Usuario implements Serializable {
         this.id = id;
     }
 
+    public int getIdRol() {
+        return idRol;
+    }
+
+    public void setIdRol(int idRol) {
+        this.idRol = idRol;
+    }
+
     public String getNombre() {
         return nombre;
     }
@@ -35,20 +46,20 @@ public class Usuario implements Serializable {
         this.nombre = nombre;
     }
 
-    public String getApellidos() {
-        return apellidos;
-    }
-
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
-    }
-
     public String getCorreo() {
         return correo;
     }
 
     public void setCorreo(String correo) {
         this.correo = correo;
+    }
+
+    public String getNombreRol() {
+        return nombreRol;
+    }
+
+    public void setNombreRol(String nombreRol) {
+        this.nombreRol = nombreRol;
     }
 
     public String getContrasena() {

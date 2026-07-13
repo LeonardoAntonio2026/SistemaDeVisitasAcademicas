@@ -60,8 +60,11 @@ public class RegisterServlet extends HttpServlet {
         }
 
         Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setNombre(nombre);
-        nuevoUsuario.setApellidos(apellidos);
+        // La tabla USUARIO solo tiene una columna NOMBRE, así que juntamos nombre y apellidos
+        String nombreCompleto = (apellidos == null || apellidos.isBlank())
+                ? nombre.trim()
+                : nombre.trim() + " " + apellidos.trim();
+        nuevoUsuario.setNombre(nombreCompleto);
         nuevoUsuario.setCorreo(correo1);
         nuevoUsuario.setContrasena(contra1);
 
@@ -71,7 +74,7 @@ public class RegisterServlet extends HttpServlet {
             String plantillaHtml = """
             <html>
                 <body style="font-family: Arial, sans-serif; color: #333333;">
-                    <h2 style="color: #183052;">¡Hola, {0} {1}!</h2>
+                    <h2 style="color: #183052;">¡Hola, {0}!</h2>
                     <p>Tu cuenta en el Sistema de Gestión de Visitas Académicas se creó correctamente.</p>
                     <p>Ya puedes iniciar sesión y registrar tus solicitudes de visita.</p>
                     <p style="font-size: 12px; color: #777777;">Si no realizaste este registro, puedes ignorar este mensaje.</p>
@@ -79,10 +82,7 @@ public class RegisterServlet extends HttpServlet {
             </html>
             """;
 
-            String cuerpoCorreo = MessageFormat.format(
-                    plantillaHtml,
-                    nuevoUsuario.getNombre(),
-                    nuevoUsuario.getApellidos() == null ? "" : nuevoUsuario.getApellidos());
+            String cuerpoCorreo = MessageFormat.format(plantillaHtml, nuevoUsuario.getNombre());
 
             try {
                 EmailSender.sendMail(

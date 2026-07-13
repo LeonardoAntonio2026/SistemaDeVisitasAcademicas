@@ -10,7 +10,6 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
         <script defer src="${pageContext.request.contextPath}/js/bootstrap.bundle.min.js"></script>
-        <script src="js/visitas-form.js"></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', function () {
             var toggle = document.getElementById('sidebarToggle');
@@ -51,7 +50,7 @@
         <button class="navbar-toggler d-md-none border-0" id="sidebarToggle" type="button" aria-label="Abrir menú">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand mb-0" href="${pageContext.request.contextPath}/">
+        <a class="navbar-brand mb-0" href="${pageContext.request.contextPath}/indexSv">
             <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png"
                  alt="Logo UTEZ" width="70" height="34" class="d-inline-block align-text-top">
             Sistema de Gestión de Visitas
