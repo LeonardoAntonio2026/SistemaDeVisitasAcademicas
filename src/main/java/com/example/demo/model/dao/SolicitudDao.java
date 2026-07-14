@@ -295,32 +295,103 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         }
     }
 
+    /**
+     * Actualiza la solicitud completa (datos + desglose por programa +
+     * asignaturas) mientras siga Pendiente. Los hijos se reemplazan en la
+     * misma transacción para que queden igual que como se capturaron.
+     */
     @Override
     public boolean update(Solicitud entidad) {
-        String sql = "UPDATE solicitud SET nombre_empresa_actividad = ?, lugar_direccion = ?, "
+        String sqlSolicitud = "UPDATE solicitud SET nombre_empresa_actividad = ?, lugar_direccion = ?, "
                 + "telefono_contacto = ?, correo_contacto = ?, fecha_inicio = ?, objetivo = ?, "
                 + "area_solicitante = ? WHERE id_solicitud = ?";
-        try (Connection con = SQLConnector.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sqlPrograma = "INSERT INTO programa_educativo (id_solicitud, division_academica, cuatrimestre, grupo, no_estudiantes) "
+                + "VALUES (?, ?, ?, ?, ?)";
+        String sqlAsignatura = "INSERT INTO asignatura_reforzar_solicitud (id_solicitud, nombre) VALUES (?, ?)";
 
-            ps.setString(1, entidad.getNombreEmpresaActividad());
-            ps.setString(2, entidad.getLugarDireccion());
-            ps.setString(3, entidad.getTelefonoContacto());
-            ps.setString(4, entidad.getCorreoContacto());
-            if (entidad.getFechaInicio() != null && !entidad.getFechaInicio().isBlank()) {
-                ps.setDate(5, Date.valueOf(entidad.getFechaInicio()));
-            } else {
-                ps.setNull(5, java.sql.Types.DATE);
+        Connection con = null;
+        try {
+            con = SQLConnector.getConnection();
+            con.setAutoCommit(false);
+
+            int id = entidad.getIdSolicitud();
+            int filas;
+            try (PreparedStatement ps = con.prepareStatement(sqlSolicitud)) {
+                ps.setString(1, entidad.getNombreEmpresaActividad());
+                ps.setString(2, entidad.getLugarDireccion());
+                ps.setString(3, entidad.getTelefonoContacto());
+                ps.setString(4, entidad.getCorreoContacto());
+                if (entidad.getFechaInicio() != null && !entidad.getFechaInicio().isBlank()) {
+                    ps.setDate(5, Date.valueOf(entidad.getFechaInicio()));
+                } else {
+                    ps.setNull(5, java.sql.Types.DATE);
+                }
+                ps.setString(6, entidad.getObjetivo());
+                ps.setString(7, entidad.getAreaSolicitante());
+                ps.setInt(8, id);
+                filas = ps.executeUpdate();
             }
-            ps.setString(6, entidad.getObjetivo());
-            ps.setString(7, entidad.getAreaSolicitante());
-            ps.setInt(8, entidad.getIdSolicitud());
+            if (filas == 0) {
+                con.rollback();
+                return false;
+            }
 
-            return ps.executeUpdate() > 0;
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM programa_educativo WHERE id_solicitud = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            if (!entidad.getProgramas().isEmpty()) {
+                try (PreparedStatement ps = con.prepareStatement(sqlPrograma)) {
+                    for (ProgramaEducativo p : entidad.getProgramas()) {
+                        ps.setInt(1, id);
+                        ps.setString(2, p.getDivisionAcademica());
+                        ps.setInt(3, p.getCuatrimestre());
+                        ps.setString(4, p.getGrupo());
+                        ps.setInt(5, p.getNoEstudiantes());
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            if (!entidad.getAsignaturas().isEmpty()) {
+                try (PreparedStatement ps = con.prepareStatement(sqlAsignatura)) {
+                    for (String asignatura : entidad.getAsignaturas()) {
+                        ps.setInt(1, id);
+                        ps.setString(2, asignatura);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            con.commit();
+            return true;
 
         } catch (SQLException e) {
             e.printStackTrace();
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
             return false;
+        } finally {
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

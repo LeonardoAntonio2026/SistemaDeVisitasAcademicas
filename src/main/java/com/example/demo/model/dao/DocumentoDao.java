@@ -112,6 +112,26 @@ public class DocumentoDao {
         }
     }
 
+    /**
+     * Elimina el documento de un tipo de la solicitud. Se usa al editar los
+     * datos: el FO firmado que ya estaba subido queda obsoleto porque el
+     * formato se regenera con la información nueva.
+     */
+    public boolean eliminarTipoDeSolicitud(int idSolicitud, String nombreTipo) {
+        String sql = "DELETE FROM documento WHERE id_solicitud = ? AND id_tipo_documento = "
+                + "(SELECT id_tipo_documento FROM tipo_documento WHERE nombre_tipo = ?)";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idSolicitud);
+            ps.setString(2, nombreTipo);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /** Indica si la solicitud ya tiene un documento de ese tipo (ej. el FO firmado). */
     public boolean existeTipoEnSolicitud(int idSolicitud, String nombreTipo) {
         String sql = "SELECT COUNT(*) FROM documento d "

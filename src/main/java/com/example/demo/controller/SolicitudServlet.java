@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import com.example.demo.model.ProgramaEducativo;
 import com.example.demo.model.Solicitud;
+import com.example.demo.model.dao.DocumentoDao;
 import com.example.demo.model.dao.SolicitudDao;
 
 import java.io.IOException;
@@ -18,11 +19,25 @@ import java.util.List;
 public class SolicitudServlet extends HttpServlet {
 
     private final SolicitudDao solicitudDao = new SolicitudDao();
+    private final DocumentoDao documentoDao = new DocumentoDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if ("nueva".equals(request.getParameter("action"))) {
+            request.getRequestDispatcher("SolicitudDocente.jsp").forward(request, response);
+            return;
+        }
+
+        // Editar: el mismo formulario de nueva solicitud pero precargado.
+        // Solo el docente dueño y solo mientras siga Pendiente (aún no se envía)
+        if ("editar".equals(request.getParameter("action"))) {
+            Solicitud solicitud = cargarEditablePorDueno(request);
+            if (solicitud == null) {
+                response.sendRedirect("solicitud");
+                return;
+            }
+            request.setAttribute("solicitud", solicitud);
             request.getRequestDispatcher("SolicitudDocente.jsp").forward(request, response);
             return;
         }
@@ -66,15 +81,7 @@ public class SolicitudServlet extends HttpServlet {
 
             Solicitud solicitud = new Solicitud();
             solicitud.setIdUsuarioSolicitante(idUsuario);
-            solicitud.setNombreEmpresaActividad(request.getParameter("nombreEmpresa"));
-            solicitud.setLugarDireccion(request.getParameter("direccionLugar"));
-            solicitud.setTelefonoContacto(request.getParameter("telefonoContacto"));
-            solicitud.setCorreoContacto(request.getParameter("correoContacto"));
-            solicitud.setFechaInicio(request.getParameter("fechaInicio"));
-            solicitud.setObjetivo(request.getParameter("objetivoVisita"));
-            solicitud.setAreaSolicitante(request.getParameter("areaSolicitante"));
-            solicitud.setProgramas(leerProgramas(request));
-            solicitud.setAsignaturas(leerAsignaturas(request));
+            llenarDesdeFormulario(solicitud, request);
 
             if (solicitudDao.create(solicitud)) {
                 // Crear NO envía a Estadías: el docente cae en los detalles para
@@ -82,10 +89,67 @@ public class SolicitudServlet extends HttpServlet {
                 response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud());
                 return;
             }
+        } else if ("update".equals(action)) {
+            Solicitud solicitud = cargarEditablePorDueno(request);
+            if (solicitud == null) {
+                response.sendRedirect("solicitud");
+                return;
+            }
+
+            llenarDesdeFormulario(solicitud, request);
+            if (solicitudDao.update(solicitud)) {
+                // El FO firmado que ya estaba subido queda obsoleto: el formato
+                // se regenera con los datos nuevos y hay que firmarlo otra vez
+                documentoDao.eliminarTipoDeSolicitud(solicitud.getIdSolicitud(),
+                        DetalleSolicitudServlet.TIPO_FO_FIRMADO);
+                response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud() + "&actualizado=1");
+                return;
+            }
+            response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud());
+            return;
         }
 
         // Patrón PRG: Redirigir al GET evita que al recargar la página se repita la operación
         response.sendRedirect("indexSv");
+    }
+
+    /** Copia al modelo los campos capturados en el formulario (crear y editar). */
+    private void llenarDesdeFormulario(Solicitud solicitud, HttpServletRequest request) {
+        solicitud.setNombreEmpresaActividad(request.getParameter("nombreEmpresa"));
+        solicitud.setLugarDireccion(request.getParameter("direccionLugar"));
+        solicitud.setTelefonoContacto(request.getParameter("telefonoContacto"));
+        solicitud.setCorreoContacto(request.getParameter("correoContacto"));
+        solicitud.setFechaInicio(request.getParameter("fechaInicio"));
+        solicitud.setObjetivo(request.getParameter("objetivoVisita"));
+        solicitud.setAreaSolicitante(request.getParameter("areaSolicitante"));
+        solicitud.setProgramas(leerProgramas(request));
+        solicitud.setAsignaturas(leerAsignaturas(request));
+    }
+
+    /**
+     * Carga la solicitud del parámetro id solo si el usuario en sesión es el
+     * docente que la creó y sigue Pendiente; una vez enviada ya no se edita.
+     */
+    private Solicitud cargarEditablePorDueno(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        if (idUsuario == null) {
+            return null;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(request.getParameter("id"));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+        Solicitud solicitud = solicitudDao.getById(id);
+        if (solicitud == null || solicitud.getIdUsuarioSolicitante() != idUsuario
+                || !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado())) {
+            return null;
+        }
+        return solicitud;
     }
 
     /**

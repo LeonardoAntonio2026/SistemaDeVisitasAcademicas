@@ -132,7 +132,8 @@ public class DocumentoServlet extends HttpServlet {
             }
         }
 
-        response.sendRedirect("detalle?id=" + idSolicitud + (guardado ? "" : "&error=guardar"));
+        // El parámetro subido= muestra la confirmación de carga en los detalles
+        response.sendRedirect("detalle?id=" + idSolicitud + (guardado ? "&subido=" + action : "&error=guardar"));
     }
 
     /** Solo PDF y máximo 10 MB (RN-07). Devuelve la clave del error o null si es válido. */
