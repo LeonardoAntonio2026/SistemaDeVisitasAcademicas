@@ -69,8 +69,12 @@ public class SolicitudServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         if ("delete".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            solicitudDao.delete(id);
+            // Mismas reglas que editar: solo el docente dueño y solo mientras
+            // siga Pendiente; una vez enviada a Estadías ya no se elimina (RF-11)
+            Solicitud aEliminar = cargarEditablePorDueno(request);
+            if (aEliminar != null) {
+                solicitudDao.delete(aEliminar.getIdSolicitud());
+            }
         } else if ("create".equals(action)) {
             HttpSession session = request.getSession(false);
             Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;

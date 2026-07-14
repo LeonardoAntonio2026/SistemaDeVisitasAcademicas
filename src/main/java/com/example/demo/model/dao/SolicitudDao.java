@@ -403,6 +403,10 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             con.setAutoCommit(false);
 
             // Primero los hijos por las FKs, después la solicitud
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM documento WHERE id_solicitud = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
             try (PreparedStatement ps = con.prepareStatement("DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud = ?")) {
                 ps.setInt(1, id);
                 ps.executeUpdate();
