@@ -75,12 +75,12 @@
                                href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">Ver solicitud</a>
                             <c:choose>
                                 <c:when test="${esDocente && r.nombreEstado == 'Pendiente'}">
-                                    <a class="btn-ver-detalles" style="text-decoration: none;"
-                                       href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Completar formulario</a>
+                                    <button type="button" class="btn-ver-detalles" disabled
+                                            title="Próximamente: formulario del reporte">Completar formulario</button>
                                 </c:when>
                                 <c:otherwise>
-                                    <a class="btn-ver-detalles" style="text-decoration: none;"
-                                       href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Ver reporte</a>
+                                    <button type="button" class="btn-ver-detalles" disabled
+                                            title="Próximamente">Ver reporte</button>
                                 </c:otherwise>
                             </c:choose>
                         </div>
