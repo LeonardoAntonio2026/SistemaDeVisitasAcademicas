@@ -40,8 +40,8 @@
 }
 
 .step-label {
-    font-size: 12px;
-    color: #8A8A8A;
+    font-size: var(--fs-xs);
+    color: var(--color-texto-tenue);
     margin-top: 6px;
     line-height: 1.25;
 }
@@ -49,41 +49,41 @@
 /* Paso completado */
 .step.done .step-dot,
 .step.done::before {
-    background-color: #2a7a5a;
+    background-color: var(--color-verde);
 }
 
 .step.done .step-label {
-    color: #2a7a5a;
+    color: var(--color-verde);
     font-weight: 600;
 }
 
 /* Paso en curso: punto verde con aro */
 .step.current .step-dot {
-    background-color: #2a7a5a;
+    background-color: var(--color-verde);
     box-shadow: 0 0 0 4px rgba(42, 122, 90, 0.25);
 }
 
 .step.current::before {
-    background-color: #2a7a5a;
+    background-color: var(--color-verde);
 }
 
 .step.current .step-label {
-    color: #183052;
+    color: var(--color-azul);
     font-weight: 600;
 }
 
 /* Paso donde la solicitud fue rechazada */
 .step.danger .step-dot {
-    background-color: #B02A37;
+    background-color: var(--color-rojo-oscuro);
     box-shadow: 0 0 0 4px rgba(176, 42, 55, 0.2);
 }
 
 .step.danger::before {
-    background-color: #B02A37;
+    background-color: var(--color-rojo-oscuro);
 }
 
 .step.danger .step-label {
-    color: #B02A37;
+    color: var(--color-rojo-oscuro);
     font-weight: 600;
 }
 

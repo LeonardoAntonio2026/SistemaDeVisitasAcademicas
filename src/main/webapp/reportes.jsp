@@ -8,6 +8,7 @@
 
 <main id="main-content">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/reporte.css">
 
     <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
 
@@ -70,13 +71,19 @@
                                 <span class="meta-valor">${r.fecha}</span>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <a class="btn-ver-detalles" style="text-decoration: none; background-color: #5A5A5A;"
-                               href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">Ver solicitud</a>
+                        <div class="acciones-card">
+                            <a class="btn-ver-detalles btn-verde" style="text-decoration: none;"
+                               href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">
+                                <i class="bi bi-arrow-right"></i> Ir a la solicitud
+                            </a>
                             <c:choose>
                                 <c:when test="${esDocente && r.nombreEstado == 'Pendiente'}">
                                     <a class="btn-ver-detalles" style="text-decoration: none;"
-                                       href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Completar formulario</a>
+                                       href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Completar reporte</a>
+                                </c:when>
+                                <c:when test="${esDocente && r.nombreEstado == 'Rechazado'}">
+                                    <a class="btn-ver-detalles" style="text-decoration: none;"
+                                       href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Corregir reporte</a>
                                 </c:when>
                                 <c:otherwise>
                                     <a class="btn-ver-detalles" style="text-decoration: none;"

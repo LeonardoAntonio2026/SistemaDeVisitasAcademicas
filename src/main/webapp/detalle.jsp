@@ -323,7 +323,7 @@
                             <small>Si te equivocaste de archivo puedes subir otro; reemplazará al anterior.</small>
                         </c:when>
                         <c:otherwise>
-                            <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: #8A8A8A;"></i>
+                            <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
                             <p>Sube el formato FO-UTEZ-EST-08 firmado</p>
                             <small>Máximo 10 MB · solo PDF</small>
                         </c:otherwise>
@@ -349,7 +349,7 @@
                 <input type="hidden" name="action" value="responsiva">
                 <input type="hidden" name="solicitud" value="${s.idSolicitud}">
                 <div class="zona-carga">
-                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: #8A8A8A;"></i>
+                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
                     <p>Sube la CARTA RESPONSIVA firmada</p>
                     <small>Máximo 10 MB · solo PDF</small>
                     <input type="file" name="archivo" class="form-control" accept="application/pdf" required>

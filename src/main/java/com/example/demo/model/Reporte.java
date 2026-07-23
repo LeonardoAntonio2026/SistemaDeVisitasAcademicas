@@ -22,6 +22,7 @@ public class Reporte implements Serializable {
     private String lugarDireccion;
     private int idUsuarioSolicitante;
     private String nombreSolicitante;
+    private String correoSolicitante;
     private int totalEstudiantes;
     private String fechaSolicitud;
 
@@ -137,6 +138,14 @@ public class Reporte implements Serializable {
 
     public void setTotalEstudiantes(int totalEstudiantes) {
         this.totalEstudiantes = totalEstudiantes;
+    }
+
+    public String getCorreoSolicitante() {
+        return correoSolicitante;
+    }
+
+    public void setCorreoSolicitante(String correoSolicitante) {
+        this.correoSolicitante = correoSolicitante;
     }
 
     public String getFechaSolicitud() {

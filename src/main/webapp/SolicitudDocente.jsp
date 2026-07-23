@@ -149,7 +149,7 @@
                 </c:choose>
             </div>
 
-            <button type="button" class="btn-add-row mt-3" id="btn-agregar-grupo">+ Agregar grupo</button>
+            <button type="button" class="btn-agregar mt-3" id="btn-agregar-grupo">+ Agregar grupo</button>
         </div>
 
         <div class="form-section">

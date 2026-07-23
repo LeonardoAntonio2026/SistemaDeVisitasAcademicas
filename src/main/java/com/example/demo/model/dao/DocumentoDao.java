@@ -60,6 +60,29 @@ public class DocumentoDao {
         return null;
     }
 
+    /** Metadatos de los documentos de un reporte (mismo criterio que getBySolicitud). */
+    public List<Documento> getByReporte(int idReporte) {
+        List<Documento> datos = new ArrayList<>();
+        String sql = "SELECT d.id_documento, d.id_solicitud, d.id_reporte, d.id_tipo_documento, "
+                + "t.nombre_tipo, TO_CHAR(d.fecha_carga, 'YYYY-MM-DD') AS fecha_carga, "
+                + "LENGTH(d.contenido_base64) AS tam_base64 "
+                + "FROM documento d JOIN tipo_documento t ON t.id_tipo_documento = d.id_tipo_documento "
+                + "WHERE d.id_reporte = ? ORDER BY d.fecha_carga, d.id_documento";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idReporte);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.add(mapRow(rs, false));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return datos;
+    }
+
     /**
      * Guarda un documento de la solicitud. Si ya existía uno del mismo tipo se
      * reemplaza (el docente puede volver a subir el archivo si se equivocó).
@@ -110,6 +133,99 @@ public class DocumentoDao {
                 }
             }
         }
+    }
+
+    /**
+     * Guarda un documento del reporte (el PDF firmado). Igual que
+     * guardarParaSolicitud: si ya existía uno del mismo tipo se reemplaza.
+     */
+    public boolean guardarParaReporte(int idReporte, String nombreTipo, String contenidoBase64) {
+        String sqlDelete = "DELETE FROM documento WHERE id_reporte = ? AND id_tipo_documento = "
+                + "(SELECT id_tipo_documento FROM tipo_documento WHERE nombre_tipo = ?)";
+        String sqlInsert = "INSERT INTO documento (id_reporte, id_tipo_documento, contenido_base64) "
+                + "VALUES (?, (SELECT id_tipo_documento FROM tipo_documento WHERE nombre_tipo = ?), ?)";
+
+        Connection con = null;
+        try {
+            con = SQLConnector.getConnection();
+            con.setAutoCommit(false);
+
+            try (PreparedStatement ps = con.prepareStatement(sqlDelete)) {
+                ps.setInt(1, idReporte);
+                ps.setString(2, nombreTipo);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
+                ps.setInt(1, idReporte);
+                ps.setString(2, nombreTipo);
+                ps.setString(3, contenidoBase64);
+                ps.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * Elimina el documento de un tipo del reporte. Se usa al corregir el
+     * formulario: el reporte firmado anterior queda obsoleto porque el
+     * formato se regenera con la información nueva.
+     */
+    public boolean eliminarTipoDeReporte(int idReporte, String nombreTipo) {
+        String sql = "DELETE FROM documento WHERE id_reporte = ? AND id_tipo_documento = "
+                + "(SELECT id_tipo_documento FROM tipo_documento WHERE nombre_tipo = ?)";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idReporte);
+            ps.setString(2, nombreTipo);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /** Indica si el reporte ya tiene un documento de ese tipo (ej. el firmado). */
+    public boolean existeTipoEnReporte(int idReporte, String nombreTipo) {
+        String sql = "SELECT COUNT(*) FROM documento d "
+                + "JOIN tipo_documento t ON t.id_tipo_documento = d.id_tipo_documento "
+                + "WHERE d.id_reporte = ? AND t.nombre_tipo = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idReporte);
+            ps.setString(2, nombreTipo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**

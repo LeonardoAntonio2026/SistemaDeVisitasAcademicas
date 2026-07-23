@@ -1,22 +1,22 @@
 /* Página de detalles de la visita: cards de resumen, datos, archivos y evaluación */
 
 .detalle-card {
-    background: #ffffff;
-    border-radius: 12px;
+    background: var(--color-superficie);
+    border-radius: var(--radio-card);
     padding: 24px 28px;
     width: 100%;
     margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--sombra-card);
     box-sizing: border-box;
 }
 
 /* Título de cada card (el único grande es el del resumen) */
 .detalle-card h6 {
     font-weight: 700;
-    font-size: 1rem;
-    color: #1c1c1e;
+    font-size: var(--fs-md);
+    color: var(--color-texto);
     margin-bottom: 18px;
-    border-bottom: 1px solid #e5e5ea;
+    border-bottom: 1px solid var(--color-borde-suave);
     padding-bottom: 10px;
 }
 
@@ -29,8 +29,8 @@
 }
 
 .resumen-titulo {
-    color: #183052;
-    font-size: 26px;
+    color: var(--color-azul);
+    font-size: var(--fs-xl);
     font-weight: 700;
     margin: 0;
 }
@@ -39,8 +39,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem 1.5rem;
-    color: #5A5A5A;
-    font-size: 14px;
+    color: var(--color-texto-3);
+    font-size: var(--fs-base);
     margin-top: 4px;
 }
 
@@ -54,10 +54,10 @@
 .instruccion {
     display: flex;
     gap: 12px;
-    border-radius: 10px;
+    border-radius: var(--radio-btn);
     padding: 14px 16px;
     margin-top: 1rem;
-    font-size: 14px;
+    font-size: var(--fs-base);
 }
 
 .instruccion i {
@@ -73,7 +73,7 @@
 
 .instruccion p {
     margin: 0;
-    color: #3a3a3c;
+    color: var(--color-texto-2);
 }
 
 .instruccion-detalle {
@@ -89,7 +89,7 @@
 
 .instruccion-info i,
 .instruccion-info .instruccion-titulo {
-    color: #2C5084;
+    color: var(--color-azul-hover);
 }
 
 .instruccion-accion {
@@ -116,7 +116,7 @@
 
 .instruccion-rechazo i,
 .instruccion-rechazo .instruccion-titulo {
-    color: #B02A37;
+    color: var(--color-rojo-oscuro);
 }
 
 /* ---- Cards de datos (lugar / participantes) ---- */
@@ -127,14 +127,14 @@
 }
 
 .dato-label {
-    color: #8A8A8A;
-    font-size: 12px;
+    color: var(--color-texto-tenue);
+    font-size: var(--fs-xs);
     margin-bottom: 1px;
 }
 
 .dato-valor {
-    color: #1c1c1e;
-    font-size: 14px;
+    color: var(--color-texto);
+    font-size: var(--fs-base);
     font-weight: 600;
     overflow-wrap: anywhere;
 }
@@ -145,8 +145,8 @@
 
 .tabla-programas {
     width: 100%;
-    border: 1.5px solid #e5e5ea;
-    border-radius: 8px;
+    border: 1.5px solid var(--color-borde-suave);
+    border-radius: var(--radio-input);
     border-collapse: separate;
     border-spacing: 0;
     overflow: hidden;
@@ -155,8 +155,8 @@
 }
 
 .tabla-programas th {
-    background: #F2F2F7;
-    color: #3a3a3c;
+    background: var(--color-fondo);
+    color: var(--color-texto-2);
     font-weight: 600;
     padding: 8px 12px;
     text-align: left;
@@ -164,22 +164,22 @@
 
 .tabla-programas td {
     padding: 8px 12px;
-    border-top: 1px solid #ECECEC;
-    color: #1c1c1e;
+    border-top: 1px solid var(--color-borde-tenue);
+    color: var(--color-texto);
 }
 
 .tabla-programas .fila-total td {
     font-weight: 700;
-    background: #FAFAFC;
+    background: var(--color-superficie-2);
 }
 
 .chip-asignatura {
     display: inline-block;
     background: #E3EDF7;
-    color: #183052;
-    border-radius: 20px;
+    color: var(--color-azul);
+    border-radius: var(--radio-pill);
     padding: 4px 14px;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 600;
     margin: 3px 6px 3px 0;
 }
@@ -197,11 +197,11 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background-color: #2a7a5a;
+    background-color: var(--color-verde);
     color: #ffffff;
-    border-radius: 8px;
+    border-radius: var(--radio-input);
     padding: 8px 16px;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 600;
     min-width: 0;
 }
@@ -217,12 +217,15 @@
 }
 
 .btn-descargar {
-    background-color: #183052;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--color-azul);
     color: #ffffff !important;
     border: none;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 13px;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-sm-pad-y) var(--btn-sm-pad-x);
+    font-size: var(--fs-sm);
     text-decoration: none;
     white-space: nowrap;
 }
@@ -252,7 +255,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #8A8A8A;
+    color: var(--color-texto-tenue);
     font-size: 12.5px;
     font-weight: 700;
     text-transform: uppercase;
@@ -269,28 +272,28 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: #E5E5EA;
+    background: var(--color-borde-suave);
 }
 
 /* Zona para subir el archivo firmado (solo el docente dueño) */
 .zona-carga {
-    border: 2px dashed #c7c7cc;
-    border-radius: 10px;
+    border: 2px dashed var(--color-borde);
+    border-radius: var(--radio-btn);
     padding: 20px;
     text-align: center;
     margin-top: 14px;
-    background: #FAFAFC;
+    background: var(--color-superficie-2);
 }
 
 .zona-carga p {
-    color: #5A5A5A;
+    color: var(--color-texto-3);
     font-size: 13.5px;
     margin: 0 0 4px;
     font-weight: 600;
 }
 
 .zona-carga small {
-    color: #8A8A8A;
+    color: var(--color-texto-tenue);
     display: block;
     margin-bottom: 10px;
 }
@@ -316,7 +319,7 @@
     display: none;
     color: #8A6D0B;
     background: #FFF3CD;
-    border-radius: 6px;
+    border-radius: var(--radio-sm);
     font-size: 12.5px;
     font-weight: 600;
     padding: 6px 12px;
@@ -329,13 +332,22 @@
 }
 
 .btn-subir {
-    background-color: #183052;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--color-azul);
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    padding: 8px 22px;
-    font-size: 13.5px;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
     cursor: pointer;
+}
+
+.btn-subir:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 /* ---- Card de evaluación (coordinador de Estadías) ---- */
@@ -350,9 +362,9 @@
 .btn-rechazar,
 .btn-aprobar {
     border: none;
-    border-radius: 8px;
-    padding: 9px 22px;
-    font-size: 14px;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
     font-weight: 600;
     color: #ffffff;
     cursor: pointer;
@@ -362,23 +374,11 @@
 }
 
 .btn-rechazar {
-    background-color: #C0392B;
+    background-color: var(--color-rojo);
 }
 
 .btn-aprobar {
-    background-color: #183052;
-}
-
-/* Barra final: Volver a la izquierda, acciones principales a la derecha
-   (detalle.jsp no incluye form.css, así que el flex se define aquí) */
-.acciones-form {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    margin-top: 1.5rem;
+    background-color: var(--color-azul);
 }
 
 .acciones-derecha {
@@ -390,12 +390,12 @@
 
 /* Botones de la barra final: Volver es secundario, Enviar es el primario (azul) */
 .btn-volver-detalle {
-    background-color: #ffffff;
-    color: #183052 !important;
-    border: 1.5px solid #c7c7cc;
-    border-radius: 8px;
-    padding: 9px 20px;
-    font-size: 14px;
+    background-color: var(--color-superficie);
+    color: var(--color-azul) !important;
+    border: 1.5px solid var(--color-borde);
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
@@ -405,17 +405,17 @@
 }
 
 .btn-volver-detalle:hover {
-    background-color: #F2F2F7;
-    border-color: #183052;
+    background-color: var(--color-fondo);
+    border-color: var(--color-azul);
 }
 
 .btn-editar-datos {
-    background-color: #ffffff;
-    color: #183052 !important;
-    border: 1.5px solid #183052;
-    border-radius: 8px;
-    padding: 9px 20px;
-    font-size: 14px;
+    background-color: var(--color-superficie);
+    color: var(--color-azul) !important;
+    border: 1.5px solid var(--color-azul);
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
@@ -429,12 +429,12 @@
 }
 
 .btn-enviar-solicitud {
-    background-color: #183052;
+    background-color: var(--color-azul);
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    padding: 9px 26px;
-    font-size: 14px;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -443,7 +443,7 @@
 }
 
 .btn-enviar-solicitud:hover:not(:disabled) {
-    background-color: #2C5084;
+    background-color: var(--color-azul-hover);
 }
 
 .btn-enviar-solicitud:disabled {

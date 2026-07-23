@@ -25,7 +25,10 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             // Va como subselect y no como JOIN para no duplicar filas.
             + "(SELECT er.nombre_estado FROM reporte r "
             + "JOIN estado_reporte er ON er.id_estado = r.id_estado "
-            + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS estado_reporte "
+            + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS estado_reporte, "
+            // Id del reporte, para enlazar directo a /reporte?id=X desde el histórico
+            + "(SELECT r.id_reporte FROM reporte r "
+            + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS id_reporte "
             + "FROM solicitud s "
             + "JOIN estado_solicitud e ON e.id_estado = s.id_estado "
             + "JOIN usuario us ON us.id_usuario = s.id_usuario_solicitante";
@@ -507,6 +510,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         s.setFechaCreacion(rs.getString("fecha_creacion"));
         s.setNombreEstado(rs.getString("nombre_estado"));
         s.setEstadoReporte(rs.getString("estado_reporte"));
+        int idReporte = rs.getInt("id_reporte");
+        s.setIdReporte(rs.wasNull() ? null : idReporte);
         s.setNombreSolicitante(rs.getString("nombre_solicitante"));
         s.setCorreoSolicitante(rs.getString("correo_solicitante"));
         s.setTotalEstudiantes(rs.getInt("total_estudiantes"));

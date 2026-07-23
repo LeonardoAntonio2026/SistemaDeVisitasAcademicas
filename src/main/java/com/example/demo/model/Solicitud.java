@@ -22,6 +22,7 @@ public class Solicitud implements Serializable {
     // Campos de apoyo para la vista (no son columnas de SOLICITUD)
     private String nombreEstado;
     private String estadoReporte;
+    private Integer idReporte;
     private String nombreSolicitante;
     private String correoSolicitante;
     private int totalEstudiantes;
@@ -29,6 +30,14 @@ public class Solicitud implements Serializable {
     private List<String> asignaturas = new ArrayList<>();
 
     public Solicitud() {}
+
+    public Integer getIdReporte() {
+        return idReporte;
+    }
+
+    public void setIdReporte(Integer idReporte) {
+        this.idReporte = idReporte;
+    }
 
     public int getIdSolicitud() {
         return idSolicitud;

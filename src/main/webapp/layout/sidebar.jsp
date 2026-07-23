@@ -1,7 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
 <aside id="sidebar" class="d-flex flex-column">
     <div class="fw-semibold text-light p-3 m-2 rounded-4"
-         style="background: #183052; ">
+         style="background: var(--color-azul);">
         <div class="d-flex align-items-center gap-2">
             <div class="rounded-circle bg-white d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width: 42px; height: 42px;">
@@ -16,7 +16,7 @@
     <ul class="nav nav-pills flex-column mb-auto">
 
         <li class="nav-item m-2 ">
-            <a class="nav-link rounded-2 ${activeNav == 'inicio' ? 'active' : ''}" href="${pageContext.request.contextPath}/indexSv">
+            <a class="nav-link rounded-2 ${activeNav == 'inicio' || activeNav == 'solicitudes' ? 'active' : ''}" href="${pageContext.request.contextPath}/indexSv">
                 <i class="bi bi-house-door me-2"></i>Solicitudes
             </a>
         </li>
