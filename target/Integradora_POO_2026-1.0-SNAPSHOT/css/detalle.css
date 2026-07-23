@@ -247,6 +247,31 @@
     background: #E8D9A0;
 }
 
+/* Separador neutro para agrupar archivos: generados por el sistema vs subidos por el docente */
+.separador-archivos {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #8A8A8A;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 18px 0 10px;
+}
+
+.separador-archivos:first-child {
+    margin-top: 0;
+}
+
+.separador-archivos::before,
+.separador-archivos::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E5E5EA;
+}
+
 /* Zona para subir el archivo firmado (solo el docente dueño) */
 .zona-carga {
     border: 2px dashed #c7c7cc;
@@ -273,6 +298,34 @@
 .zona-carga .form-control {
     max-width: 380px;
     margin: 0 auto 10px;
+}
+
+/* Cuando el archivo ya está en el sistema la zona pasa a modo "reemplazar" */
+.zona-carga.zona-cargada {
+    border-color: #7FBFA3;
+    background: #F2FAF6;
+}
+
+.zona-carga.zona-cargada p,
+.zona-carga.zona-cargada i {
+    color: #1E7A46 !important;
+}
+
+/* Aviso al elegir archivo: seleccionar NO es subir, falta dar click en Subir */
+.aviso-seleccion {
+    display: none;
+    color: #8A6D0B;
+    background: #FFF3CD;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    margin: 0 auto 10px;
+    max-width: 380px;
+}
+
+.aviso-seleccion.visible {
+    display: block;
 }
 
 .btn-subir {
@@ -316,21 +369,67 @@
     background-color: #183052;
 }
 
-/* Botones de la barra final (Volver / Enviar) */
+/* Barra final: Volver a la izquierda, acciones principales a la derecha
+   (detalle.jsp no incluye form.css, así que el flex se define aquí) */
+.acciones-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.acciones-derecha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Botones de la barra final: Volver es secundario, Enviar es el primario (azul) */
 .btn-volver-detalle {
-    background-color: #183052;
-    color: #ffffff !important;
+    background-color: #ffffff;
+    color: #183052 !important;
+    border: 1.5px solid #c7c7cc;
     border-radius: 8px;
     padding: 9px 20px;
     font-size: 14px;
+    font-weight: 600;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn-volver-detalle:hover {
+    background-color: #F2F2F7;
+    border-color: #183052;
+}
+
+.btn-editar-datos {
+    background-color: #ffffff;
+    color: #183052 !important;
+    border: 1.5px solid #183052;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s;
+}
+
+.btn-editar-datos:hover {
+    background-color: #E3EDF7;
 }
 
 .btn-enviar-solicitud {
-    background-color: #2a7a5a;
+    background-color: #183052;
     color: #ffffff;
     border: none;
     border-radius: 8px;
@@ -341,6 +440,10 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+}
+
+.btn-enviar-solicitud:hover:not(:disabled) {
+    background-color: #2C5084;
 }
 
 .btn-enviar-solicitud:disabled {

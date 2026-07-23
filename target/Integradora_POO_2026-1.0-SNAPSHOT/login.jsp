@@ -39,10 +39,7 @@
             </button>
         </form>
 
-        <p class="text-center small mt-3 mb-0">
-            ¿No tienes cuenta?
-            <a href="${pageContext.request.contextPath}/registro.jsp" style="color: #183052;">Regístrate</a>
-        </p>
+
     </div>
 </div>
 </body>

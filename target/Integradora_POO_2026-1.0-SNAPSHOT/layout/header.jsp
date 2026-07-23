@@ -46,15 +46,28 @@
 <body style="background-color: #F2F2F7">
 
 <nav class="navbar px-3" style="background:#ffffff; margin: 1rem 1rem 0; border-radius: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06); border: none;">
-    <div class="d-flex align-items-center gap-3">
-        <button class="navbar-toggler d-md-none border-0" id="sidebarToggle" type="button" aria-label="Abrir menú">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand mb-0" href="${pageContext.request.contextPath}/indexSv">
-            <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png"
-                 alt="Logo UTEZ" width="70" height="34" class="d-inline-block align-text-top">
-            Sistema de Gestión de Visitas
-        </a>
+    <!-- Se añade w-100 y justify-content-between -->
+    <div class="d-flex align-items-center justify-content-between w-100">
+
+        <!-- Bloque Izquierdo: Menú + Logo agrupados con gap-3 -->
+        <div class="d-flex align-items-center gap-3">
+            <button class="navbar-toggler d-md-none border-0" id="sidebarToggle" type="button" aria-label="Abrir menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand mb-0" href="${pageContext.request.contextPath}/indexSv">
+                <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png"
+                     alt="Logo UTEZ" width="70" height="34" class="d-inline-block align-text-top">
+                Sistema de Gestión de Visitas
+            </a>
+        </div>
+
+        <!-- Bloque Derecho: Cerrar Sesión -->
+        <div class="m-2">
+            <a class="nav-link rounded-2 text-danger d-block" href="${pageContext.request.contextPath}/logout">
+                <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+            </a>
+        </div>
+
     </div>
 </nav>
 

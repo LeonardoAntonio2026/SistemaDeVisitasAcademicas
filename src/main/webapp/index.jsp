@@ -10,8 +10,13 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/stepper.css">
 
     <div class="superior">
-        <h2>¡Bienvenido ${sessionScope.nombreUsuario != null ? sessionScope.nombreUsuario : 'Docente'}!</h2>
-        <p>Aquí puedes gestionar tus visitas académicas</p>
+        <h2>Solicitudes</h2>
+        <p>
+            <c:choose>
+                <c:when test="${sessionScope.rol == null || sessionScope.rol == 'Docente'}">Consulta el estado de tus solicitudes de visita</c:when>
+                <c:otherwise>Solicitudes activas y pendientes por revisar enviadas por los docentes</c:otherwise>
+            </c:choose>
+        </p>
     </div>
 
     <c:if test="${sessionScope.rol == null || sessionScope.rol == 'Docente'}">

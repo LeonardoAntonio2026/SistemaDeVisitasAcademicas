@@ -154,6 +154,17 @@
     color: #183052;
 }
 
+/* Solicitud completada a la que todavía le falta el reporte */
+.estado-reporte-pendiente {
+    background-color: #FFF3CD;
+    color: #8A6D0B;
+}
+
+.estado-reporte-rechazado {
+    background-color: #F8D7DA;
+    color: #B02A37;
+}
+
 /* Estados del reporte (misma paleta que los de la solicitud) */
 .estado-completado {
     background-color: #D6E4F0;

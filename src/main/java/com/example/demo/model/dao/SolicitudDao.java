@@ -20,7 +20,12 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             + "TO_CHAR(s.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, s.objetivo, s.area_solicitante, "
             + "s.id_estado, s.detalles_decision, TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
             + "e.nombre_estado, us.nombre AS nombre_solicitante, us.correo AS correo_solicitante, "
-            + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes "
+            + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes, "
+            // Estado del reporte de la visita; null si todavía no se generó.
+            // Va como subselect y no como JOIN para no duplicar filas.
+            + "(SELECT er.nombre_estado FROM reporte r "
+            + "JOIN estado_reporte er ON er.id_estado = r.id_estado "
+            + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS estado_reporte "
             + "FROM solicitud s "
             + "JOIN estado_solicitud e ON e.id_estado = s.id_estado "
             + "JOIN usuario us ON us.id_usuario = s.id_usuario_solicitante";
@@ -501,6 +506,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         s.setDetallesDecision(rs.getString("detalles_decision"));
         s.setFechaCreacion(rs.getString("fecha_creacion"));
         s.setNombreEstado(rs.getString("nombre_estado"));
+        s.setEstadoReporte(rs.getString("estado_reporte"));
         s.setNombreSolicitante(rs.getString("nombre_solicitante"));
         s.setCorreoSolicitante(rs.getString("correo_solicitante"));
         s.setTotalEstudiantes(rs.getInt("total_estudiantes"));

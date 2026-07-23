@@ -21,6 +21,7 @@ public class Solicitud implements Serializable {
 
     // Campos de apoyo para la vista (no son columnas de SOLICITUD)
     private String nombreEstado;
+    private String estadoReporte;
     private String nombreSolicitante;
     private String correoSolicitante;
     private int totalEstudiantes;
@@ -139,6 +140,15 @@ public class Solicitud implements Serializable {
 
     public void setNombreEstado(String nombreEstado) {
         this.nombreEstado = nombreEstado;
+    }
+
+    /** Estado del reporte de esta solicitud, null si todavía no existe. */
+    public String getEstadoReporte() {
+        return estadoReporte;
+    }
+
+    public void setEstadoReporte(String estadoReporte) {
+        this.estadoReporte = estadoReporte;
     }
 
     public String getNombreSolicitante() {

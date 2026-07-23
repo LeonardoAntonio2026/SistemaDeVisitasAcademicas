@@ -17,14 +17,10 @@
 
         <li class="nav-item m-2 ">
             <a class="nav-link rounded-2 ${activeNav == 'inicio' ? 'active' : ''}" href="${pageContext.request.contextPath}/indexSv">
-                <i class="bi bi-house-door me-2"></i>Inicio
+                <i class="bi bi-house-door me-2"></i>Solicitudes
             </a>
         </li>
-        <li class="nav-item m-2">
-            <a class="nav-link rounded-2 ${activeNav == 'solicitudes' ? 'active' : ''}" href="${pageContext.request.contextPath}/solicitud">
-                <i class="bi bi-calendar-check me-2"></i>Solicitudes
-            </a>
-        </li>
+
         <li class="nav-item m-2">
             <a class="nav-link rounded-2 ${activeNav == 'reportes' ? 'active' : ''}" href="${pageContext.request.contextPath}/reportes">
                 <i class="bi bi-file-earmark-text me-2"></i>Reportes
@@ -38,13 +34,7 @@
 
     </ul>
 
-    <div class="m-2">
-        <a class="nav-link rounded-2 text-danger d-block" href="${pageContext.request.contextPath}/logout">
-            <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
-        </a>
-    </div>
-    <div class="border-top px-3 py-2 small text-muted">
-        UTEZ &copy; 2026
-    </div>
+
+
 </aside>
 <div id="sidebar-backdrop"></div>

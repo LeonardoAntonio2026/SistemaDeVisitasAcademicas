@@ -9,6 +9,7 @@
 <c:set var="pasoHecho" value="0"/>
 <c:set var="pasoActual" value="0"/>
 <c:set var="pasoRechazado" value="false"/>
+<c:set var="revisionModo" value="Revisión de estadías"/>
 <c:choose>
     <c:when test="${stepperEstado == 'Pendiente'}">
         <c:set var="pasoHecho" value="1"/><c:set var="pasoActual" value="2"/>
@@ -18,17 +19,19 @@
     </c:when>
     <c:when test="${stepperEstado == 'Aprobada'}">
         <c:set var="pasoHecho" value="3"/>
+        <c:set var="revisionModo" value="Subir carta responsiva"/>
     </c:when>
     <c:when test="${stepperEstado == 'Completada'}">
         <c:set var="pasoHecho" value="3"/><c:set var="pasoActual" value="4"/>
     </c:when>
     <c:when test="${stepperEstado == 'Rechazada'}">
         <c:set var="pasoHecho" value="2"/><c:set var="pasoRechazado" value="true"/>
+        <c:set var="revisionModo" value="Rechazado"/>
     </c:when>
 </c:choose>
 
 <div class="stepper">
-    <c:forTokens items="Llenar formulario,Enviar solicitud,Revisión de estadías,Llenar formulario de reporte"
+    <c:forTokens items="Llenar formulario,Enviar solicitud,${revisionModo},Llenar formulario de reporte"
                  delims="," var="pasoNombre" varStatus="st">
         <div class="step ${st.count <= pasoHecho ? 'done' : ''} ${st.count == pasoActual ? 'current' : ''} ${pasoRechazado && st.count == 3 ? 'danger' : ''}">
             <div class="step-dot"></div>

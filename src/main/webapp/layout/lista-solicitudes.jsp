@@ -24,43 +24,46 @@
     </c:when>
     <c:otherwise>
         <c:forEach var="s" items="${listaSolicitudes}">
-            <div class="solicitud-card">
-                <div class="solicitud-card-top">
-                    <div>
-                        <h5 class="solicitud-empresa">${s.nombreEmpresaActividad}</h5>
-                        <div class="solicitud-ubicacion">
-                            <i class="bi bi-pin-map"></i>
-                            <span>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
-                        </div>
-                    </div>
-                    <span class="badge-estado estado-${fn:replace(fn:toLowerCase(s.nombreEstado), ' ', '-')}">${s.nombreEstado}</span>
-                </div>
-
-                <%-- Stepper compacto: mismo componente que la página de detalles --%>
-                <c:set var="stepperEstado" value="${s.nombreEstado}"/>
-                <%@ include file="stepper.jsp" %>
-
-                <div class="solicitud-card-bottom">
-                    <div class="solicitud-meta">
-                        <div class="meta-item">
-                            <span class="meta-label">Alumnos</span>
-                            <span class="meta-valor">${s.totalEstudiantes}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Solicitada</span>
-                            <span class="meta-valor">${s.fechaCreacion}</span>
-                        </div>
-                        <c:if test="${not empty s.fechaInicio}">
-                            <div class="meta-item">
-                                <span class="meta-label">Visita</span>
-                                <span class="meta-valor">${s.fechaInicio}</span>
+            <c:if test="${s.nombreEstado eq 'Pendiente' or s.nombreEstado eq 'En revisión' or s.nombreEstado eq 'Aprobada'}">
+                <div class="solicitud-card">
+                    <div class="solicitud-card-top">
+                        <div>
+                            <h5 class="solicitud-empresa">${s.nombreEmpresaActividad}</h5>
+                            <div class="solicitud-ubicacion">
+                                <i class="bi bi-pin-map"></i>
+                                <span>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
                             </div>
-                        </c:if>
+                        </div>
+                        <span class="badge-estado estado-${fn:replace(fn:toLowerCase(s.nombreEstado), ' ', '-')}">${s.nombreEstado}</span>
                     </div>
-                    <a class="btn-ver-detalles" style="text-decoration: none;"
-                       href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver detalles</a>
+
+                        <%-- Stepper compacto: mismo componente que la página de detalles --%>
+                    <c:set var="stepperEstado" value="${s.nombreEstado}"/>
+                    <%@ include file="stepper.jsp" %>
+
+                    <div class="solicitud-card-bottom">
+                        <div class="solicitud-meta">
+                            <div class="meta-item">
+                                <span class="meta-label">Alumnos</span>
+                                <span class="meta-valor">${s.totalEstudiantes}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Solicitada</span>
+                                <span class="meta-valor">${s.fechaCreacion}</span>
+                            </div>
+                            <c:if test="${not empty s.fechaInicio}">
+                                <div class="meta-item">
+                                    <span class="meta-label">Visita</span>
+                                    <span class="meta-valor">${s.fechaInicio}</span>
+                                </div>
+                            </c:if>
+                        </div>
+                        <a class="btn-ver-detalles" style="text-decoration: none;"
+                           href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver detalles</a>
+                    </div>
                 </div>
-            </div>
+            </c:if>
+
         </c:forEach>
     </c:otherwise>
 </c:choose>
