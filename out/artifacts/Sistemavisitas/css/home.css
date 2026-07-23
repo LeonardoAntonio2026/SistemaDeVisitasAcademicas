@@ -1,0 +1,218 @@
+/* Estilos propios de la página de inicio (index.jsp) */
+
+/* Misma "receta" de card en toda la app: radio 12px y sombra suave (igual que .form-section) */
+.superior {
+    width: 100% !important;
+    height: 93px;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    box-sizing: border-box !important;
+}
+
+.superior h2 {
+    color: #183052;
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px 0 !important;
+}
+
+.superior p {
+    color: #555555;
+    font-size: 16px;
+    margin: 0 !important;
+}
+
+.botonnueva {
+    width: 188px;
+    height: 47px;
+    border-radius: 15px;
+    background-color: #183052;
+    color: white !important;
+    margin-top: 1rem;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.titulo-solicitudes {
+    color: #183052;
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 1.5rem;
+}
+
+/* Estado vacío: sin solicitudes (como en el prototipo) */
+.solicitud-vacia {
+    width: 100%;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    margin-top: 1rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.solicitud-vacia h5 {
+    color: #183052;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.solicitud-vacia p {
+    color: #555555;
+    margin-bottom: 1rem;
+}
+
+.btn-nueva-vacia {
+    display: inline-block;
+    background-color: #183052;
+    color: #FFFFFF !important;
+    border-radius: 10px;
+    padding: 0.55rem 1.6rem;
+    text-decoration: none;
+}
+
+/* Tarjeta de solicitud */
+.solicitud-card {
+    width: 100%;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    margin-top: 1rem;
+    padding: 1.25rem 1.5rem;
+    box-sizing: border-box;
+}
+
+.solicitud-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.solicitud-empresa {
+    color: #183052;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.solicitud-ubicacion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #5A5A5A;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+/* Badge de estado, color según el nombre del estado */
+.badge-estado {
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    background-color: #E9ECEF;
+    color: #495057;
+}
+
+.estado-pendiente {
+    background-color: #FDE2E4;
+    color: #C0392B;
+}
+
+.estado-en-revisión,
+.estado-en-revision {
+    background-color: #FFF3CD;
+    color: #8A6D0B;
+}
+
+.estado-aprobada {
+    background-color: #D9F2E3;
+    color: #1E7A46;
+}
+
+.estado-rechazada {
+    background-color: #F8D7DA;
+    color: #B02A37;
+}
+
+.estado-completada {
+    background-color: #D6E4F0;
+    color: #183052;
+}
+
+/* Estados del reporte (misma paleta que los de la solicitud) */
+.estado-completado {
+    background-color: #D6E4F0;
+    color: #183052;
+}
+
+.estado-aprobado {
+    background-color: #D9F2E3;
+    color: #1E7A46;
+}
+
+.estado-rechazado {
+    background-color: #F8D7DA;
+    color: #B02A37;
+}
+
+.solicitud-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #ECECEC;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.solicitud-meta {
+    display: flex;
+    gap: 2rem;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-label {
+    color: #8A8A8A;
+    font-size: 12px;
+}
+
+.meta-valor {
+    color: #333333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.btn-ver-detalles {
+    background-color: #183052;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 2rem;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn-ver-detalles:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

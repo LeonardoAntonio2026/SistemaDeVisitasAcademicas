@@ -1,0 +1,463 @@
+/* Página de detalles de la visita: cards de resumen, datos, archivos y evaluación */
+
+.detalle-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px 28px;
+    width: 100%;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
+}
+
+/* Título de cada card (el único grande es el del resumen) */
+.detalle-card h6 {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1c1c1e;
+    margin-bottom: 18px;
+    border-bottom: 1px solid #e5e5ea;
+    padding-bottom: 10px;
+}
+
+/* ---- Card de resumen ---- */
+.resumen-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.resumen-titulo {
+    color: #183052;
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.resumen-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.5rem;
+    color: #5A5A5A;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.resumen-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ---- Mini card de instrucciones ---- */
+.instruccion {
+    display: flex;
+    gap: 12px;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 1rem;
+    font-size: 14px;
+}
+
+.instruccion i {
+    font-size: 1.25rem;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.instruccion-titulo {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.instruccion p {
+    margin: 0;
+    color: #3a3a3c;
+}
+
+.instruccion-detalle {
+    font-size: 12.5px;
+    color: #6c6c70 !important;
+    margin-top: 4px !important;
+}
+
+/* Variantes: informativa (espera), acción requerida, éxito y rechazo */
+.instruccion-info {
+    background-color: #E3EDF7;
+}
+
+.instruccion-info i,
+.instruccion-info .instruccion-titulo {
+    color: #2C5084;
+}
+
+.instruccion-accion {
+    background-color: #FFF3CD;
+}
+
+.instruccion-accion i,
+.instruccion-accion .instruccion-titulo {
+    color: #8A6D0B;
+}
+
+.instruccion-exito {
+    background-color: #D9F2E3;
+}
+
+.instruccion-exito i,
+.instruccion-exito .instruccion-titulo {
+    color: #1E7A46;
+}
+
+.instruccion-rechazo {
+    background-color: #F8D7DA;
+}
+
+.instruccion-rechazo i,
+.instruccion-rechazo .instruccion-titulo {
+    color: #B02A37;
+}
+
+/* ---- Cards de datos (lugar / participantes) ---- */
+.datos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 24px;
+}
+
+.dato-label {
+    color: #8A8A8A;
+    font-size: 12px;
+    margin-bottom: 1px;
+}
+
+.dato-valor {
+    color: #1c1c1e;
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.dato-full {
+    grid-column: 1 / -1;
+}
+
+.tabla-programas {
+    width: 100%;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 8px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    font-size: 13.5px;
+    margin-top: 6px;
+}
+
+.tabla-programas th {
+    background: #F2F2F7;
+    color: #3a3a3c;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.tabla-programas td {
+    padding: 8px 12px;
+    border-top: 1px solid #ECECEC;
+    color: #1c1c1e;
+}
+
+.tabla-programas .fila-total td {
+    font-weight: 700;
+    background: #FAFAFC;
+}
+
+.chip-asignatura {
+    display: inline-block;
+    background: #E3EDF7;
+    color: #183052;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 3px 6px 3px 0;
+}
+
+/* ---- Card de archivos ---- */
+.archivo-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 10px;
+}
+
+.archivo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #2a7a5a;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 0;
+}
+
+.archivo-pill i {
+    font-size: 1.1rem;
+}
+
+.archivo-pill small {
+    display: block;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+.btn-descargar {
+    background-color: #183052;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.separador-firmar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #8A6D0B;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 18px 0 10px;
+}
+
+.separador-firmar::before,
+.separador-firmar::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E8D9A0;
+}
+
+/* Separador neutro para agrupar archivos: generados por el sistema vs subidos por el docente */
+.separador-archivos {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #8A8A8A;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 18px 0 10px;
+}
+
+.separador-archivos:first-child {
+    margin-top: 0;
+}
+
+.separador-archivos::before,
+.separador-archivos::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E5E5EA;
+}
+
+/* Zona para subir el archivo firmado (solo el docente dueño) */
+.zona-carga {
+    border: 2px dashed #c7c7cc;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 14px;
+    background: #FAFAFC;
+}
+
+.zona-carga p {
+    color: #5A5A5A;
+    font-size: 13.5px;
+    margin: 0 0 4px;
+    font-weight: 600;
+}
+
+.zona-carga small {
+    color: #8A8A8A;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.zona-carga .form-control {
+    max-width: 380px;
+    margin: 0 auto 10px;
+}
+
+/* Cuando el archivo ya está en el sistema la zona pasa a modo "reemplazar" */
+.zona-carga.zona-cargada {
+    border-color: #7FBFA3;
+    background: #F2FAF6;
+}
+
+.zona-carga.zona-cargada p,
+.zona-carga.zona-cargada i {
+    color: #1E7A46 !important;
+}
+
+/* Aviso al elegir archivo: seleccionar NO es subir, falta dar click en Subir */
+.aviso-seleccion {
+    display: none;
+    color: #8A6D0B;
+    background: #FFF3CD;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 12px;
+    margin: 0 auto 10px;
+    max-width: 380px;
+}
+
+.aviso-seleccion.visible {
+    display: block;
+}
+
+.btn-subir {
+    background-color: #183052;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    font-size: 13.5px;
+    cursor: pointer;
+}
+
+/* ---- Card de evaluación (coordinador de Estadías) ---- */
+.acciones-evaluar {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+.btn-rechazar,
+.btn-aprobar {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-rechazar {
+    background-color: #C0392B;
+}
+
+.btn-aprobar {
+    background-color: #183052;
+}
+
+/* Barra final: Volver a la izquierda, acciones principales a la derecha
+   (detalle.jsp no incluye form.css, así que el flex se define aquí) */
+.acciones-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.acciones-derecha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Botones de la barra final: Volver es secundario, Enviar es el primario (azul) */
+.btn-volver-detalle {
+    background-color: #ffffff;
+    color: #183052 !important;
+    border: 1.5px solid #c7c7cc;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn-volver-detalle:hover {
+    background-color: #F2F2F7;
+    border-color: #183052;
+}
+
+.btn-editar-datos {
+    background-color: #ffffff;
+    color: #183052 !important;
+    border: 1.5px solid #183052;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s;
+}
+
+.btn-editar-datos:hover {
+    background-color: #E3EDF7;
+}
+
+.btn-enviar-solicitud {
+    background-color: #183052;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 26px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-enviar-solicitud:hover:not(:disabled) {
+    background-color: #2C5084;
+}
+
+.btn-enviar-solicitud:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 575.98px) {
+    .datos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .archivo-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

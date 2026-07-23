@@ -13,17 +13,17 @@ import java.util.List;
 public class ReporteDao {
 
     private static final String SELECT_BASE =
-            "SELECT r.id_reporte, r.id_solicitud, TO_CHAR(r.fecha, 'YYYY-MM-DD') AS fecha, "
-            + "r.resultados, r.observaciones, TO_CHAR(r.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
-            + "r.id_estado, r.motivo, e.nombre_estado, "
-            + "s.nombre_empresa_actividad, s.lugar_direccion, s.id_usuario_solicitante, "
-            + "TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_solicitud, "
-            + "u.nombre AS nombre_solicitante, "
-            + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes "
-            + "FROM reporte r "
-            + "JOIN estado_reporte e ON e.id_estado = r.id_estado "
-            + "JOIN solicitud s ON s.id_solicitud = r.id_solicitud "
-            + "JOIN usuario u ON u.id_usuario = s.id_usuario_solicitante";
+    "SELECT r.id_reporte, r.id_solicitud, TO_CHAR(r.fecha, 'YYYY-MM-DD') AS fecha, "
+    + "r.resultados, r.observaciones, TO_CHAR(r.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
+    + "r.id_estado, r.motivo, e.nombre_estado, "
+    + "s.nombre_empresa_actividad, s.lugar_direccion, s.id_usuario_solicitante, "
+    + "TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_solicitud, "
+    + "u.nombre AS nombre_solicitante, "
+    + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes "
+    + "FROM reporte r "
+    + "JOIN estado_reporte e ON e.id_estado = r.id_estado "
+    + "JOIN solicitud s ON s.id_solicitud = r.id_solicitud "
+    + "JOIN usuario u ON u.id_usuario = s.id_usuario_solicitante";
 
     /**
      * Crea el reporte pendiente de una solicitud completada. La fecha del
@@ -31,8 +31,8 @@ public class ReporteDao {
      */
     public boolean crearPendiente(int idSolicitud) {
         String sql = "INSERT INTO reporte (id_solicitud, fecha, id_estado) VALUES (?, "
-                + "NVL((SELECT fecha_inicio FROM solicitud WHERE id_solicitud = ?), SYSDATE), "
-                + "(SELECT id_estado FROM estado_reporte WHERE nombre_estado = 'Pendiente'))";
+        + "NVL((SELECT fecha_inicio FROM solicitud WHERE id_solicitud = ?), SYSDATE), "
+        + "(SELECT id_estado FROM estado_reporte WHERE nombre_estado = 'Pendiente'))";
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -129,6 +129,29 @@ public class ReporteDao {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Guarda el formulario del reporte (RF-08a) y lo pasa de Pendiente al
+     * estado ESTADO_COMPLETADO (ver ReporteDetalleServlet). El servlet ya
+     * validó el acceso y que el reporte siga Pendiente antes de llamar esto.
+     */
+    public boolean completarFormulario(int idReporte, String resultados, String observaciones) {
+        String sql = "UPDATE reporte SET resultados = ?, observaciones = ?, "
+        + "id_estado = (SELECT id_estado FROM estado_reporte WHERE nombre_estado = ?) "
+        + "WHERE id_reporte = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, resultados);
+            ps.setString(2, observaciones);
+            ps.setString(3, com.example.demo.controller.ReporteDetalleServlet.ESTADO_COMPLETADO);
+            ps.setInt(4, idReporte);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private Reporte mapRow(ResultSet rs) throws SQLException {

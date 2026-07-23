@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="Sistemavisitas">
+    <output-path>$PROJECT_DIR$/out/artifacts/Sistemavisitas</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="Integradora_POO_2026" />
+        </element>
+      </element>
+      <element id="javaee-facet-resources" facet="Integradora_POO_2026/web/Web" />
+    </root>
+  </artifact>
+</component>
