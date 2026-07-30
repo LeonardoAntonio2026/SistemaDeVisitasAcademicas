@@ -219,6 +219,46 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         }
         return false;
     }
+    /**
+     * Trae el usuario por correo, con todos sus datos (para RF-02: generar el
+     * token de recuperación necesitamos su id, sin exponerlo en la vista).
+     */
+    public Usuario getByCorreo(String correo) {
+        String sql = SELECT_BASE + " WHERE u.correo = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, correo.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Actualiza el hash guardado en CONTRASENA tras un restablecimiento (RF-02).
+     * TODO(coordinar con Dev C): si CONTRASENA agrega columna de salt, aquí es
+     * donde hay que generarlo y guardarlo junto con el hash (hoy es solo SHA-256
+     * plano, igual que en create() y login()).
+     */
+    public boolean actualizarContrasena(int idUsuario, String nuevaContrasenaPlano) {
+        String sql = "UPDATE contrasena SET hash_password = ? WHERE id_usuario = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, PasswordUtils.sha256(nuevaContrasenaPlano));
+            ps.setInt(2, idUsuario);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     private Usuario mapRow(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();

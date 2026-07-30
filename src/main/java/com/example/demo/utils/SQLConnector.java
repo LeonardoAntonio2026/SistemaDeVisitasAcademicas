@@ -18,7 +18,7 @@ public class SQLConnector {
         try {
             // 1. Localizar mis conjuntos de Wallet
             ClassLoader classLoader = SQLConnector.class.getClassLoader();
-            URL walletUrl = classLoader.getResource("wallet/");
+            URL walletUrl = classLoader.getResource("Wallet/");
 
             if (walletUrl == null) {
                 throw new RuntimeException("No se encontró la Wallet");

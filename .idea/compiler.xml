@@ -6,7 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="SistemaDeVisitasAcademicas" />
+        <module name="Integradora_POO_2026" />
       </profile>
     </annotationProcessing>
   </component>

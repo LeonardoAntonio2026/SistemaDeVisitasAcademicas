@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Iniciar sesión - Visitas Académicas</title>
+    <title>Cambiar Contraseña - Visitas Académicas</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
@@ -14,34 +14,32 @@
 
         <div class="text-center mb-4">
             <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" height="48" class="mb-3">
-            <h4 class="fw-semibold" style="color: #183052;">Iniciar sesión</h4>
+            <h4 class="fw-semibold" style="color: #183052;">Cambiar Contraseña</h4>
             <p class="text-muted small mb-0">Sistema de Gestión de Visitas Académicas</p>
+            <p class="text-muted small mb-0">Ingresa la nueva contraseña </p>
         </div>
 
         <% if (request.getAttribute("error") != null) { %>
-            <div class="alert alert-danger py-2 small"><%= request.getAttribute("error") %></div>
+        <div class="alert alert-danger py-2 small"><%= request.getAttribute("error") %></div>
         <% } %>
         <% if (request.getAttribute("mensaje") != null) { %>
-            <div class="alert alert-success py-2 small"><%= request.getAttribute("mensaje") %></div>
+        <div class="alert alert-success py-2 small"><%= request.getAttribute("mensaje") %></div>
         <% } %>
 
-        <form action="${pageContext.request.contextPath}/login" method="POST">
+        <form action="${pageContext.request.contextPath}/restablecer-contrasena" method="POST">
+            <input type="hidden" name="token" value="<%= request.getAttribute("token") %>">
             <div class="mb-3">
-                <label class="form-label">Correo electrónico</label>
-                <input type="email" name="correo" class="form-control" placeholder="docente@utez.edu.mx" required>
+                <label class="form-label">Nueva Contraseña</label>
+                <input type="password" name="contra1" class="form-control" placeholder="contraseña nueva" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Contraseña</label>
-                <input type="password" name="contrasena" class="form-control" placeholder="••••••••" required>
+                <label class="form-label">Confirmar Contraseña</label>
+                <input type="password" name="contra2" class="form-control" placeholder="confirmar contraseña" required>
             </div>
             <button type="submit" class="btn w-100 text-white" style="background-color: #183052;">
-                Entrar
+                Enviar
             </button>
         </form>
-
-        <p class="text-center small mt-3 mb-0">
-            <a href="${pageContext.request.contextPath}/olvide-contrasena" style="color: #183052;">¿Olvidaste tu contraseña?</a>
-        </p>
 
     </div>
 </div>
