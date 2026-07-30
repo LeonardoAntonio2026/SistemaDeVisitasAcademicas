@@ -24,12 +24,16 @@ public class FiltroAutenticacion extends HttpFilter {
         // 1. ¿El usuario ya inició sesión? (guardamos el atributo "usuario" al hacer login)
         boolean loggedIn = (session != null && session.getAttribute("usuario") != null);
 
-        // 2. Rutas públicas: login, registro y sus servlets
+// 2. Rutas públicas: login, registro, recuperación de contraseña (RF-02) y sus servlets
         boolean loginRequest =
                 requestURI.endsWith("login.jsp") ||
-                requestURI.endsWith("/login") ||
-                requestURI.endsWith("registro.jsp") ||
-                requestURI.endsWith("/register");
+                        requestURI.endsWith("/login") ||
+                        requestURI.endsWith("registro.jsp") ||
+                        requestURI.endsWith("/register") ||
+                        requestURI.endsWith("olvide-contrasena.jsp") ||
+                        requestURI.endsWith("/olvide-contrasena") ||
+                        requestURI.endsWith("restablecer-contrasena.jsp") ||
+                        requestURI.endsWith("/restablecer-contrasena");
 
         // 3. Recursos estáticos que deben cargar aunque no haya sesión (para que el login tenga estilos)
         boolean isResource =

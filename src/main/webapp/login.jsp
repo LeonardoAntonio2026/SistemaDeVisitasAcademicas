@@ -40,6 +40,9 @@
             </button>
         </form>
 
+        <p class="text-center small mt-3 mb-0">
+            <a href="${pageContext.request.contextPath}/olvide-contrasena" style="color: #183052;">¿Olvidaste tu contraseña?</a>
+        </p>
 
     </div>
 </div>
