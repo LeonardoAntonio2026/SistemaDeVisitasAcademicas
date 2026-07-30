@@ -2,6 +2,7 @@ package com.example.demo.model.dao;
 
 import com.example.demo.model.ProgramaEducativo;
 import com.example.demo.model.Solicitud;
+import com.example.demo.model.Usuario;
 import com.example.demo.utils.SQLConnector;
 
 import java.sql.Connection;
@@ -11,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SolicitudDao implements Dao<Solicitud, Integer> {
 
@@ -18,6 +20,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             "SELECT s.id_solicitud, s.id_usuario_solicitante, s.id_usuario_autoriza, "
             + "s.nombre_empresa_actividad, s.lugar_direccion, s.telefono_contacto, s.correo_contacto, "
             + "TO_CHAR(s.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, s.objetivo, s.area_solicitante, "
+            + "s.docente_responsable, s.celular_responsable, "
             + "s.id_estado, s.detalles_decision, TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
             + "e.nombre_estado, us.nombre AS nombre_solicitante, us.correo AS correo_solicitante, "
             + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes, "
@@ -37,12 +40,9 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     public boolean create(Solicitud entidad) {
         String sqlSolicitud = "INSERT INTO solicitud (id_usuario_solicitante, nombre_empresa_actividad, "
                 + "lugar_direccion, telefono_contacto, correo_contacto, fecha_inicio, objetivo, "
-                + "area_solicitante, id_estado) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, "
+                + "area_solicitante, docente_responsable, celular_responsable, id_estado) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
                 + "(SELECT id_estado FROM estado_solicitud WHERE nombre_estado = 'Pendiente'))";
-        String sqlPrograma = "INSERT INTO programa_educativo (id_solicitud, division_academica, cuatrimestre, grupo, no_estudiantes) "
-                + "VALUES (?, ?, ?, ?, ?)";
-        String sqlAsignatura = "INSERT INTO asignatura_reforzar_solicitud (id_solicitud, nombre) VALUES (?, ?)";
 
         Connection con = null;
         try {
@@ -63,6 +63,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 }
                 ps.setString(7, entidad.getObjetivo());
                 ps.setString(8, entidad.getAreaSolicitante());
+                ps.setString(9, entidad.getDocenteResponsable());
+                ps.setString(10, entidad.getCelularResponsable());
                 ps.executeUpdate();
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -74,30 +76,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 }
             }
 
-            if (!entidad.getProgramas().isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement(sqlPrograma)) {
-                    for (ProgramaEducativo p : entidad.getProgramas()) {
-                        ps.setInt(1, idSolicitud);
-                        ps.setString(2, p.getDivisionAcademica());
-                        ps.setInt(3, p.getCuatrimestre());
-                        ps.setString(4, p.getGrupo());
-                        ps.setInt(5, p.getNoEstudiantes());
-                        ps.addBatch();
-                    }
-                    ps.executeBatch();
-                }
-            }
-
-            if (!entidad.getAsignaturas().isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement(sqlAsignatura)) {
-                    for (String asignatura : entidad.getAsignaturas()) {
-                        ps.setInt(1, idSolicitud);
-                        ps.setString(2, asignatura);
-                        ps.addBatch();
-                    }
-                    ps.executeBatch();
-                }
-            }
+            guardarHijos(con, idSolicitud, entidad);
 
             con.commit();
             entidad.setIdSolicitud(idSolicitud);
@@ -154,6 +133,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                     Solicitud solicitud = mapRow(rs);
                     solicitud.setProgramas(getProgramas(id));
                     solicitud.setAsignaturas(getAsignaturas(id));
+                    solicitud.setEstudiantesPorDivision(getEstudiantesPorDivision(id));
+                    solicitud.setDocentesAcompanantes(getDocentesAcompanantes(id));
                     return solicitud;
                 }
             }
@@ -312,10 +293,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     public boolean update(Solicitud entidad) {
         String sqlSolicitud = "UPDATE solicitud SET nombre_empresa_actividad = ?, lugar_direccion = ?, "
                 + "telefono_contacto = ?, correo_contacto = ?, fecha_inicio = ?, objetivo = ?, "
-                + "area_solicitante = ? WHERE id_solicitud = ?";
-        String sqlPrograma = "INSERT INTO programa_educativo (id_solicitud, division_academica, cuatrimestre, grupo, no_estudiantes) "
-                + "VALUES (?, ?, ?, ?, ?)";
-        String sqlAsignatura = "INSERT INTO asignatura_reforzar_solicitud (id_solicitud, nombre) VALUES (?, ?)";
+                + "area_solicitante = ?, docente_responsable = ?, celular_responsable = ? "
+                + "WHERE id_solicitud = ?";
 
         Connection con = null;
         try {
@@ -336,7 +315,9 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 }
                 ps.setString(6, entidad.getObjetivo());
                 ps.setString(7, entidad.getAreaSolicitante());
-                ps.setInt(8, id);
+                ps.setString(8, entidad.getDocenteResponsable());
+                ps.setString(9, entidad.getCelularResponsable());
+                ps.setInt(10, id);
                 filas = ps.executeUpdate();
             }
             if (filas == 0) {
@@ -344,39 +325,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 return false;
             }
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM programa_educativo WHERE id_solicitud = ?")) {
-                ps.setInt(1, id);
-                ps.executeUpdate();
-            }
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud = ?")) {
-                ps.setInt(1, id);
-                ps.executeUpdate();
-            }
-
-            if (!entidad.getProgramas().isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement(sqlPrograma)) {
-                    for (ProgramaEducativo p : entidad.getProgramas()) {
-                        ps.setInt(1, id);
-                        ps.setString(2, p.getDivisionAcademica());
-                        ps.setInt(3, p.getCuatrimestre());
-                        ps.setString(4, p.getGrupo());
-                        ps.setInt(5, p.getNoEstudiantes());
-                        ps.addBatch();
-                    }
-                    ps.executeBatch();
-                }
-            }
-
-            if (!entidad.getAsignaturas().isEmpty()) {
-                try (PreparedStatement ps = con.prepareStatement(sqlAsignatura)) {
-                    for (String asignatura : entidad.getAsignaturas()) {
-                        ps.setInt(1, id);
-                        ps.setString(2, asignatura);
-                        ps.addBatch();
-                    }
-                    ps.executeBatch();
-                }
-            }
+            borrarHijos(con, id);
+            guardarHijos(con, id, entidad);
 
             con.commit();
             return true;
@@ -415,14 +365,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 ps.setInt(1, id);
                 ps.executeUpdate();
             }
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud = ?")) {
-                ps.setInt(1, id);
-                ps.executeUpdate();
-            }
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM programa_educativo WHERE id_solicitud = ?")) {
-                ps.setInt(1, id);
-                ps.executeUpdate();
-            }
+            borrarHijos(con, id);
             int filas;
             try (PreparedStatement ps = con.prepareStatement("DELETE FROM solicitud WHERE id_solicitud = ?")) {
                 ps.setInt(1, id);
@@ -452,6 +395,122 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 }
             }
         }
+    }
+
+    /**
+     * Inserta las tablas hijas de la solicitud (desglose por programa,
+     * asignaturas, estudiantes por división y docentes acompañantes) usando la
+     * conexión de la transacción que ya viene abierta.
+     */
+    private void guardarHijos(Connection con, int idSolicitud, Solicitud entidad) throws SQLException {
+        if (!entidad.getProgramas().isEmpty()) {
+            String sql = "INSERT INTO programa_educativo (id_solicitud, division_academica, cuatrimestre, grupo, no_estudiantes) "
+                    + "VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                for (ProgramaEducativo p : entidad.getProgramas()) {
+                    ps.setInt(1, idSolicitud);
+                    ps.setString(2, p.getDivisionAcademica());
+                    ps.setInt(3, p.getCuatrimestre());
+                    ps.setString(4, p.getGrupo());
+                    ps.setInt(5, p.getNoEstudiantes());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+
+        if (!entidad.getAsignaturas().isEmpty()) {
+            String sql = "INSERT INTO asignatura_reforzar_solicitud (id_solicitud, nombre) VALUES (?, ?)";
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                for (String asignatura : entidad.getAsignaturas()) {
+                    ps.setInt(1, idSolicitud);
+                    ps.setString(2, asignatura);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+
+        // Solo se guardan las divisiones con estudiantes; las que van en 0 no ocupan fila
+        String sqlDivision = "INSERT INTO estudiantes_division (id_solicitud, division, no_estudiantes) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(sqlDivision)) {
+            boolean hayFilas = false;
+            for (Map.Entry<String, Integer> e : entidad.getEstudiantesPorDivision().entrySet()) {
+                int cantidad = e.getValue() != null ? e.getValue() : 0;
+                if (cantidad <= 0) {
+                    continue;
+                }
+                ps.setInt(1, idSolicitud);
+                ps.setString(2, e.getKey());
+                ps.setInt(3, cantidad);
+                ps.addBatch();
+                hayFilas = true;
+            }
+            if (hayFilas) {
+                ps.executeBatch();
+            }
+        }
+
+        if (!entidad.getDocentesAcompanantes().isEmpty()) {
+            String sql = "INSERT INTO solicitud_docente (id_solicitud, id_usuario) VALUES (?, ?)";
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                for (Usuario docente : entidad.getDocentesAcompanantes()) {
+                    ps.setInt(1, idSolicitud);
+                    ps.setInt(2, docente.getId());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+    }
+
+    /** Borra las tablas hijas para volver a escribirlas (update) o eliminar la solicitud. */
+    private void borrarHijos(Connection con, int idSolicitud) throws SQLException {
+        String[] tablas = {"asignatura_reforzar_solicitud", "programa_educativo",
+                "estudiantes_division", "solicitud_docente"};
+        for (String tabla : tablas) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM " + tabla + " WHERE id_solicitud = ?")) {
+                ps.setInt(1, idSolicitud);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    /** Devuelve siempre las 4 divisiones; las que no tienen fila quedan en 0. */
+    private Map<String, Integer> getEstudiantesPorDivision(int idSolicitud) throws SQLException {
+        Map<String, Integer> divisiones = Solicitud.divisionesEnCero();
+        String sql = "SELECT division, no_estudiantes FROM estudiantes_division WHERE id_solicitud = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idSolicitud);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    divisiones.put(rs.getString("division"), rs.getInt("no_estudiantes"));
+                }
+            }
+        }
+        return divisiones;
+    }
+
+    private List<Usuario> getDocentesAcompanantes(int idSolicitud) throws SQLException {
+        List<Usuario> docentes = new ArrayList<>();
+        String sql = "SELECT u.id_usuario, u.nombre, u.correo FROM solicitud_docente sd "
+                + "JOIN usuario u ON u.id_usuario = sd.id_usuario "
+                + "WHERE sd.id_solicitud = ? ORDER BY u.nombre";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idSolicitud);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Usuario u = new Usuario();
+                    u.setId(rs.getInt("id_usuario"));
+                    u.setNombre(rs.getString("nombre"));
+                    u.setCorreo(rs.getString("correo"));
+                    docentes.add(u);
+                }
+            }
+        }
+        return docentes;
     }
 
     private List<ProgramaEducativo> getProgramas(int idSolicitud) throws SQLException {
@@ -505,6 +564,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         s.setFechaInicio(rs.getString("fecha_inicio"));
         s.setObjetivo(rs.getString("objetivo"));
         s.setAreaSolicitante(rs.getString("area_solicitante"));
+        s.setDocenteResponsable(rs.getString("docente_responsable"));
+        s.setCelularResponsable(rs.getString("celular_responsable"));
         s.setIdEstado(rs.getInt("id_estado"));
         s.setDetallesDecision(rs.getString("detalles_decision"));
         s.setFechaCreacion(rs.getString("fecha_creacion"));

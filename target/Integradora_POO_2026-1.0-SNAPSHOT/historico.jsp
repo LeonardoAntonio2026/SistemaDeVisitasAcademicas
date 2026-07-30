@@ -55,6 +55,12 @@
                                     <c:when test="${s.nombreEstado == 'Completada' && s.estadoReporte == 'Rechazado'}">
                                         <span class="badge-estado estado-reporte-rechazado">Reporte rechazado</span>
                                     </c:when>
+                                    <c:when test="${s.nombreEstado == 'Completada' && s.estadoReporte == 'Completado'}">
+                                        <span class="badge-estado estado-completado">Reporte en revisión</span>
+                                    </c:when>
+                                    <c:when test="${s.nombreEstado == 'Completada' && s.estadoReporte == 'Aprobado'}">
+                                        <span class="badge-estado estado-aprobado">Reporte aprobado</span>
+                                    </c:when>
                                     <c:otherwise>
                                         <span class="badge-estado estado-${fn:replace(fn:toLowerCase(s.nombreEstado), ' ', '-')}">${s.nombreEstado}</span>
                                     </c:otherwise>
@@ -63,9 +69,9 @@
                             <td style="white-space: nowrap;">
                                 <a class="btn-descargar" style="margin-right: 6px;"
                                    href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver solicitud</a>
-                                <c:if test="${s.nombreEstado == 'Completada'}">
-                                    <a class="btn-descargar" style="background-color: #5A5A5A;"
-                                       href="${pageContext.request.contextPath}/reportes">Ver reporte</a>
+                                <c:if test="${s.nombreEstado == 'Completada' && s.idReporte != null}">
+                                    <a class="btn-descargar btn-verde"
+                                       href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Ver reporte</a>
                                 </c:if>
                             </td>
                         </tr>

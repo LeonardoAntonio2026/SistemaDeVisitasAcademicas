@@ -7,14 +7,15 @@
     <title>Iniciar sesión - Visitas Académicas</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/tokens.css">
 </head>
-<body style="background-color: #F2F2F7;">
+<body style="background-color: var(--color-fondo);">
 <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-    <div class="card border-0 shadow-sm p-4" style="max-width: 420px; width: 100%; border-radius: 1rem;">
+    <div class="card border-0 shadow-sm p-4" style="max-width: 420px; width: 100%; border-radius: var(--radio-lg);">
 
         <div class="text-center mb-4">
             <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" height="48" class="mb-3">
-            <h4 class="fw-semibold" style="color: #183052;">Iniciar sesión</h4>
+            <h4 class="fw-semibold" style="color: var(--color-azul);">Iniciar sesión</h4>
             <p class="text-muted small mb-0">Sistema de Gestión de Visitas Académicas</p>
         </div>
 
@@ -34,7 +35,7 @@
                 <label class="form-label">Contraseña</label>
                 <input type="password" name="contrasena" class="form-control" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="btn w-100 text-white" style="background-color: #183052;">
+            <button type="submit" class="btn w-100 text-white" style="background-color: var(--color-azul);">
                 Entrar
             </button>
         </form>

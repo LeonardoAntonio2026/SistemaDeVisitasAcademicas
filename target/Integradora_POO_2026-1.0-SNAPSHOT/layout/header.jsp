@@ -8,8 +8,10 @@
 
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/tokens.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
         <script defer src="${pageContext.request.contextPath}/js/bootstrap.bundle.min.js"></script>
+        <script defer src="${pageContext.request.contextPath}/js/loading.js"></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', function () {
             var toggle = document.getElementById('sidebarToggle');
@@ -43,9 +45,11 @@
         });
     </script>
 </head>
-<body style="background-color: #F2F2F7">
+<body style="background-color: var(--color-fondo)">
 
-<nav class="navbar px-3" style="background:#ffffff; margin: 1rem 1rem 0; border-radius: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06); border: none;">
+<div id="barra-carga"></div>
+
+<nav class="navbar px-3" style="background: var(--color-superficie); margin: 1rem 1rem 0; border-radius: var(--radio-lg); box-shadow: var(--sombra-card); border: none;">
     <!-- Se añade w-100 y justify-content-between -->
     <div class="d-flex align-items-center justify-content-between w-100">
 

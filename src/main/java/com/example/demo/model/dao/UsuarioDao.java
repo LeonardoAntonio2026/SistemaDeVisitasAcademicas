@@ -220,6 +220,41 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return false;
     }
 
+    /**
+     * Docentes cuyo nombre o correo empatan con el texto escrito, para el
+     * autocompletado de docentes acompañantes. Se excluye al usuario indicado
+     * (el responsable no se acompaña a sí mismo).
+     */
+    public List<Usuario> buscarDocentes(String texto, Integer excluirIdUsuario, int limite) {
+        List<Usuario> datos = new ArrayList<>();
+        String sql = SELECT_BASE
+                + " WHERE r.nombre_rol = 'Docente'"
+                + " AND (UPPER(u.nombre) LIKE UPPER(?) OR UPPER(u.correo) LIKE UPPER(?))"
+                + (excluirIdUsuario != null ? " AND u.id_usuario <> ?" : "")
+                + " ORDER BY u.nombre FETCH FIRST ? ROWS ONLY";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            String patron = "%" + (texto != null ? texto.trim() : "") + "%";
+            int i = 1;
+            ps.setString(i++, patron);
+            ps.setString(i++, patron);
+            if (excluirIdUsuario != null) {
+                ps.setInt(i++, excluirIdUsuario);
+            }
+            ps.setInt(i, limite);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return datos;
+    }
+
     private Usuario mapRow(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
         u.setId(rs.getInt("id_usuario"));

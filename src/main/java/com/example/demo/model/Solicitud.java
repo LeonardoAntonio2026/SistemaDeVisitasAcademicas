@@ -2,9 +2,15 @@ package com.example.demo.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Solicitud implements Serializable {
+
+    /** Divisiones académicas del formato FO-UTEZ-EST-08, en el orden en que se imprimen. */
+    public static final List<String> DIVISIONES = List.of("DACEA", "DATEFI", "DATID", "DAMI");
+
     private int idSolicitud;
     private int idUsuarioSolicitante;
     private Integer idUsuarioAutoriza;
@@ -15,6 +21,8 @@ public class Solicitud implements Serializable {
     private String fechaInicio;
     private String objetivo;
     private String areaSolicitante;
+    private String docenteResponsable;
+    private String celularResponsable;
     private int idEstado;
     private String detallesDecision;
     private String fechaCreacion;
@@ -28,8 +36,21 @@ public class Solicitud implements Serializable {
     private int totalEstudiantes;
     private List<ProgramaEducativo> programas = new ArrayList<>();
     private List<String> asignaturas = new ArrayList<>();
+    // Estudiantes por división académica (ESTUDIANTES_DIVISION), siempre con las 4 llaves
+    private Map<String, Integer> estudiantesPorDivision = divisionesEnCero();
+    // Docentes acompañantes (SOLICITUD_DOCENTE); solo se usan id y nombre
+    private List<Usuario> docentesAcompanantes = new ArrayList<>();
 
     public Solicitud() {}
+
+    /** Mapa con las 4 divisiones en 0, para que la vista siempre encuentre la llave. */
+    public static Map<String, Integer> divisionesEnCero() {
+        Map<String, Integer> mapa = new LinkedHashMap<>();
+        for (String division : DIVISIONES) {
+            mapa.put(division, 0);
+        }
+        return mapa;
+    }
 
     public Integer getIdReporte() {
         return idReporte;
@@ -119,6 +140,23 @@ public class Solicitud implements Serializable {
         this.areaSolicitante = areaSolicitante;
     }
 
+    /** Nombre capturado en el formato; puede no ser el mismo que el del solicitante. */
+    public String getDocenteResponsable() {
+        return docenteResponsable;
+    }
+
+    public void setDocenteResponsable(String docenteResponsable) {
+        this.docenteResponsable = docenteResponsable;
+    }
+
+    public String getCelularResponsable() {
+        return celularResponsable;
+    }
+
+    public void setCelularResponsable(String celularResponsable) {
+        this.celularResponsable = celularResponsable;
+    }
+
     public int getIdEstado() {
         return idEstado;
     }
@@ -198,5 +236,30 @@ public class Solicitud implements Serializable {
 
     public void setAsignaturas(List<String> asignaturas) {
         this.asignaturas = asignaturas;
+    }
+
+    public Map<String, Integer> getEstudiantesPorDivision() {
+        return estudiantesPorDivision;
+    }
+
+    public void setEstudiantesPorDivision(Map<String, Integer> estudiantesPorDivision) {
+        this.estudiantesPorDivision = estudiantesPorDivision;
+    }
+
+    /** Suma de los estudiantes capturados por división académica. */
+    public int getTotalPorDivision() {
+        int total = 0;
+        for (Integer valor : estudiantesPorDivision.values()) {
+            total += (valor != null ? valor : 0);
+        }
+        return total;
+    }
+
+    public List<Usuario> getDocentesAcompanantes() {
+        return docentesAcompanantes;
+    }
+
+    public void setDocentesAcompanantes(List<Usuario> docentesAcompanantes) {
+        this.docentesAcompanantes = docentesAcompanantes;
     }
 }

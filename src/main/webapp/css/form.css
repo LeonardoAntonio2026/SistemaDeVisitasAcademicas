@@ -106,6 +106,19 @@
     cursor: default;
 }
 
+.form-mismatch-msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background-color: #ffe5e5;
+    color: var(--color-rojo);
+    border-radius: var(--radio-input);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 .programa-header,
 .programa-row {
     display: grid;
@@ -186,6 +199,60 @@
     flex: 1;
     min-width: 120px;
     padding: 2px 0;
+}
+
+/* Autocompletado de docentes acompañantes */
+.form-ayuda {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.76rem;
+    color: var(--color-texto-tenue);
+}
+
+.autocomplete-lista {
+    display: none;
+    position: relative;
+    margin-top: 4px;
+    background: var(--color-superficie);
+    border: 1.5px solid var(--color-borde);
+    border-radius: var(--radio-input);
+    box-shadow: var(--sombra-card);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 5;
+}
+
+.autocomplete-lista.visible { display: block; }
+
+.autocomplete-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.autocomplete-item:last-child { border-bottom: none; }
+
+.autocomplete-item:hover,
+.autocomplete-item.resaltado { background: var(--color-fondo); }
+
+.autocomplete-nombre {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--color-texto);
+}
+
+.autocomplete-item small {
+    font-size: 0.76rem;
+    color: var(--color-texto-tenue);
+}
+
+.autocomplete-vacio {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: var(--color-texto-tenue);
 }
 
 .btn-volver {

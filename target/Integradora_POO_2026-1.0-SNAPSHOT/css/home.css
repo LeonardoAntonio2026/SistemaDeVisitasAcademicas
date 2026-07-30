@@ -1,52 +1,52 @@
 /* Estilos propios de la página de inicio (index.jsp) */
 
-/* Misma "receta" de card en toda la app: radio 12px y sombra suave (igual que .form-section) */
+/* Misma "receta" de card en toda la app (ver --radio-card / --sombra-card) */
 .superior {
-    width: 100% !important;
+    width: 100%;
     height: 93px;
-    border-radius: 12px;
-    background-color: #FFFFFF;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    border-radius: var(--radio-card);
+    background-color: var(--color-superficie);
+    box-shadow: var(--sombra-card);
     display: flex;
     flex-direction: column;
     justify-content: center;
     padding-left: 2rem;
     padding-right: 2rem;
-    box-sizing: border-box !important;
+    box-sizing: border-box;
 }
 
 .superior h2 {
-    color: #183052;
-    font-size: 28px;
+    color: var(--color-azul);
+    font-size: var(--fs-2xl);
     font-weight: 600;
-    margin: 0 0 8px 0 !important;
+    margin: 0 0 8px 0;
 }
 
 .superior p {
-    color: #555555;
-    font-size: 16px;
-    margin: 0 !important;
+    color: var(--color-texto-3);
+    font-size: var(--fs-md);
+    margin: 0;
 }
 
 .botonnueva {
-    width: 188px;
-    height: 47px;
-    border-radius: 15px;
-    background-color: #183052;
+    border-radius: var(--radio-btn);
+    background-color: var(--color-azul);
     color: white !important;
     margin-top: 1rem;
     border: none;
-    display: flex;
+    display: inline-flex;
     justify-content: center;
     align-items: center;
+    gap: 8px;
+    padding: var(--btn-pad-y) var(--btn-pad-x);
     text-align: center;
     text-decoration: none;
     cursor: pointer;
 }
 
 .titulo-solicitudes {
-    color: #183052;
-    font-size: 24px;
+    color: var(--color-azul);
+    font-size: var(--fs-xl);
     font-weight: 600;
     margin-top: 1.5rem;
 }
@@ -54,9 +54,9 @@
 /* Estado vacío: sin solicitudes (como en el prototipo) */
 .solicitud-vacia {
     width: 100%;
-    border-radius: 12px;
-    background-color: #FFFFFF;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    border-radius: var(--radio-card);
+    background-color: var(--color-superficie);
+    box-shadow: var(--sombra-card);
     margin-top: 1rem;
     padding: 3rem 1.5rem;
     text-align: center;
@@ -64,31 +64,22 @@
 }
 
 .solicitud-vacia h5 {
-    color: #183052;
+    color: var(--color-azul);
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .solicitud-vacia p {
-    color: #555555;
+    color: var(--color-texto-3);
     margin-bottom: 1rem;
-}
-
-.btn-nueva-vacia {
-    display: inline-block;
-    background-color: #183052;
-    color: #FFFFFF !important;
-    border-radius: 10px;
-    padding: 0.55rem 1.6rem;
-    text-decoration: none;
 }
 
 /* Tarjeta de solicitud */
 .solicitud-card {
     width: 100%;
-    border-radius: 12px;
-    background-color: #FFFFFF;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    border-radius: var(--radio-card);
+    background-color: var(--color-superficie);
+    box-shadow: var(--sombra-card);
     margin-top: 1rem;
     padding: 1.25rem 1.5rem;
     box-sizing: border-box;
@@ -102,8 +93,8 @@
 }
 
 .solicitud-empresa {
-    color: #183052;
-    font-size: 20px;
+    color: var(--color-azul);
+    font-size: var(--fs-lg);
     font-weight: 600;
     margin: 0;
 }
@@ -112,16 +103,16 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    color: #5A5A5A;
-    font-size: 14px;
+    color: var(--color-texto-3);
+    font-size: var(--fs-base);
     margin-top: 2px;
 }
 
 /* Badge de estado, color según el nombre del estado */
 .badge-estado {
-    border-radius: 20px;
+    border-radius: var(--radio-pill);
     padding: 4px 14px;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 600;
     white-space: nowrap;
     background-color: #E9ECEF;
@@ -130,7 +121,7 @@
 
 .estado-pendiente {
     background-color: #FDE2E4;
-    color: #C0392B;
+    color: var(--color-rojo);
 }
 
 .estado-en-revisión,
@@ -146,12 +137,12 @@
 
 .estado-rechazada {
     background-color: #F8D7DA;
-    color: #B02A37;
+    color: var(--color-rojo-oscuro);
 }
 
 .estado-completada {
     background-color: #D6E4F0;
-    color: #183052;
+    color: var(--color-azul);
 }
 
 /* Solicitud completada a la que todavía le falta el reporte */
@@ -162,13 +153,13 @@
 
 .estado-reporte-rechazado {
     background-color: #F8D7DA;
-    color: #B02A37;
+    color: var(--color-rojo-oscuro);
 }
 
 /* Estados del reporte (misma paleta que los de la solicitud) */
 .estado-completado {
     background-color: #D6E4F0;
-    color: #183052;
+    color: var(--color-azul);
 }
 
 .estado-aprobado {
@@ -178,7 +169,7 @@
 
 .estado-rechazado {
     background-color: #F8D7DA;
-    color: #B02A37;
+    color: var(--color-rojo-oscuro);
 }
 
 .solicitud-card-bottom {
@@ -187,7 +178,7 @@
     align-items: flex-end;
     margin-top: 1rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #ECECEC;
+    border-top: 1px solid var(--color-borde-tenue);
     gap: 1rem;
     flex-wrap: wrap;
 }
@@ -203,27 +194,42 @@
 }
 
 .meta-label {
-    color: #8A8A8A;
-    font-size: 12px;
+    color: var(--color-texto-tenue);
+    font-size: var(--fs-xs);
 }
 
 .meta-valor {
-    color: #333333;
-    font-size: 14px;
+    color: var(--color-texto-2);
+    font-size: var(--fs-base);
     font-weight: 600;
 }
 
 .btn-ver-detalles {
-    background-color: #183052;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--color-azul);
     color: #FFFFFF;
     border: none;
-    border-radius: 10px;
-    padding: 0.5rem 2rem;
-    font-size: 14px;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
     cursor: pointer;
 }
 
 .btn-ver-detalles:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* Modificador de acento (verde de marca) para botones secundarios que
+   antes iban en gris y parecían deshabilitados. Aplica sobre
+   .btn-ver-detalles y .btn-descargar. */
+.btn-verde {
+    background-color: var(--color-verde) !important;
+}
+
+.btn-verde:hover {
+    background-color: var(--color-verde-hover) !important;
 }

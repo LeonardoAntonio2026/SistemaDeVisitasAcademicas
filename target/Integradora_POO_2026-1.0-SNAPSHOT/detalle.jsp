@@ -3,6 +3,7 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Detalles de la visita"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
+<% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
@@ -215,10 +216,49 @@
                 <div class="dato-valor">${empty s.areaSolicitante ? '—' : s.areaSolicitante}</div>
             </div>
             <div>
-                <div class="dato-label">Docente responsable</div>
-                <div class="dato-valor">${s.nombreSolicitante}</div>
+                <div class="dato-label">Docente responsable de la visita</div>
+                <%-- Las solicitudes viejas no tienen el campo: se muestra quien la creó --%>
+                <div class="dato-valor">${empty s.docenteResponsable ? s.nombreSolicitante : s.docenteResponsable}</div>
+            </div>
+            <div>
+                <div class="dato-label">Celular del responsable</div>
+                <div class="dato-valor">${empty s.celularResponsable ? '—' : s.celularResponsable}</div>
             </div>
         </div>
+
+        <div class="dato-label" style="margin-top: 14px;">Docentes acompañantes</div>
+        <c:choose>
+            <c:when test="${not empty s.docentesAcompanantes}">
+                <div>
+                    <c:forEach var="d" items="${s.docentesAcompanantes}">
+                        <span class="chip-asignatura">${d.nombre}</span>
+                    </c:forEach>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <div class="dato-valor">—</div>
+            </c:otherwise>
+        </c:choose>
+
+        <div class="dato-label" style="margin-top: 14px;">Número de estudiantes por división académica</div>
+        <table class="tabla-programas">
+            <thead>
+            <tr>
+                <c:forEach var="division" items="${divisiones}">
+                    <th>${division}</th>
+                </c:forEach>
+                <th>Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <c:forEach var="division" items="${divisiones}">
+                    <td>${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}</td>
+                </c:forEach>
+                <td>${s.totalPorDivision}</td>
+            </tr>
+            </tbody>
+        </table>
 
         <c:if test="${not empty s.programas}">
             <div class="dato-label" style="margin-top: 14px;">Desglose por programa educativo</div>
@@ -323,7 +363,7 @@
                             <small>Si te equivocaste de archivo puedes subir otro; reemplazará al anterior.</small>
                         </c:when>
                         <c:otherwise>
-                            <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: #8A8A8A;"></i>
+                            <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
                             <p>Sube el formato FO-UTEZ-EST-08 firmado</p>
                             <small>Máximo 10 MB · solo PDF</small>
                         </c:otherwise>
@@ -349,7 +389,7 @@
                 <input type="hidden" name="action" value="responsiva">
                 <input type="hidden" name="solicitud" value="${s.idSolicitud}">
                 <div class="zona-carga">
-                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: #8A8A8A;"></i>
+                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
                     <p>Sube la CARTA RESPONSIVA firmada</p>
                     <small>Máximo 10 MB · solo PDF</small>
                     <input type="file" name="archivo" class="form-control" accept="application/pdf" required>

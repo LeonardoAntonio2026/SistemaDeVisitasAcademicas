@@ -12,8 +12,7 @@
             <c:choose>
                 <c:when test="${esDocente}">
                     <h5>No tienes ninguna solicitud</h5>
-                    <p>Puedes crear una nueva</p>
-                    <a href="${pageContext.request.contextPath}/solicitud?action=nueva" class="btn-nueva-vacia">Nueva solicitud</a>
+                    <p>Usa el botón <strong>Nueva Solicitud</strong> de arriba para crear una</p>
                 </c:when>
                 <c:otherwise>
                     <h5>No hay solicitudes por ahora</h5>

@@ -3,6 +3,8 @@
 <%-- El mismo formulario sirve para crear y para editar (con ${solicitud} precargada) --%>
 <% request.setAttribute("pageTitle", request.getAttribute("solicitud") != null ? "Editar solicitud" : "Nueva Solicitud"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
+<%-- Las divisiones académicas viven en el modelo para no repetirlas en cada vista --%>
+<% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
@@ -42,63 +44,96 @@
             <div class="mb-3">
                 <label class="form-label">Lugar o dirección</label>
                 <input type="text" name="direccionLugar" class="form-control" placeholder="ej. Av. Insurgentes"
-                       value="${s.lugarDireccion}" required>
+                       value="${s.lugarDireccion}">
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Teléfonos del contacto</label>
                     <input type="text" name="telefonoContacto" class="form-control" placeholder="ej. 7776268823"
-                           value="${s.telefonoContacto}" required>
+                           value="${s.telefonoContacto}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Correo electrónico del contacto</label>
                     <input type="email" name="correoContacto" class="form-control" placeholder="contacto@empresa.com"
-                           value="${s.correoContacto}" required>
+                           value="${s.correoContacto}">
                 </div>
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Fecha de inicio</label>
-                    <input type="date" name="fechaInicio" class="form-control" value="${s.fechaInicio}" required>
+                    <input type="date" name="fechaInicio" class="form-control" value="${s.fechaInicio}">
                 </div>
             </div>
 
             <div class="mb-1">
                 <label class="form-label">Objetivo de la visita</label>
-                <textarea name="objetivoVisita" class="form-control" rows="3" placeholder="Describe el objetivo académico de la visita" required>${s.objetivo}</textarea>
+                <textarea name="objetivoVisita" class="form-control" rows="3" placeholder="Describe el objetivo académico de la visita">${s.objetivo}</textarea>
             </div>
         </div>
 
         <div class="form-section">
             <h6>Datos de los participantes de la visita</h6>
 
-            <div class="row g-3 mb-4">
+            <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Área solicitante</label>
                     <input type="text" name="areaSolicitante" class="form-control" placeholder="ej. DACEA"
-                           value="${s.areaSolicitante}" required>
+                           value="${s.areaSolicitante}">
                 </div>
+            </div>
+
+            <%-- El responsable se precarga con el docente en sesión, pero se puede cambiar --%>
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label class="form-label">Docente responsable de la visita</label>
+                    <input type="text" name="docenteResponsable" class="form-control" required
+                           placeholder="Nombre completo del docente"
+                           value="${editando ? s.docenteResponsable : sessionScope.nombreUsuario}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Celular</label>
+                    <input type="tel" name="celularResponsable" class="form-control" placeholder="ej. 7771234567"
+                           value="${s.celularResponsable}">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Docentes acompañantes</label>
+                <div class="tags-input-wrapper" id="acompanantes-wrapper">
+                    <%-- En edición se pintan los chips igual que los arma solicitud-form.js --%>
+                    <c:forEach var="d" items="${s.docentesAcompanantes}">
+                        <span class="tag-chip">${d.nombre} <button type="button" class="tag-remove" aria-label="Quitar">&times;</button><input
+                                type="hidden" name="docentesAcompanantes" value="${d.id}"></span>
+                    </c:forEach>
+                    <input type="text" class="tags-input" id="acompanantes-input" autocomplete="off"
+                           placeholder="Escribe el nombre del docente y presiona Enter">
+                </div>
+                <div class="autocomplete-lista" id="acompanantes-sugerencias"></div>
+                <small class="form-ayuda">Solo aparecen docentes registrados en el sistema.</small>
             </div>
 
             <div class="mb-1">
                 <label class="form-label d-block mb-2">Número de estudiantes participantes por división académica</label>
                 <div class="division-table">
                     <div class="division-header">
-                        <span>DACEA</span>
-                        <span>DATEFI</span>
-                        <span>DATID</span>
-                        <span>DAMI</span>
+                        <c:forEach var="division" items="${divisiones}">
+                            <span>${division}</span>
+                        </c:forEach>
                         <span>Total</span>
                     </div>
                     <div class="division-inputs">
-                        <input type="number" class="form-control" value="0" min="0">
-                        <input type="number" class="form-control" value="0" min="0">
-                        <input type="number" class="form-control" value="0" min="0">
-                        <input type="number" class="form-control" value="0" min="0">
+                        <c:forEach var="division" items="${divisiones}">
+                            <input type="number" name="division_${division}" class="form-control" min="0"
+                                   value="${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}">
+                        </c:forEach>
                         <input type="number" class="form-control division-total" value="0" readonly tabindex="-1">
                     </div>
+                </div>
+                <div id="division-mismatch-msg" class="form-mismatch-msg" style="display:none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span id="division-mismatch-text"></span>
                 </div>
             </div>
         </div>
@@ -119,10 +154,10 @@
                     <c:when test="${editando && not empty s.programas}">
                         <c:forEach var="p" items="${s.programas}">
                             <div class="programa-row">
-                                <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" value="${p.divisionAcademica}" required>
-                                <input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11" value="${p.cuatrimestre}" required>
-                                <input type="text" name="grupo" class="form-control" placeholder="A" value="${p.grupo}" required>
-                                <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0" value="${p.noEstudiantes}" required>
+                                <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" value="${p.divisionAcademica}">
+                                <input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11" value="${p.cuatrimestre}">
+                                <input type="text" name="grupo" class="form-control" placeholder="A" value="${p.grupo}">
+                                <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0" value="${p.noEstudiantes}">
                                 <button type="button" class="btn-delete-row" title="Eliminar fila">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -134,11 +169,11 @@
                     </c:when>
                     <c:otherwise>
                         <div class="programa-row">
-                            <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required>
-                            <input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11" required>
-                            <input type="text" name="grupo" class="form-control" placeholder="A" required>
-                            <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0" required>
-                            <button type="button" class="btn-delete-row" title="Eliminar fila" >
+                            <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo">
+                            <input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11">
+                            <input type="text" name="grupo" class="form-control" placeholder="A">
+                            <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0">
+                            <button type="button" class="btn-delete-row" title="Eliminar fila">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
                                     <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.171a1 1 0 0 1 .707.293L7.5 3h1l.621-.707A1 1 0 0 1 9.829 2H13a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 0 0 1z"/>
@@ -149,7 +184,7 @@
                 </c:choose>
             </div>
 
-            <button type="button" class="btn-add-row mt-3" id="btn-agregar-grupo">+ Agregar grupo</button>
+            <button type="button" class="btn-agregar mt-3" id="btn-agregar-grupo">+ Agregar grupo</button>
         </div>
 
         <div class="form-section">

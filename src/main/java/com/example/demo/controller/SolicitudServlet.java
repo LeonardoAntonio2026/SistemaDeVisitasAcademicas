@@ -8,12 +8,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import com.example.demo.model.ProgramaEducativo;
 import com.example.demo.model.Solicitud;
+import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.DocumentoDao;
 import com.example.demo.model.dao.SolicitudDao;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @WebServlet(name = "SolicitudServlet", value = "/solicitud")
 public class SolicitudServlet extends HttpServlet {
@@ -126,8 +130,62 @@ public class SolicitudServlet extends HttpServlet {
         solicitud.setFechaInicio(request.getParameter("fechaInicio"));
         solicitud.setObjetivo(request.getParameter("objetivoVisita"));
         solicitud.setAreaSolicitante(request.getParameter("areaSolicitante"));
+        solicitud.setDocenteResponsable(request.getParameter("docenteResponsable"));
+        solicitud.setCelularResponsable(request.getParameter("celularResponsable"));
         solicitud.setProgramas(leerProgramas(request));
         solicitud.setAsignaturas(leerAsignaturas(request));
+        solicitud.setEstudiantesPorDivision(leerDivisiones(request));
+        solicitud.setDocentesAcompanantes(leerAcompanantes(request));
+    }
+
+    /**
+     * Estudiantes capturados por división académica. Cada input viene con
+     * name="division_DACEA", name="division_DATEFI", etc.
+     */
+    private Map<String, Integer> leerDivisiones(HttpServletRequest request) {
+        Map<String, Integer> divisiones = Solicitud.divisionesEnCero();
+        for (String division : Solicitud.DIVISIONES) {
+            String valor = request.getParameter("division_" + division);
+            int cantidad = 0;
+            if (valor != null && !valor.isBlank()) {
+                try {
+                    cantidad = Math.max(0, Integer.parseInt(valor.trim()));
+                } catch (NumberFormatException e) {
+                    cantidad = 0;
+                }
+            }
+            divisiones.put(division, cantidad);
+        }
+        return divisiones;
+    }
+
+    /**
+     * Docentes acompañantes elegidos con el autocompletado; llegan como ids en
+     * inputs ocultos. Se ignoran repetidos y los que no sean números.
+     */
+    private List<Usuario> leerAcompanantes(HttpServletRequest request) {
+        List<Usuario> docentes = new ArrayList<>();
+        String[] ids = request.getParameterValues("docentesAcompanantes");
+        if (ids == null) {
+            return docentes;
+        }
+        Set<Integer> vistos = new LinkedHashSet<>();
+        for (String id : ids) {
+            if (id == null || id.isBlank()) {
+                continue;
+            }
+            try {
+                vistos.add(Integer.parseInt(id.trim()));
+            } catch (NumberFormatException e) {
+                // Valor manipulado en el formulario: se ignora
+            }
+        }
+        for (Integer id : vistos) {
+            Usuario u = new Usuario();
+            u.setId(id);
+            docentes.add(u);
+        }
+        return docentes;
     }
 
     /**

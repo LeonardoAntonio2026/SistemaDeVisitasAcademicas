@@ -6,7 +6,7 @@
       "runtimeExecutable": "cmd",
       "runtimeArgs": [
         "/c",
-        "C:\\Users\\PC\\Downloads\\SistemaDeVisitasAcademicas\\.claude\\run-dev.cmd"
+        "C:\\Users\\Leomanzana\\Documents\\SistemaDeVisitasAcademicas\\.claude\\run-dev.cmd"
       ],
       "port": 8090
     }

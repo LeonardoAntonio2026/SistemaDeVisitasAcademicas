@@ -3,6 +3,8 @@
 <%-- El mismo formulario sirve para crear y para editar (con ${solicitud} precargada) --%>
 <% request.setAttribute("pageTitle", request.getAttribute("solicitud") != null ? "Editar solicitud" : "Nueva Solicitud"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
+<%-- Las divisiones académicas viven en el modelo para no repetirlas en cada vista --%>
+<% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
@@ -74,7 +76,7 @@
         <div class="form-section">
             <h6>Datos de los participantes de la visita</h6>
 
-            <div class="row g-3 mb-4">
+            <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Área solicitante</label>
                     <input type="text" name="areaSolicitante" class="form-control" placeholder="ej. DACEA"
@@ -82,23 +84,56 @@
                 </div>
             </div>
 
+            <%-- El responsable se precarga con el docente en sesión, pero se puede cambiar --%>
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label class="form-label">Docente responsable de la visita</label>
+                    <input type="text" name="docenteResponsable" class="form-control" required
+                           placeholder="Nombre completo del docente"
+                           value="${editando ? s.docenteResponsable : sessionScope.nombreUsuario}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Celular</label>
+                    <input type="tel" name="celularResponsable" class="form-control" placeholder="ej. 7771234567"
+                           value="${s.celularResponsable}">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Docentes acompañantes</label>
+                <div class="tags-input-wrapper" id="acompanantes-wrapper">
+                    <%-- En edición se pintan los chips igual que los arma solicitud-form.js --%>
+                    <c:forEach var="d" items="${s.docentesAcompanantes}">
+                        <span class="tag-chip">${d.nombre} <button type="button" class="tag-remove" aria-label="Quitar">&times;</button><input
+                                type="hidden" name="docentesAcompanantes" value="${d.id}"></span>
+                    </c:forEach>
+                    <input type="text" class="tags-input" id="acompanantes-input" autocomplete="off"
+                           placeholder="Escribe el nombre del docente y presiona Enter">
+                </div>
+                <div class="autocomplete-lista" id="acompanantes-sugerencias"></div>
+                <small class="form-ayuda">Solo aparecen docentes registrados en el sistema.</small>
+            </div>
+
             <div class="mb-1">
                 <label class="form-label d-block mb-2">Número de estudiantes participantes por división académica</label>
                 <div class="division-table">
                     <div class="division-header">
-                        <span>DACEA</span>
-                        <span>DATEFI</span>
-                        <span>DATID</span>
-                        <span>DAMI</span>
+                        <c:forEach var="division" items="${divisiones}">
+                            <span>${division}</span>
+                        </c:forEach>
                         <span>Total</span>
                     </div>
                     <div class="division-inputs">
-                        <input type="number" class="form-control" value="0" min="0">
-                        <input type="number" class="form-control" value="0" min="0">
-                        <input type="number" class="form-control" value="0" min="0">
-                        <input type="number" class="form-control" value="0" min="0">
+                        <c:forEach var="division" items="${divisiones}">
+                            <input type="number" name="division_${division}" class="form-control" min="0"
+                                   value="${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}">
+                        </c:forEach>
                         <input type="number" class="form-control division-total" value="0" readonly tabindex="-1">
                     </div>
+                </div>
+                <div id="division-mismatch-msg" class="form-mismatch-msg" style="display:none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span id="division-mismatch-text"></span>
                 </div>
             </div>
         </div>
