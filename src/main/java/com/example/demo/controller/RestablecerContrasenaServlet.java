@@ -47,7 +47,7 @@ public class RestablecerContrasenaServlet extends HttpServlet {
         }
 
         if (contra1 == null || contra1.isBlank() || contra2 == null || !contra1.equals(contra2)) {
-            request.setAttribute("error", "Las contraseñas no coinciden.");
+            request.setAttribute("error", "Las contraseñas no son iguales.");
             request.setAttribute("token", token);
             request.getRequestDispatcher("restablecer-contrasena.jsp").forward(request, response);
             return;
