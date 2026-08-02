@@ -34,6 +34,11 @@
                 <i class="bi bi-person-badge me-2"></i>Historico
             </a>
         </li>
+        <li class="nav-item m-2">
+            <a class="nav-link rounded-2" href="${pageContext.request.contextPath}/UserManagement.jsp?role=admin">
+                <i class="bi bi-shield-lock me-2"></i>Gestión de usuarios
+            </a>
+        </li>
 
     </ul>
     <div class="border-top px-3 py-2 small text-muted">
