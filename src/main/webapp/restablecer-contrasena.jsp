@@ -29,17 +29,23 @@
         <form action="${pageContext.request.contextPath}/restablecer-contrasena" method="POST">
             <input type="hidden" name="token" value="<%= request.getAttribute("token") %>">
             <div class="mb-3">
-                <label class="form-label">Nueva Contraseña</label>
-                <input type="password" name="contra1" class="form-control" placeholder="contraseña nueva" required>
+                <label class="form-label" for="contra1">Nueva Contraseña</label>
+                <input type="password" id="contra1" name="contra1" class="form-control" placeholder="contraseña nueva"
+                       required minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+                       title="Mínimo 8 caracteres, con letras y números">
+                <small class="text-muted">Al menos 8 caracteres, con letras y números.</small>
             </div>
             <div class="mb-3">
-                <label class="form-label">Confirmar Contraseña</label>
-                <input type="password" name="contra2" class="form-control" placeholder="confirmar contraseña" required>
+                <label class="form-label" for="contra2">Confirmar Contraseña</label>
+                <input type="password" id="contra2" name="contra2" class="form-control" placeholder="confirmar contraseña"
+                       required data-igual-a="#contra1" data-mensaje="Las contraseñas no coinciden.">
             </div>
             <button type="submit" class="btn w-100 text-white" style="background-color: #183052;">
                 Enviar
             </button>
         </form>
+
+        <script src="${pageContext.request.contextPath}/js/validacion-cuenta.js" defer></script>
 
     </div>
 </div>

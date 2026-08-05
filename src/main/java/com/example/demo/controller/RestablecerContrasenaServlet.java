@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.TokenRecuperacion;
 import com.example.demo.model.dao.TokenRecuperacionDao;
 import com.example.demo.model.dao.UsuarioDao;
+import com.example.demo.utils.Validador;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -46,7 +47,13 @@ public class RestablecerContrasenaServlet extends HttpServlet {
             return;
         }
 
-        if (contra1 == null || contra1.isBlank() || contra2 == null || !contra1.equals(contra2)) {
+        if (!Validador.contrasenaValida(contra1)) {
+            request.setAttribute("error", Validador.REGLA_CONTRASENA);
+            request.setAttribute("token", token);
+            request.getRequestDispatcher("restablecer-contrasena.jsp").forward(request, response);
+            return;
+        }
+        if (!contra1.equals(contra2)) {
             request.setAttribute("error", "Las contraseñas no son iguales.");
             request.setAttribute("token", token);
             request.getRequestDispatcher("restablecer-contrasena.jsp").forward(request, response);

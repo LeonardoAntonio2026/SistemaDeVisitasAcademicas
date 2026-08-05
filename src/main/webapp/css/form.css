@@ -119,6 +119,39 @@
     font-weight: 600;
 }
 
+/* Lista de errores que devuelve la validación del servidor */
+.form-errores {
+    background-color: #ffe5e5;
+    border: 1.5px solid #f5b5b5;
+    border-radius: var(--radio-card);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    color: var(--color-rojo);
+    font-size: 0.85rem;
+}
+
+.form-errores-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.form-errores ul {
+    margin: 0;
+    padding-left: 28px;
+}
+
+.form-errores li {
+    margin-bottom: 2px;
+}
+
+/* Campo marcado por el navegador solo después de intentar enviar */
+.form-control:user-invalid {
+    border-color: var(--color-rojo);
+}
+
 .programa-header,
 .programa-row {
     display: grid;

@@ -1,10 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%-- El mismo formulario sirve para crear y para editar (con ${solicitud} precargada) --%>
-<% request.setAttribute("pageTitle", request.getAttribute("solicitud") != null ? "Editar solicitud" : "Nueva Solicitud"); %>
+<%-- El mismo formulario sirve para crear y para editar (con ${solicitud} precargada).
+     "editando" lo decide el servlet: al volver con errores de validación también
+     viene ${solicitud} cargada, pero eso NO significa que se esté editando. --%>
+<% request.setAttribute("pageTitle", Boolean.TRUE.equals(request.getAttribute("editando")) ? "Editar solicitud" : "Nueva Solicitud"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
 <%-- Las divisiones académicas viven en el modelo para no repetirlas en cada vista --%>
 <% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
+<%-- Tope inferior del selector de fecha: no se agenda una visita en el pasado --%>
+<% request.setAttribute("hoy", java.time.LocalDate.now().toString()); %>
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
@@ -12,9 +16,8 @@
 
 <main id="main-content">
     <c:set var="s" value="${solicitud}"/>
-    <c:set var="editando" value="${not empty s}"/>
 
-    <form action="solicitud" method="POST"
+    <form action="solicitud" method="POST" id="form-solicitud"
           <c:if test="${editando}">onsubmit="return confirm('¿Guardar los cambios? Si ya habías subido el formato FO-UTEZ-EST-08 firmado se eliminará: descarga el formato actualizado, fírmalo y súbelo de nuevo.');"</c:if>>
         <input type="hidden" name="action" value="${editando ? 'update' : 'create'}">
         <c:if test="${editando}">
@@ -32,44 +35,63 @@
             </div>
         </c:if>
 
+        <%-- Errores que devolvió la validación del servidor (RNF-07) --%>
+        <c:if test="${not empty errores}">
+            <div class="form-errores" id="form-errores">
+                <div class="form-errores-titulo">
+                    <i class="bi bi-exclamation-triangle"></i> Revisa los siguientes datos antes de continuar
+                </div>
+                <ul>
+                    <c:forEach var="e" items="${errores}">
+                        <li><c:out value="${e}"/></li>
+                    </c:forEach>
+                </ul>
+            </div>
+        </c:if>
+
         <div class="form-section">
             <h6>Datos del lugar a visitar</h6>
 
             <div class="mb-3">
                 <label class="form-label">Nombre de la empresa o actividad</label>
                 <input type="text" name="nombreEmpresa" class="form-control" placeholder="ej. CISCO" required
-                       value="${s.nombreEmpresaActividad}">
+                       maxlength="150" value="<c:out value="${s.nombreEmpresaActividad}"/>">
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Lugar o dirección</label>
-                <input type="text" name="direccionLugar" class="form-control" placeholder="ej. Av. Insurgentes"
-                       value="${s.lugarDireccion}">
+                <input type="text" name="direccionLugar" class="form-control" placeholder="ej. Av. Insurgentes" required
+                       maxlength="200" value="<c:out value="${s.lugarDireccion}"/>">
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Teléfonos del contacto</label>
-                    <input type="text" name="telefonoContacto" class="form-control" placeholder="ej. 7776268823"
-                           value="${s.telefonoContacto}">
+                    <input type="tel" name="telefonoContacto" class="form-control" placeholder="ej. 7776268823" required
+                           pattern="[0-9]{10}" inputmode="numeric" maxlength="10"
+                           title="10 dígitos, sin espacios ni guiones"
+                           value="<c:out value="${s.telefonoContacto}"/>">
+                    <small class="form-ayuda">10 dígitos, sin espacios ni guiones.</small>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Correo electrónico del contacto</label>
-                    <input type="email" name="correoContacto" class="form-control" placeholder="contacto@empresa.com"
-                           value="${s.correoContacto}">
+                    <input type="email" name="correoContacto" class="form-control" placeholder="contacto@empresa.com" required
+                           maxlength="100" value="<c:out value="${s.correoContacto}"/>">
                 </div>
             </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Fecha de inicio</label>
-                    <input type="date" name="fechaInicio" class="form-control" value="${s.fechaInicio}">
+                    <input type="date" name="fechaInicio" class="form-control" value="${s.fechaInicio}" required
+                           min="${hoy}" title="La visita no puede agendarse en una fecha pasada">
                 </div>
             </div>
 
             <div class="mb-1">
                 <label class="form-label">Objetivo de la visita</label>
-                <textarea name="objetivoVisita" class="form-control" rows="3" placeholder="Describe el objetivo académico de la visita">${s.objetivo}</textarea>
+                <textarea name="objetivoVisita" class="form-control" rows="3" required maxlength="500"
+                          placeholder="Describe el objetivo académico de la visita"><c:out value="${s.objetivo}"/></textarea>
             </div>
         </div>
 
@@ -79,8 +101,8 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Área solicitante</label>
-                    <input type="text" name="areaSolicitante" class="form-control" placeholder="ej. DACEA"
-                           value="${s.areaSolicitante}">
+                    <input type="text" name="areaSolicitante" class="form-control" required placeholder="ej. DACEA"
+                           maxlength="100" value="<c:out value="${s.areaSolicitante}"/>">
                 </div>
             </div>
 
@@ -88,14 +110,16 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-8">
                     <label class="form-label">Docente responsable de la visita</label>
-                    <input type="text" name="docenteResponsable" class="form-control" required
+                    <input type="text" name="docenteResponsable" class="form-control" required maxlength="150"
                            placeholder="Nombre completo del docente"
-                           value="${editando ? s.docenteResponsable : sessionScope.nombreUsuario}">
+                           value="<c:out value="${empty s ? sessionScope.nombreUsuario : s.docenteResponsable}"/>">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Celular</label>
-                    <input type="tel" name="celularResponsable" class="form-control" placeholder="ej. 7771234567"
-                           value="${s.celularResponsable}">
+                    <input type="tel" name="celularResponsable" required class="form-control" placeholder="ej. 7771234567"
+                           pattern="[0-9]{10}" inputmode="numeric" maxlength="10"
+                           title="10 dígitos, sin espacios ni guiones"
+                           value="<c:out value="${s.celularResponsable}"/>">
                 </div>
             </div>
 
@@ -125,12 +149,13 @@
                     </div>
                     <div class="division-inputs">
                         <c:forEach var="division" items="${divisiones}">
-                            <input type="number" name="division_${division}" class="form-control" min="0"
+                            <input type="number" name="division_${division}" class="form-control" min="0" max="999" step="1"
                                    value="${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}">
                         </c:forEach>
                         <input type="number" class="form-control division-total" value="0" readonly tabindex="-1">
                     </div>
                 </div>
+                <small class="form-ayuda">El total debe ser igual a la suma del desglose por programa educativo.</small>
                 <div id="division-mismatch-msg" class="form-mismatch-msg" style="display:none;">
                     <i class="bi bi-exclamation-triangle"></i>
                     <span id="division-mismatch-text"></span>
@@ -150,14 +175,16 @@
             </div>
 
             <div id="programas-container">
+                <%-- Se pintan las filas que ya existan: en edición vienen de la BD y al
+                     volver con errores de validación vienen de lo que se capturó --%>
                 <c:choose>
-                    <c:when test="${editando && not empty s.programas}">
+                    <c:when test="${not empty s.programas}">
                         <c:forEach var="p" items="${s.programas}">
                             <div class="programa-row">
-                                <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" value="${p.divisionAcademica}">
-                                <input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11" value="${p.cuatrimestre}">
-                                <input type="text" name="grupo" class="form-control" placeholder="A" value="${p.grupo}">
-                                <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0" value="${p.noEstudiantes}">
+                                <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required maxlength="100" value="<c:out value="${p.divisionAcademica}"/>">
+                                <input type="number" name="cuatrimestre" class="form-control" placeholder="5" required min="1" max="11" step="1" value="${p.cuatrimestre}">
+                                <input type="text" name="grupo" class="form-control" placeholder="A" required maxlength="10" value="<c:out value="${p.grupo}"/>">
+                                <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" required min="1" max="999" step="1" value="${p.noEstudiantes}">
                                 <button type="button" class="btn-delete-row" title="Eliminar fila">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -169,10 +196,10 @@
                     </c:when>
                     <c:otherwise>
                         <div class="programa-row">
-                            <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo">
-                            <input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11">
-                            <input type="text" name="grupo" class="form-control" placeholder="A">
-                            <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0">
+                            <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required maxlength="100">
+                            <input type="number" name="cuatrimestre" class="form-control" placeholder="5" required min="1" max="11" step="1">
+                            <input type="text" name="grupo" class="form-control" placeholder="A" required maxlength="10">
+                            <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" required min="1" max="999" step="1">
                             <button type="button" class="btn-delete-row" title="Eliminar fila">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -182,6 +209,11 @@
                         </div>
                     </c:otherwise>
                 </c:choose>
+            </div>
+
+            <div id="programas-msg" class="form-mismatch-msg" style="display:none;">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span id="programas-msg-text"></span>
             </div>
 
             <button type="button" class="btn-agregar mt-3" id="btn-agregar-grupo">+ Agregar grupo</button>
@@ -198,7 +230,13 @@
                         <span class="tag-chip">${a} <button type="button" class="tag-remove" aria-label="Quitar">&times;</button><input
                                 type="hidden" name="asignaturas" value="${a}"></span>
                     </c:forEach>
-                    <input type="text" class="tags-input" id="tags-input" placeholder="Escribe y presiona Enter">
+                    <input type="text" class="tags-input" id="tags-input" maxlength="100"
+                           placeholder="Escribe y presiona Enter">
+                </div>
+                <small class="form-ayuda">Escribe cada asignatura y presiona Enter para agregarla.</small>
+                <div id="asignaturas-msg" class="form-mismatch-msg" style="display:none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span id="asignaturas-msg-text"></span>
                 </div>
             </div>
         </div>

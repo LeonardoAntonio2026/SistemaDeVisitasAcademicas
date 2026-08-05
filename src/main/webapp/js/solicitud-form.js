@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var divisionInputs = document.querySelector(".division-inputs");
     var mismatchMsg = document.getElementById("division-mismatch-msg");
     var mismatchText = document.getElementById("division-mismatch-text");
+    var programasMsg = document.getElementById("programas-msg");
+    var programasText = document.getElementById("programas-msg-text");
+    var asignaturasMsg = document.getElementById("asignaturas-msg");
+    var asignaturasText = document.getElementById("asignaturas-msg-text");
     var form = document.querySelector("form[action='solicitud']");
     var acompWrapper = document.getElementById("acompanantes-wrapper");
     var acompInput = document.getElementById("acompanantes-input");
@@ -57,23 +61,67 @@ document.addEventListener("DOMContentLoaded", function () {
         return total;
     }
 
-    // Verifica que el total por división académica coincida con el total del desglose por programa
-    function validarTotales() {
-        if (!mismatchMsg || !mismatchText) {
-            return true;
+    // Cuántas asignaturas (chips) lleva capturadas el formulario
+    function getAsignaturas() {
+        return document.querySelectorAll('input[name="asignaturas"]').length;
+    }
+
+    // Pinta u oculta uno de los mensajes de error de abajo del campo
+    function mostrarMensaje(caja, texto, mensaje) {
+        if (!caja || !texto) {
+            return;
         }
+        if (mensaje) {
+            texto.textContent = mensaje;
+            caja.style.display = "flex";
+        } else {
+            caja.style.display = "none";
+        }
+    }
+
+    // Verifica que el total por división académica coincida con el total del desglose
+    // por programa. exigirMinimo solo se usa al enviar: en un formulario recién
+    // abierto ambos totales son 0 y no tiene caso reclamarle nada al docente todavía.
+    function validarTotales(exigirMinimo) {
         var totalDivision = getDivisionTotal();
         var totalProgramas = getProgramasTotal();
-        var coinciden = totalDivision === totalProgramas;
+        var mensaje = "";
 
-        if (coinciden) {
-            mismatchMsg.style.display = "none";
-        } else {
-            mismatchText.textContent = "El total de estudiantes por división académica (" + totalDivision +
+        if (totalDivision !== totalProgramas) {
+            mensaje = "El total de estudiantes por división académica (" + totalDivision +
                 ") no coincide con el total del desglose por programa educativo (" + totalProgramas + ").";
-            mismatchMsg.style.display = "flex";
+        } else if (exigirMinimo && totalDivision < 1) {
+            mensaje = "Captura cuántos estudiantes participan en la visita.";
         }
-        return coinciden;
+
+        mostrarMensaje(mismatchMsg, mismatchText, mensaje);
+        return !mensaje;
+    }
+
+    // Debe haber al menos un grupo en el desglose por programa educativo
+    function validarProgramas() {
+        var filas = programasContainer ? programasContainer.querySelectorAll(".programa-row").length : 0;
+        var mensaje = filas === 0 ? "Agrega al menos un grupo en el desglose por programa educativo." : "";
+        mostrarMensaje(programasMsg, programasText, mensaje);
+        return !mensaje;
+    }
+
+    // Los chips de asignaturas no son un input required: se validan aparte
+    function validarAsignaturas() {
+        var mensaje = getAsignaturas() === 0
+            ? "Agrega al menos una asignatura que se reforzará con la visita."
+            : "";
+        mostrarMensaje(asignaturasMsg, asignaturasText, mensaje);
+        return !mensaje;
+    }
+
+    // Todo lo que el navegador no puede validar solo con required/pattern
+    function validarFormulario() {
+        // Se evalúan las tres para que se pinten todos los mensajes de una vez
+        var programasOk = validarProgramas();
+        var totalesOk = validarTotales(true);
+        var asignaturasOk = validarAsignaturas();
+        return programasOk && totalesOk && asignaturasOk;
     }
 
     if (btnAgregarGrupo && programasContainer) {
@@ -81,12 +129,13 @@ document.addEventListener("DOMContentLoaded", function () {
             var row = document.createElement("div");
             row.className = "programa-row";
             row.innerHTML =
-                '<input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo">' +
-                '<input type="number" name="cuatrimestre" class="form-control" placeholder="5" min="1" max="11">' +
-                '<input type="text" name="grupo" class="form-control" placeholder="A">' +
-                '<input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" min="0">' +
+                '<input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required maxlength="100">' +
+                '<input type="number" name="cuatrimestre" class="form-control" placeholder="5" required min="1" max="11" step="1">' +
+                '<input type="text" name="grupo" class="form-control" placeholder="A" required maxlength="10">' +
+                '<input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" required min="1" max="999" step="1">' +
                 '<button type="button" class="btn-delete-row" title="Eliminar fila">' + getTrashSvg() + "</button>";
             programasContainer.appendChild(row);
+            validarProgramas();
             validarTotales();
         });
 
@@ -96,12 +145,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 var row = btn.closest(".programa-row");
                 if (row) {
                     row.remove();
+                    validarProgramas();
                     validarTotales();
                 }
             }
         });
 
-        programasContainer.addEventListener("input", validarTotales);
+        programasContainer.addEventListener("input", function () {
+            validarTotales();
+        });
     }
 
     if (tagsWrapper && tagsInput) {
@@ -121,6 +173,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     chips[chips.length - 1].remove();
                 }
             }
+            validarAsignaturas();
         });
 
         tagsWrapper.addEventListener("click", function (e) {
@@ -129,6 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (chip) {
                     chip.remove();
                 }
+                validarAsignaturas();
             }
         });
     }
@@ -297,16 +351,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Si el usuario escribió una asignatura y envió sin presionar Enter, la convertimos en chip
-    if (form && tagsInput) {
-        form.addEventListener("submit", function () {
-            if (tagsInput.value.trim()) {
-                addTag(tagsInput.value.trim().replace(/,$/, ""));
-                tagsInput.value = "";
-            }
-        });
-    }
-
     function pintarDivisionTotal() {
         if (!divisionInputs) {
             return;
@@ -326,15 +370,29 @@ document.addEventListener("DOMContentLoaded", function () {
         pintarDivisionTotal();
     }
 
-    // No permite enviar el formulario si los dos totales de estudiantes no coinciden
+    // No permite enviar mientras falte algo que el navegador no valida solo:
+    // los dos totales de estudiantes, los grupos y las asignaturas
     if (form) {
         form.addEventListener("submit", function (e) {
-            if (!validarTotales()) {
+            // Si escribió una asignatura y envió sin presionar Enter, la convertimos en chip
+            if (tagsInput && tagsInput.value.trim()) {
+                addTag(tagsInput.value.trim().replace(/,$/, ""));
+                tagsInput.value = "";
+            }
+
+            if (!validarFormulario()) {
                 e.preventDefault();
-                mismatchMsg.scrollIntoView({ behavior: "smooth", block: "center" });
+                var primero = [programasMsg, mismatchMsg, asignaturasMsg].find(function (caja) {
+                    return caja && caja.style.display !== "none";
+                });
+                if (primero) {
+                    primero.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
             }
         });
     }
 
+    // Al cargar solo se revisan los totales: los otros dos mensajes aparecerían
+    // en rojo antes de que el docente escriba nada en un formulario nuevo
     validarTotales();
 });

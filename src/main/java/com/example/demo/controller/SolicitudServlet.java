@@ -11,8 +11,11 @@ import com.example.demo.model.Solicitud;
 import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.DocumentoDao;
 import com.example.demo.model.dao.SolicitudDao;
+import com.example.demo.model.dao.UsuarioDao;
+import com.example.demo.utils.Validador;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -22,13 +25,18 @@ import java.util.Set;
 @WebServlet(name = "SolicitudServlet", value = "/solicitud")
 public class SolicitudServlet extends HttpServlet {
 
+    /** Tope por celda para atajar capturas absurdas (un grupo no llega a 999 alumnos). */
+    private static final int MAX_ESTUDIANTES = 999;
+
     private final SolicitudDao solicitudDao = new SolicitudDao();
     private final DocumentoDao documentoDao = new DocumentoDao();
+    private final UsuarioDao usuarioDao = new UsuarioDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if ("nueva".equals(request.getParameter("action"))) {
+            request.setAttribute("editando", false);
             request.getRequestDispatcher("SolicitudDocente.jsp").forward(request, response);
             return;
         }
@@ -42,6 +50,7 @@ public class SolicitudServlet extends HttpServlet {
                 return;
             }
             request.setAttribute("solicitud", solicitud);
+            request.setAttribute("editando", true);
             request.getRequestDispatcher("SolicitudDocente.jsp").forward(request, response);
             return;
         }
@@ -91,6 +100,12 @@ public class SolicitudServlet extends HttpServlet {
             solicitud.setIdUsuarioSolicitante(idUsuario);
             llenarDesdeFormulario(solicitud, request);
 
+            List<String> errores = validar(solicitud);
+            if (!errores.isEmpty()) {
+                regresarAlFormulario(request, response, solicitud, errores, false);
+                return;
+            }
+
             if (solicitudDao.create(solicitud)) {
                 // Crear NO envía a Estadías: el docente cae en los detalles para
                 // descargar el formato, firmarlo, subirlo y ahí dar ENVIAR (RN-02)
@@ -105,6 +120,13 @@ public class SolicitudServlet extends HttpServlet {
             }
 
             llenarDesdeFormulario(solicitud, request);
+
+            List<String> errores = validar(solicitud);
+            if (!errores.isEmpty()) {
+                regresarAlFormulario(request, response, solicitud, errores, true);
+                return;
+            }
+
             if (solicitudDao.update(solicitud)) {
                 // El FO firmado que ya estaba subido queda obsoleto: el formato
                 // se regenera con los datos nuevos y hay que firmarlo otra vez
@@ -119,6 +141,135 @@ public class SolicitudServlet extends HttpServlet {
 
         // Patrón PRG: Redirigir al GET evita que al recargar la página se repita la operación
         response.sendRedirect("indexSv");
+    }
+
+    /**
+     * Reglas de la solicitud. Devuelve la lista de mensajes a mostrar; vacía si
+     * todo está bien. El navegador ya valida lo mismo, pero un POST directo se
+     * lo salta: esta es la validación que de verdad protege los datos.
+     *
+     * Los largos máximos son los de las columnas VARCHAR2 del esquema: si se
+     * cambia una columna hay que mover también el maxlength de la vista.
+     */
+    private List<String> validar(Solicitud s) {
+        List<String> errores = new ArrayList<>();
+
+        // ---------- Datos del lugar a visitar ----------
+        exigirTexto(errores, s.getNombreEmpresaActividad(), "Nombre de la empresa o actividad", 150);
+        exigirTexto(errores, s.getLugarDireccion(), "Lugar o dirección", 200);
+
+        if (!Validador.telefonoValido(s.getTelefonoContacto())) {
+            errores.add("El teléfono del contacto debe tener 10 dígitos.");
+        }
+        if (!Validador.correoValido(s.getCorreoContacto())) {
+            errores.add("El correo electrónico del contacto no tiene un formato válido.");
+        }
+
+        LocalDate fechaInicio = Validador.fecha(s.getFechaInicio());
+        if (fechaInicio == null) {
+            errores.add("Elige la fecha de inicio de la visita.");
+        } else if (fechaInicio.isBefore(LocalDate.now())) {
+            errores.add("La fecha de la visita no puede ser anterior a hoy.");
+        }
+
+        exigirTexto(errores, s.getObjetivo(), "Objetivo de la visita", 500);
+
+        // ---------- Participantes ----------
+        exigirTexto(errores, s.getAreaSolicitante(), "Área solicitante", 100);
+        exigirTexto(errores, s.getDocenteResponsable(), "Docente responsable de la visita", 150);
+
+        if (!Validador.telefonoValido(s.getCelularResponsable())) {
+            errores.add("El celular del docente responsable debe tener 10 dígitos.");
+        }
+
+        for (Map.Entry<String, Integer> division : s.getEstudiantesPorDivision().entrySet()) {
+            int cantidad = (division.getValue() != null) ? division.getValue() : 0;
+            if (cantidad > MAX_ESTUDIANTES) {
+                errores.add("El número de estudiantes de " + division.getKey()
+                        + " no puede pasar de " + MAX_ESTUDIANTES + ".");
+            }
+        }
+
+        // ---------- Desglose por programa educativo ----------
+        if (s.getProgramas().isEmpty()) {
+            errores.add("Agrega al menos un grupo en el desglose por programa educativo.");
+        }
+        for (ProgramaEducativo p : s.getProgramas()) {
+            String programa = "\"" + p.getDivisionAcademica() + "\"";
+            if (p.getDivisionAcademica().length() > 100) {
+                errores.add("El nombre del programa educativo " + programa + " es demasiado largo.");
+            }
+            if (p.getCuatrimestre() < 1 || p.getCuatrimestre() > 11) {
+                errores.add("El cuatrimestre del programa " + programa + " debe estar entre 1 y 11.");
+            }
+            if (Validador.vacio(p.getGrupo())) {
+                errores.add("Escribe el grupo del programa " + programa + ".");
+            }
+            if (p.getNoEstudiantes() < 1) {
+                errores.add("El programa " + programa + " debe llevar al menos 1 estudiante.");
+            } else if (p.getNoEstudiantes() > MAX_ESTUDIANTES) {
+                errores.add("El programa " + programa + " no puede pasar de " + MAX_ESTUDIANTES + " estudiantes.");
+            }
+        }
+
+        // ---------- Los dos totales de estudiantes tienen que cuadrar ----------
+        int totalDivision = s.getTotalPorDivision();
+        int totalProgramas = 0;
+        for (ProgramaEducativo p : s.getProgramas()) {
+            totalProgramas += Math.max(0, p.getNoEstudiantes());
+        }
+        if (totalDivision < 1) {
+            errores.add("Captura cuántos estudiantes participan por división académica.");
+        }
+        if (totalDivision != totalProgramas) {
+            errores.add("El total de estudiantes por división académica (" + totalDivision
+                    + ") no coincide con el total del desglose por programa educativo ("
+                    + totalProgramas + ").");
+        }
+
+        // ---------- Asignaturas ----------
+        if (s.getAsignaturas().isEmpty()) {
+            errores.add("Agrega al menos una asignatura que se reforzará con la visita.");
+        }
+        for (String asignatura : s.getAsignaturas()) {
+            if (asignatura.length() > 100) {
+                errores.add("El nombre de la asignatura \"" + asignatura.substring(0, 40)
+                        + "…\" no debe pasar de 100 caracteres.");
+            }
+        }
+
+        return errores;
+    }
+
+    /** Campo de texto obligatorio: ni vacío ni más largo de lo que acepta la columna. */
+    private void exigirTexto(List<String> errores, String valor, String etiqueta, int maxLargo) {
+        if (Validador.vacio(valor)) {
+            errores.add("Completa el campo \"" + etiqueta + "\".");
+        } else if (Validador.limpiar(valor).length() > maxLargo) {
+            errores.add("El campo \"" + etiqueta + "\" no debe pasar de " + maxLargo + " caracteres.");
+        }
+    }
+
+    /**
+     * Vuelve a pintar el formulario con lo que el docente había capturado y la
+     * lista de errores, para que no pierda el trabajo por un dato mal escrito.
+     */
+    private void regresarAlFormulario(HttpServletRequest request, HttpServletResponse response,
+                                      Solicitud solicitud, List<String> errores, boolean editando)
+            throws ServletException, IOException {
+        // Los acompañantes llegaron solo como ids: se recuperan los nombres
+        // para poder volver a pintar los chips del autocompletado
+        List<Usuario> conNombre = new ArrayList<>();
+        for (Usuario elegido : solicitud.getDocentesAcompanantes()) {
+            Usuario completo = usuarioDao.getById(elegido.getId());
+            conNombre.add(completo != null ? completo : elegido);
+        }
+        solicitud.setDocentesAcompanantes(conNombre);
+
+        request.setAttribute("solicitud", solicitud);
+        request.setAttribute("editando", editando);
+        request.setAttribute("errores", errores);
+        request.getRequestDispatcher("SolicitudDocente.jsp").forward(request, response);
     }
 
     /** Copia al modelo los campos capturados en el formulario (crear y editar). */

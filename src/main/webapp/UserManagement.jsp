@@ -103,13 +103,13 @@
                 <div class="col-md-6">
                     <label class="form-label" for="nombre">Nombre completo</label>
                     <input id="nombre" name="nombre" type="text" class="form-control"
-                           placeholder="Ej. Ana López Ramírez"
+                           placeholder="Ej. Ana López Ramírez" maxlength="100"
                            value="${fn:escapeXml(usuarioEditado.nombre)}" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label" for="correo">Correo electrónico</label>
                     <input id="correo" name="correo" type="email" class="form-control"
-                           placeholder="usuario@utez.edu.mx"
+                           placeholder="usuario@utez.edu.mx" maxlength="100"
                            value="${fn:escapeXml(usuarioEditado.correo)}" required>
                 </div>
                 <div class="col-md-6">
@@ -126,8 +126,10 @@
                 <c:if test="${not editando}">
                     <div class="col-md-6">
                         <label class="form-label" for="contrasena">Contraseña temporal</label>
-                        <input id="contrasena" name="contrasena" type="password" class="form-control" required>
-                        <span class="form-ayuda">El usuario puede cambiarla desde "¿Olvidaste tu contraseña?".</span>
+                        <input id="contrasena" name="contrasena" type="password" class="form-control" required
+                               minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+                               title="Mínimo 8 caracteres, con letras y números">
+                        <span class="form-ayuda">Al menos 8 caracteres con letras y números. El usuario puede cambiarla desde "¿Olvidaste tu contraseña?".</span>
                     </div>
                 </c:if>
             </div>
