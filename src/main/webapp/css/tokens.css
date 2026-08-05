@@ -184,3 +184,7 @@
     width: 100%;
     margin-top: 1.5rem;
 }
+
+/* Variante para formularios sin acción secundaria: la acción principal
+   igual queda al pie a la derecha, no pegada al borde izquierdo. */
+.acciones-form--derecha { justify-content: flex-end; }

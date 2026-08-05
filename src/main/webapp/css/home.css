@@ -233,3 +233,29 @@
 .btn-verde:hover {
     background-color: var(--color-verde-hover) !important;
 }
+
+/* Modificador destructivo (eliminar en filas de tabla). Mismo patrón que
+   .btn-verde: aplica sobre .btn-ver-detalles y .btn-descargar. */
+.btn-rojo {
+    background-color: var(--color-rojo) !important;
+}
+
+.btn-rojo:hover {
+    background-color: var(--color-rojo-oscuro) !important;
+}
+
+/* Roles de usuario: mismo badge de estado, paleta de la marca (RF-12) */
+.rol-administrador {
+    background-color: #D6E4F0;
+    color: var(--color-azul);
+}
+
+.rol-estadias {
+    background-color: #D9F2E3;
+    color: #1E7A46;
+}
+
+.rol-docente {
+    background-color: #E9ECEF;
+    color: #495057;
+}

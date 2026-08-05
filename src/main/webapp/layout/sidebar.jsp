@@ -1,4 +1,5 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <aside id="sidebar" class="d-flex flex-column">
     <div class="fw-semibold text-light p-3 m-2 rounded-4"
          style="background: var(--color-azul);">
@@ -31,11 +32,15 @@
                 <i class="bi bi-clock-history me-2"></i>Histórico
             </a>
         </li>
-        <li class="nav-item m-2">
-            <a class="nav-link rounded-2" href="${pageContext.request.contextPath}/UserManagement.jsp?role=admin">
-                <i class="bi bi-shield-lock me-2"></i>Gestión de usuarios
-            </a>
-        </li>
+        <%-- Gestión de usuarios: solo el Administrador. El rol se lee de la
+             sesión (lo guarda LoginServlet), nunca de la URL. --%>
+        <c:if test="${sessionScope.rol == 'Administrador'}">
+            <li class="nav-item m-2">
+                <a class="nav-link rounded-2 ${activeNav == 'usuarios' ? 'active' : ''}" href="${pageContext.request.contextPath}/usuarios">
+                    <i class="bi bi-people me-2"></i>Gestión de usuarios
+                </a>
+            </li>
+        </c:if>
 
     </ul>
 

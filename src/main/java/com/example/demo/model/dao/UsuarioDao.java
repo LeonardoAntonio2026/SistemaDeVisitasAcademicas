@@ -18,13 +18,17 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
             + "FROM usuario u JOIN rol r ON r.id_rol = u.id_rol";
 
     /**
-     * Crea el usuario con rol Docente por defecto y guarda el hash de su
-     * contraseña en la tabla CONTRASENA, todo en una misma transacción.
+     * Crea el usuario y guarda el hash de su contraseña en la tabla CONTRASENA,
+     * todo en una misma transacción. Si la entidad no trae id_rol se usa Docente
+     * (registro público); la gestión de usuarios sí lo manda explícito (RF-12).
      */
     @Override
     public boolean create(Usuario entidad) {
-        String sqlUsuario = "INSERT INTO usuario (id_rol, nombre, correo) "
-                + "VALUES ((SELECT id_rol FROM rol WHERE nombre_rol = 'Docente'), ?, ?)";
+        boolean conRolExplicito = entidad.getIdRol() > 0;
+        String sqlUsuario = conRolExplicito
+                ? "INSERT INTO usuario (id_rol, nombre, correo) VALUES (?, ?, ?)"
+                : "INSERT INTO usuario (id_rol, nombre, correo) "
+                        + "VALUES ((SELECT id_rol FROM rol WHERE nombre_rol = 'Docente'), ?, ?)";
         String sqlContrasena = "INSERT INTO contrasena (id_usuario, hash_password) VALUES (?, ?)";
 
         Connection con = null;
@@ -34,8 +38,12 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
 
             int idUsuario;
             try (PreparedStatement ps = con.prepareStatement(sqlUsuario, new String[]{"ID_USUARIO"})) {
-                ps.setString(1, entidad.getNombre());
-                ps.setString(2, entidad.getCorreo());
+                int i = 1;
+                if (conRolExplicito) {
+                    ps.setInt(i++, entidad.getIdRol());
+                }
+                ps.setString(i++, entidad.getNombre());
+                ps.setString(i, entidad.getCorreo());
                 ps.executeUpdate();
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -132,13 +140,68 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         }
     }
 
+    /**
+     * Da de baja la cuenta y borra TODO lo que el usuario generó: sus solicitudes
+     * con su desglose, sus reportes, y los documentos e imágenes de ambos. Es
+     * irreversible; todo va en una transacción, así que o se borra completo o no
+     * se borra nada.
+     *
+     * Lo que NO destruye es el trabajo de OTROS: si evaluó solicitudes ajenas
+     * solo se quita su firma (id_usuario_autoriza queda en NULL) y si acompañó
+     * visitas de otro docente solo se quita de la lista de acompañantes. Borrar
+     * un coordinador de Estadías no puede llevarse las solicitudes de los demás.
+     *
+     * Usa {@link #contarHistorial(int)} antes para advertir qué se va a perder.
+     */
     @Override
     public boolean delete(Integer id) {
+        // Subconsulta reutilizada: las solicitudes de las que el usuario es dueño
+        final String SUS_SOLICITUDES = "SELECT id_solicitud FROM solicitud WHERE id_usuario_solicitante = ?";
+
         Connection con = null;
         try {
             con = SQLConnector.getConnection();
             con.setAutoCommit(false);
 
+            // 1. Desligarlo de lo ajeno, sin borrarlo
+            try (PreparedStatement ps = con.prepareStatement(
+                    "UPDATE solicitud SET id_usuario_autoriza = NULL WHERE id_usuario_autoriza = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = con.prepareStatement(
+                    "DELETE FROM solicitud_docente WHERE id_usuario = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            // 2. Borrar su árbol de solicitudes, de la hoja a la raíz por las FKs:
+            //    imagen/documento -> reporte -> documento/hijos -> solicitud
+            String[] enCascada = {
+                "DELETE FROM imagen WHERE id_reporte IN "
+                    + "(SELECT id_reporte FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + "))",
+                "DELETE FROM documento WHERE id_reporte IN "
+                    + "(SELECT id_reporte FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + "))",
+                "DELETE FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                "DELETE FROM documento WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                "DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                "DELETE FROM programa_educativo WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                "DELETE FROM estudiantes_division WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                "DELETE FROM solicitud_docente WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                "DELETE FROM solicitud WHERE id_usuario_solicitante = ?"
+            };
+            for (String sql : enCascada) {
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+            }
+
+            // 3. Sus datos de acceso y, por último, la cuenta
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM token_recuperacion WHERE id_usuario = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
             try (PreparedStatement ps = con.prepareStatement("DELETE FROM contrasena WHERE id_usuario = ?")) {
                 ps.setInt(1, id);
                 ps.executeUpdate();
@@ -172,6 +235,44 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
                 }
             }
         }
+    }
+
+    /**
+     * Lo que hay detrás de un usuario. {@code solicitudes} y {@code reportes} se
+     * DESTRUYEN al darlo de baja; {@code autorizaciones} y {@code acompanamientos}
+     * son trabajo de otros y solo se desligan.
+     */
+    public record Historial(int solicitudes, int reportes, int autorizaciones, int acompanamientos) {
+        /** Hay algo que se perdería para siempre al borrar la cuenta. */
+        public boolean destruyeDatos() {
+            return solicitudes + reportes > 0;
+        }
+    }
+
+    /** Cuenta lo que se perdería al dar de baja al usuario, para poder advertirlo. */
+    public Historial contarHistorial(int idUsuario) {
+        String sql = "SELECT "
+                + " (SELECT COUNT(*) FROM solicitud WHERE id_usuario_solicitante = ?),"
+                + " (SELECT COUNT(*) FROM reporte WHERE id_solicitud IN"
+                + "     (SELECT id_solicitud FROM solicitud WHERE id_usuario_solicitante = ?)),"
+                + " (SELECT COUNT(*) FROM solicitud WHERE id_usuario_autoriza = ?),"
+                + " (SELECT COUNT(*) FROM solicitud_docente WHERE id_usuario = ?)"
+                + " FROM dual";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            for (int i = 1; i <= 4; i++) {
+                ps.setInt(i, idUsuario);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Historial(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getInt(4));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new Historial(0, 0, 0, 0);
     }
 
     /**

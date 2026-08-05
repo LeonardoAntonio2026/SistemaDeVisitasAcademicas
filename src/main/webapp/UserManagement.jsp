@@ -1,248 +1,203 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%
-    request.setAttribute("pageTitle", "Gestión de usuarios");
-    String role = request.getParameter("role");
-    boolean isAdmin = "admin".equalsIgnoreCase(role);
-%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%-- Esta vista se sirve desde /usuarios (UsuarioServlet). El candado de aquí es
+     por si alguien escribe la URL del JSP a mano: el rol sale de la sesión. --%>
+<c:if test="${sessionScope.rol != 'Administrador'}">
+    <c:redirect url="/indexSv"/>
+</c:if>
+<% request.setAttribute("pageTitle", "Gestión de usuarios"); %>
+<% request.setAttribute("activeNav", "usuarios"); %>
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/css/user-management.css">
-
 <main id="main-content">
-    <% if (!isAdmin) { %>
-    <section class="access-card">
-        <h2>Acceso restringido</h2>
-        <p>Este panel solo está disponible para usuarios con permisos de administrador.</p>
-        <a class="btn-primary" href="${pageContext.request.contextPath}/UserManagement.jsp?role=admin">Ingresar como administrador</a>
-    </section>
-    <% } else { %>
-    <section class="management-shell">
-        <div class="page-header">
-            <div>
-                <p class="eyebrow">Panel de administración</p>
-                <h2>Gestión de usuarios</h2>
-                <p class="subtitle">Administra docentes y usuarios del sistema desde un único panel.</p>
-            </div>
-            <div class="header-badge">Solo administrador</div>
-        </div>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/form.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
-        <div class="summary-grid">
-            <article class="summary-card">
-                <span class="summary-label">Usuarios activos</span>
-                <strong id="activeUsersCount">0</strong>
-            </article>
-            <article class="summary-card">
-                <span class="summary-label">Administradores</span>
-                <strong id="adminUsersCount">0</strong>
-            </article>
-            <article class="summary-card">
-                <span class="summary-label">Docentes</span>
-                <strong id="teacherUsersCount">0</strong>
-            </article>
-        </div>
+    <c:set var="editando" value="${not empty usuarioEditado}"/>
+    <c:set var="confirmandoBaja" value="${not empty usuarioABorrar}"/>
 
-        <div class="card-panel">
-            <div class="card-panel-header">
-                <div>
-                    <h3 id="formTitle">Agregar usuario</h3>
-                    <p>Completa los datos para crear o actualizar un usuario.</p>
-                </div>
-                <button type="button" class="btn-secondary" id="resetFormBtn">Limpiar formulario</button>
-            </div>
+    <div class="superior">
+        <h2>Gestión de usuarios</h2>
+        <p>Da de alta cuentas y define con qué rol entran al sistema</p>
+    </div>
 
-            <form id="userForm" class="user-form">
-                <input type="hidden" id="userId" name="userId">
-                <div class="form-grid">
-                    <div class="field-group">
-                        <label for="fullName">Nombre completo</label>
-                        <input id="fullName" name="fullName" type="text" placeholder="Ej. Ana López" required>
+    <c:if test="${not empty mensaje}">
+        <div class="alert alert-success py-2 small mb-0 mt-3">${mensaje}</div>
+    </c:if>
+    <c:if test="${not empty error}">
+        <div class="alert alert-danger py-2 small mb-0 mt-3">${error}</div>
+    </c:if>
+
+    <c:if test="${confirmandoBaja}">
+        <h2 class="titulo-solicitudes">Confirmar eliminación</h2>
+        <div class="form-section">
+            <h6>Vas a eliminar a <c:out value="${usuarioABorrar.nombre}"/></h6>
+
+            <p>Se eliminará la cuenta <strong><c:out value="${usuarioABorrar.correo}"/></strong>
+               (<c:out value="${usuarioABorrar.nombreRol}"/>) y todo lo que registró en el sistema.
+               <strong>Esta acción no se puede deshacer.</strong></p>
+
+            <c:choose>
+                <c:when test="${bajaSolicitudes > 0 or bajaReportes > 0}">
+                    <div class="form-mismatch-msg" style="display: block;">
+                        Se borrarán para siempre:
+                        <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+                            <c:if test="${bajaSolicitudes > 0}">
+                                <li>${bajaSolicitudes} solicitud${bajaSolicitudes == 1 ? '' : 'es'} de visita,
+                                    con su desglose de grupos y sus documentos</li>
+                            </c:if>
+                            <c:if test="${bajaReportes > 0}">
+                                <li>${bajaReportes} reporte${bajaReportes == 1 ? '' : 's'} de visita,
+                                    con sus evidencias fotográficas</li>
+                            </c:if>
+                        </ul>
                     </div>
-                    <div class="field-group">
-                        <label for="email">Correo electrónico</label>
-                        <input id="email" name="email" type="email" placeholder="usuario@utez.edu.mx" required>
-                    </div>
-                    <div class="field-group">
-                        <label for="role">Rol</label>
-                        <select id="role" name="role" required>
-                            <option value="">Selecciona un rol</option>
-                            <option value="Administrador">Administrador</option>
-                            <option value="Docente">Docente</option>
-                            <option value="Coordinador">Coordinador</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label for="status">Estado</label>
-                        <select id="status" name="status" required>
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Guardar usuario</button>
+                </c:when>
+                <c:otherwise>
+                    <p class="form-ayuda">Este usuario no tiene solicitudes ni reportes propios.</p>
+                </c:otherwise>
+            </c:choose>
+
+            <%-- El trabajo de otros no se toca: solo se desliga --%>
+            <c:if test="${bajaAutorizaciones > 0 or bajaAcompanamientos > 0}">
+                <p class="form-ayuda" style="margin-top: 12px;">
+                    No se borrarán las solicitudes de otros docentes:
+                    <c:if test="${bajaAutorizaciones > 0}">
+                        en ${bajaAutorizaciones} que evaluó solo se quitará su firma como quien autorizó<c:if test="${bajaAcompanamientos > 0}">, y</c:if>
+                    </c:if>
+                    <c:if test="${bajaAcompanamientos > 0}">
+                        en ${bajaAcompanamientos} solo se le quitará de la lista de docentes acompañantes
+                    </c:if>.
+                </p>
+            </c:if>
+
+            <form action="${pageContext.request.contextPath}/usuarios" method="POST">
+                <input type="hidden" name="action" value="eliminar">
+                <input type="hidden" name="id" value="${usuarioABorrar.id}">
+                <div class="acciones-form">
+                    <a href="${pageContext.request.contextPath}/usuarios" class="btn-volver text-decoration-none">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btncrear" style="background-color: var(--color-rojo);">
+                        <i class="bi bi-trash"></i> Sí, eliminar todo
+                    </button>
                 </div>
             </form>
         </div>
+    </c:if>
 
-        <div class="card-panel">
-            <div class="card-panel-header">
-                <div>
-                    <h3>Usuarios registrados</h3>
-                    <p>Lista actual del sistema con opciones de edición y eliminación.</p>
+    <c:if test="${not confirmandoBaja}">
+    <h2 class="titulo-solicitudes">${editando ? 'Editar usuario' : 'Nuevo usuario'}</h2>
+
+    <div class="form-section">
+        <form action="${pageContext.request.contextPath}/usuarios" method="POST">
+            <input type="hidden" name="action" value="${editando ? 'actualizar' : 'crear'}">
+            <c:if test="${editando}">
+                <input type="hidden" name="id" value="${usuarioEditado.id}">
+            </c:if>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="nombre">Nombre completo</label>
+                    <input id="nombre" name="nombre" type="text" class="form-control"
+                           placeholder="Ej. Ana López Ramírez"
+                           value="${fn:escapeXml(usuarioEditado.nombre)}" required>
                 </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="correo">Correo electrónico</label>
+                    <input id="correo" name="correo" type="email" class="form-control"
+                           placeholder="usuario@utez.edu.mx"
+                           value="${fn:escapeXml(usuarioEditado.correo)}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="rol">Rol</label>
+                    <select id="rol" name="rol" class="form-control" required>
+                        <option value="">Selecciona un rol</option>
+                        <c:forEach var="r" items="${rolesDisponibles}">
+                            <option value="${fn:escapeXml(r)}"
+                                    ${usuarioEditado.nombreRol == r ? 'selected' : ''}>${fn:escapeXml(r)}</option>
+                        </c:forEach>
+                    </select>
+                    <span class="form-ayuda">Estadías y Administrador ven las solicitudes de todos los docentes.</span>
+                </div>
+                <c:if test="${not editando}">
+                    <div class="col-md-6">
+                        <label class="form-label" for="contrasena">Contraseña temporal</label>
+                        <input id="contrasena" name="contrasena" type="password" class="form-control" required>
+                        <span class="form-ayuda">El usuario puede cambiarla desde "¿Olvidaste tu contraseña?".</span>
+                    </div>
+                </c:if>
             </div>
 
-            <div class="table-responsive">
-                <table class="user-table">
+            <div class="acciones-form ${editando ? '' : 'acciones-form--derecha'}">
+                <c:if test="${editando}">
+                    <a href="${pageContext.request.contextPath}/usuarios" class="btn-volver text-decoration-none">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </c:if>
+                <button type="submit" class="btncrear">
+                    <i class="bi ${editando ? 'bi-check-lg' : 'bi-person-plus'}"></i>
+                    ${editando ? 'Guardar cambios' : 'Crear usuario'}
+                </button>
+            </div>
+        </form>
+    </div>
+    </c:if>
+
+    <h2 class="titulo-solicitudes">Usuarios registrados</h2>
+
+    <c:choose>
+        <c:when test="${empty listaUsuarios}">
+            <div class="solicitud-vacia">
+                <h5>Aún no hay usuarios</h5>
+                <p>Las cuentas que des de alta aparecerán en esta lista</p>
+            </div>
+        </c:when>
+        <c:otherwise>
+            <div class="detalle-card" style="margin-top: 1rem; overflow-x: auto;">
+                <table class="tabla-programas" style="margin-top: 0;">
                     <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Correo</th>
-                            <th>Rol</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
                     </thead>
-                    <tbody id="userTableBody"></tbody>
+                    <tbody>
+                    <c:forEach var="u" items="${listaUsuarios}">
+                        <tr>
+                            <td>
+                                <c:out value="${u.nombre}"/>
+                                <c:if test="${u.id == sessionScope.idUsuario}">
+                                    <span class="text-muted small">(tú)</span>
+                                </c:if>
+                            </td>
+                            <td><c:out value="${u.correo}"/></td>
+                            <td>
+                                <span class="badge-estado rol-${fn:toLowerCase(u.nombreRol)}"><c:out value="${u.nombreRol}"/></span>
+                            </td>
+                            <td style="white-space: nowrap;">
+                                <a class="btn-descargar" style="margin-right: 6px;"
+                                   href="${pageContext.request.contextPath}/usuarios?action=editar&id=${u.id}">Editar</a>
+                                <%-- La cuenta propia no se borra: dejaría al sistema sin quien lo administre.
+                                     El borrado es irreversible, así que pasa por una pantalla de confirmación
+                                     que detalla qué solicitudes y reportes se van a perder. --%>
+                                <c:if test="${u.id != sessionScope.idUsuario}">
+                                    <a class="btn-descargar btn-rojo"
+                                       href="${pageContext.request.contextPath}/usuarios?action=confirmar&id=${u.id}">Eliminar</a>
+                                </c:if>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                    </tbody>
                 </table>
             </div>
-        </div>
-    </section>
-    <% } %>
+        </c:otherwise>
+    </c:choose>
 </main>
-</div>
-</body>
-<script>
-    const STORAGE_KEY = 'userManagementUsers';
-    const initialUsers = [
-        { id: 1, fullName: 'Leonardo Antonio', email: 'leonardo@utez.edu.mx', role: 'Administrador', status: 'Activo' },
-        { id: 2, fullName: 'Patricia Ruiz', email: 'patricia@utez.edu.mx', role: 'Docente', status: 'Activo' },
-        { id: 3, fullName: 'Carlos Méndez', email: 'carlos@utez.edu.mx', role: 'Coordinador', status: 'Inactivo' }
-    ];
 
-    const form = document.getElementById('userForm');
-    const tableBody = document.getElementById('userTableBody');
-    const formTitle = document.getElementById('formTitle');
-    const resetBtn = document.getElementById('resetFormBtn');
-    const userIdInput = document.getElementById('userId');
-
-    const state = {
-        users: JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || initialUsers,
-        editingId: null
-    };
-
-    function saveUsers() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.users));
-        renderUsers();
-    }
-
-    function renderUsers() {
-        tableBody.innerHTML = '';
-        if (!state.users.length) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="empty-state">No hay usuarios registrados.</td></tr>';
-            updateSummary();
-            return;
-        }
-
-        state.users.forEach((user) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${user.fullName}</td>
-                <td>${user.email}</td>
-                <td>${user.role}</td>
-                <td><span class="status-badge ${user.status.toLowerCase()}">${user.status}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button type="button" class="btn-edit" data-id="${user.id}">Editar</button>
-                        <button type="button" class="btn-delete" data-id="${user.id}">Eliminar</button>
-                    </div>
-                </td>
-            `;
-            tableBody.appendChild(row);
-        });
-
-        updateSummary();
-    }
-
-    function updateSummary() {
-        const active = state.users.filter(user => user.status === 'Activo').length;
-        const admins = state.users.filter(user => user.role === 'Administrador').length;
-        const teachers = state.users.filter(user => user.role === 'Docente').length;
-        document.getElementById('activeUsersCount').textContent = active;
-        document.getElementById('adminUsersCount').textContent = admins;
-        document.getElementById('teacherUsersCount').textContent = teachers;
-    }
-
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const formData = new FormData(form);
-        const userData = {
-            id: Number(userIdInput.value) || Date.now(),
-            fullName: formData.get('fullName').toString().trim(),
-            email: formData.get('email').toString().trim(),
-            role: formData.get('role').toString(),
-            status: formData.get('status').toString()
-        };
-
-        if (!userData.fullName || !userData.email || !userData.role) {
-            return;
-        }
-
-        if (state.editingId) {
-            state.users = state.users.map(user => user.id === state.editingId ? userData : user);
-            state.editingId = null;
-        } else {
-            state.users.unshift(userData);
-        }
-
-        saveUsers();
-        form.reset();
-        userIdInput.value = '';
-        formTitle.textContent = 'Agregar usuario';
-    });
-
-    resetBtn.addEventListener('click', function () {
-        form.reset();
-        userIdInput.value = '';
-        state.editingId = null;
-        formTitle.textContent = 'Agregar usuario';
-    });
-
-    tableBody.addEventListener('click', function (event) {
-        const target = event.target;
-        if (target.tagName !== 'BUTTON') return;
-
-        const userId = Number(target.getAttribute('data-id'));
-        const user = state.users.find(item => item.id === userId);
-        if (!user) return;
-
-        if (target.classList.contains('btn-edit')) {
-            state.editingId = user.id;
-            userIdInput.value = user.id;
-            document.getElementById('fullName').value = user.fullName;
-            document.getElementById('email').value = user.email;
-            document.getElementById('role').value = user.role;
-            document.getElementById('status').value = user.status;
-            formTitle.textContent = 'Actualizar usuario';
-            document.getElementById('fullName').focus();
-        }
-
-        if (target.classList.contains('btn-delete')) {
-            const confirmDelete = confirm(`¿Deseas eliminar a ${user.fullName}?`);
-            if (confirmDelete) {
-                state.users = state.users.filter(item => item.id !== userId);
-                saveUsers();
-                if (state.editingId === userId) {
-                    state.editingId = null;
-                    form.reset();
-                    userIdInput.value = '';
-                    formTitle.textContent = 'Agregar usuario';
-                }
-            }
-        }
-    });
-
-    renderUsers();
-</script>
-</html>
+<%@ include file="layout/footer.jsp" %>
