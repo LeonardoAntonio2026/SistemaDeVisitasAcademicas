@@ -7,13 +7,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class TokenRecuperacionDao {
+
+    /** Horas que vive un enlace de recuperación; el correo anuncia este mismo número. */
+    public static final int HORAS_VIGENCIA = 24;
 
     public boolean crear(int idUsuario, String token) {
         String sqlInvalidar = "UPDATE token_recuperacion SET usado = 'S' WHERE id_usuario = ? AND usado = 'N'";
         String sqlInsert = "INSERT INTO token_recuperacion (id_usuario, token, fecha_expiracion, usado) "
-                + "VALUES (?, ?, SYSTIMESTAMP + INTERVAL '24' HOUR, 'N')";
+                + "VALUES (?, ?, ?, 'N')";
+
+        // La expiración se calcula aquí y no con SYSTIMESTAMP + INTERVAL: el servidor
+        // de BD trabaja en UTC (DBTIMEZONE +00:00) y FECHA_EXPIRACION no guarda zona,
+        // así que al releerla con la zona de la app (UTC-6) se le sumaban 6 horas de
+        // regalo y el enlace duraba 30 h en vez de 24. Escribiendo y leyendo el
+        // Timestamp desde Java ambos lados usan la misma zona.
+        Timestamp expiracion = Timestamp.from(Instant.now().plus(HORAS_VIGENCIA, ChronoUnit.HOURS));
 
         Connection con = null;
         try {
@@ -27,6 +40,7 @@ public class TokenRecuperacionDao {
             try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
                 ps.setInt(1, idUsuario);
                 ps.setString(2, token);
+                ps.setTimestamp(3, expiracion);
                 ps.executeUpdate();
             }
 

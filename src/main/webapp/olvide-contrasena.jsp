@@ -15,13 +15,9 @@
 
         <div class="text-center mb-4">
             <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" height="48" class="mb-3">
-<<<<<<< HEAD:target/Integradora_POO_2026-1.0-SNAPSHOT/login.jsp
-            <h4 class="fw-semibold" style="color: var(--color-azul);">Iniciar sesión</h4>
-=======
-            <h4 class="fw-semibold" style="color: #183052;">Recuperar Contraseña</h4>
->>>>>>> origin/feature/rf02-recuperar-contrasena:src/main/webapp/olvide-contrasena.jsp
+            <h4 class="fw-semibold" style="color: var(--color-azul);">Recuperar contraseña</h4>
             <p class="text-muted small mb-0">Sistema de Gestión de Visitas Académicas</p>
-            <p class="text-muted small mb-0">Ingresa el correro de tu cuenta para enviar codigo de verificacion </p>
+            <p class="text-muted small mb-0">Ingresa el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.</p>
         </div>
 
         <% if (request.getAttribute("error") != null) { %>
@@ -33,30 +29,19 @@
 
         <form action="${pageContext.request.contextPath}/olvide-contrasena" method="POST">
             <div class="mb-3">
-                <label class="form-label">Correo electrónico</label>
-                <input type="email" name="correo" class="form-control" placeholder="docente@utez.edu.mx" required>
-            </div>
-<<<<<<< HEAD:target/Integradora_POO_2026-1.0-SNAPSHOT/login.jsp
-            <div class="mb-3">
-                <label class="form-label">Contraseña</label>
-                <input type="password" name="contrasena" class="form-control" placeholder="••••••••" required>
+                <label class="form-label" for="correo">Correo electrónico</label>
+                <input type="email" id="correo" name="correo" class="form-control"
+                       placeholder="docente@utez.edu.mx" required maxlength="100">
             </div>
             <button type="submit" class="btn w-100 text-white" style="background-color: var(--color-azul);">
-                Entrar
+                Enviar enlace
             </button>
         </form>
 
+        <a href="${pageContext.request.contextPath}/login.jsp" class="text-center small mt-3 text-decoration-none"
+           style="color: var(--color-azul);">Volver a iniciar sesión</a>
 
-=======
-            <button type="submit" class="btn w-100 text-white" style="background-color: #183052;">
-                Enviar
-            </button>
-        </form>
-
->>>>>>> origin/feature/rf02-recuperar-contrasena:src/main/webapp/olvide-contrasena.jsp
     </div>
 </div>
 </body>
 </html>
-
-

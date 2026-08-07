@@ -9,6 +9,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
@@ -63,8 +64,17 @@ public class RestablecerContrasenaServlet extends HttpServlet {
         boolean actualizado = usuarioDao.actualizarContrasena(tokenRecuperacion.getIdUsuario(), contra1);
         if (actualizado) {
             tokenDao.marcarUsado(token);
-            request.setAttribute("mensaje", "Tu contraseña se actualizó con éxito. Ya puedes iniciar sesión.");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+
+            // Quien recupera la contraseña vuelve a entrar desde cero: si había una
+            // sesión abierta en este navegador (propia o de otro), se cierra.
+            HttpSession sesion = request.getSession(false);
+            if (sesion != null) {
+                sesion.invalidate();
+            }
+
+            // Redirect y no forward: así la URL deja de ser el POST y refrescar la
+            // página no reenvía el formulario con un token ya gastado.
+            response.sendRedirect(request.getContextPath() + "/login.jsp?mensaje=restablecida");
         } else {
             request.setAttribute("error", "Hubo un problema al actualizar tu contraseña. Intenta de nuevo.");
             request.setAttribute("token", token);

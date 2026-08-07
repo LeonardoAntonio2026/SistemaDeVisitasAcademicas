@@ -4,6 +4,7 @@ import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.TokenRecuperacionDao;
 import com.example.demo.model.dao.UsuarioDao;
 import com.example.demo.utils.EmailSender;
+import com.example.demo.utils.Validador;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -36,9 +37,12 @@ public class OlvideContrasenaServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
+        // Se valida el formato antes de ir a la BD, pero un correo mal escrito
+        // NO se delata con un error propio: la respuesta es siempre la misma para
+        // no revelar qué correos están registrados.
         String correo = request.getParameter("correo");
-        if (correo != null && !correo.isBlank()) {
-            Usuario usuario = usuarioDao.getByCorreo(correo.trim());
+        if (Validador.correoValido(correo)) {
+            Usuario usuario = usuarioDao.getByCorreo(Validador.limpiar(correo));
             if (usuario != null) {
                 String token = generarToken();
                 boolean guardado = tokenDao.crear(usuario.getId(), token);
@@ -67,12 +71,13 @@ public class OlvideContrasenaServlet extends HttpServlet {
                 <h2 style="color: #183052;">Recupera tu contraseña</h2>
                 <p>Hola {0}, recibimos una solicitud para restablecer tu contraseña.</p>
                 <p><a href="{1}" style="color: #183052;">Haz click aquí para crear una nueva contraseña</a></p>
-                <p>Este enlace es válido durante <strong>24 horas</strong>. Si tú no solicitaste esto, puedes ignorar este correo.</p>
+                <p>Este enlace es válido durante <strong>{2} horas</strong>. Si tú no solicitaste esto, puedes ignorar este correo.</p>
                 <p style="font-size: 12px; color: #777777;">Sistema de Gestión de Visitas Académicas - UTEZ</p>
             </body>
         </html>
         """;
-        String cuerpo = MessageFormat.format(plantillaHtml, usuario.getNombre(), enlace);
+        String cuerpo = MessageFormat.format(plantillaHtml, usuario.getNombre(), enlace,
+                String.valueOf(TokenRecuperacionDao.HORAS_VIGENCIA));
 
         try {
             EmailSender.sendMail(usuario.getCorreo(),

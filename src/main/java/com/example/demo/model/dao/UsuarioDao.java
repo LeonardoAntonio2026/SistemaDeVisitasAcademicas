@@ -323,9 +323,13 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     /**
      * Trae el usuario por correo, con todos sus datos (para RF-02: generar el
      * token de recuperación necesitamos su id, sin exponerlo en la vista).
+     *
+     * Compara sin distinguir mayúsculas: quien escribe "Docente@utez.edu.mx"
+     * para recuperar su cuenta no debe quedarse esperando un correo que nunca
+     * se envió sólo por la capitalización.
      */
     public Usuario getByCorreo(String correo) {
-        String sql = SELECT_BASE + " WHERE u.correo = ?";
+        String sql = SELECT_BASE + " WHERE UPPER(u.correo) = UPPER(?)";
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -342,18 +346,30 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Actualiza el hash guardado en CONTRASENA tras un restablecimiento (RF-02).
+     * Guarda el nuevo hash en CONTRASENA tras un restablecimiento (RF-02).
+     *
+     * Es un MERGE y no un UPDATE porque no todo usuario tiene ya su fila en
+     * CONTRASENA (los dados de alta directo en la BD no la tienen): con UPDATE
+     * el restablecimiento afectaba 0 filas y el usuario quedaba atorado viendo
+     * "hubo un problema" sin poder entrar nunca.
+     *
      * TODO(coordinar con Dev C): si CONTRASENA agrega columna de salt, aquí es
      * donde hay que generarlo y guardarlo junto con el hash (hoy es solo SHA-256
      * plano, igual que en create() y login()).
      */
     public boolean actualizarContrasena(int idUsuario, String nuevaContrasenaPlano) {
-        String sql = "UPDATE contrasena SET hash_password = ? WHERE id_usuario = ?";
+        String sql = "MERGE INTO contrasena c "
+                + "USING (SELECT ? AS id_usuario, ? AS hash_password FROM dual) nuevo "
+                + "ON (c.id_usuario = nuevo.id_usuario) "
+                + "WHEN MATCHED THEN UPDATE SET c.hash_password = nuevo.hash_password, "
+                + "                            c.fecha_actualizacion = SYSDATE "
+                + "WHEN NOT MATCHED THEN INSERT (id_usuario, hash_password, fecha_actualizacion) "
+                + "                      VALUES (nuevo.id_usuario, nuevo.hash_password, SYSDATE)";
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, PasswordUtils.sha256(nuevaContrasenaPlano));
-            ps.setInt(2, idUsuario);
+            ps.setInt(1, idUsuario);
+            ps.setString(2, PasswordUtils.sha256(nuevaContrasenaPlano));
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

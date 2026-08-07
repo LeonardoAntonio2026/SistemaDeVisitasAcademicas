@@ -78,6 +78,16 @@ public class SQLConnector {
             config.setUsername(dbUser);
             config.setPassword(dbPass);
 
+            // La BD es Autonomous y viene con parallel_degree_policy = AUTO, así que
+            // Oracle resuelve los DML en paralelo por su cuenta. El problema es que
+            // después de un DML paralelo sobre una tabla, esa misma transacción ya no
+            // puede volver a tocarla: lanza ORA-12838. Eso rompía todo flujo que
+            // encadena dos escrituras sobre la misma tabla, como invalidar los tokens
+            // viejos y luego insertar el nuevo (RF-02) o el borrado en cascada de un
+            // usuario. Nuestras escrituras son de pocas filas y no ganan nada con el
+            // paralelismo, así que se desactiva en cada conexión del pool.
+            config.setConnectionInitSql("ALTER SESSION DISABLE PARALLEL DML");
+
             config.setMaximumPoolSize(10);
             config.setMinimumIdle(2);
             config.setIdleTimeout(30000);

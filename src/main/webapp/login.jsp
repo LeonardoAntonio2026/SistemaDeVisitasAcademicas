@@ -2,6 +2,7 @@
 <%
     request.setAttribute("pageTitle", "Iniciar Sesión");
     String error = request.getParameter("error");
+    String mensaje = request.getParameter("mensaje");
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -27,6 +28,13 @@
                 out.print("Correo inválido");
             }
         %>
+    </div>
+    <% } %>
+
+    <% if ("restablecida".equals(mensaje)) { %>
+    <div class="auth-alert auth-alert-exito">
+        <i class="bi bi-check-circle"></i>
+        Tu contraseña se actualizó. Ya puedes iniciar sesión.
     </div>
     <% } %>
 
@@ -59,7 +67,7 @@
 
             <button type="submit" class="btn-auth">Iniciar Sesión</button>
 
-            <a href="${pageContext.request.contextPath}/RecuperarContrasena.jsp" class="auth-link">Recuperar contraseña</a>
+            <a href="${pageContext.request.contextPath}/olvide-contrasena" class="auth-link">Recuperar contraseña</a>
         </form>
     </div>
 

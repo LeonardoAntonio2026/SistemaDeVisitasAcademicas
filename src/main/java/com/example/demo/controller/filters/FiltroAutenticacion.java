@@ -24,13 +24,19 @@ public class FiltroAutenticacion extends HttpFilter {
         // 1. ¿El usuario ya inició sesión? (guardamos el atributo "usuario" al hacer login)
         boolean loggedIn = (session != null && session.getAttribute("usuario") != null);
 
-// 2. Rutas públicas: login, registro, recuperación de contraseña (RF-02) y sus servlets
+        // 2. Rutas públicas: login y registro
         boolean loginRequest =
                 requestURI.endsWith("login.jsp") ||
                         requestURI.endsWith("/login") ||
                         requestURI.endsWith("registro.jsp") ||
-                        requestURI.endsWith("/register") ||
-                        requestURI.endsWith("olvide-contrasena.jsp") ||
+                        requestURI.endsWith("/register");
+
+        // 2b. Recuperación de contraseña (RF-02): públicas TAMBIÉN con sesión abierta.
+        // El enlace llega por correo y es normal abrirlo desde el navegador donde ya
+        // se inició sesión (propia o de alguien más en un equipo compartido); si aquí
+        // se redirige a index.jsp, el enlace del correo simplemente no funciona.
+        boolean recuperacionRequest =
+                requestURI.endsWith("olvide-contrasena.jsp") ||
                         requestURI.endsWith("/olvide-contrasena") ||
                         requestURI.endsWith("restablecer-contrasena.jsp") ||
                         requestURI.endsWith("/restablecer-contrasena");
@@ -51,8 +57,8 @@ public class FiltroAutenticacion extends HttpFilter {
                 chain.doFilter(request, response);
             }
         } else {
-            // SIN sesión: solo dejamos pasar login/registro y recursos públicos
-            if (loginRequest || isResource) {
+            // SIN sesión: solo dejamos pasar login/registro, recuperación y recursos públicos
+            if (loginRequest || recuperacionRequest || isResource) {
                 chain.doFilter(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/login.jsp");

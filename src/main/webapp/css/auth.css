@@ -156,3 +156,10 @@
     align-items: center;
     gap: 0.5rem;
 }
+
+/* Misma píldora, en verde: confirmaciones (contraseña restablecida). */
+.auth-alert-exito {
+    background: #e8f5ee;
+    color: #1e6b46;
+    border-color: #bfe3d0;
+}
