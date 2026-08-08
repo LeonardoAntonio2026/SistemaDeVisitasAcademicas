@@ -109,7 +109,7 @@
                 <div class="col-md-6">
                     <label class="form-label" for="correo">Correo electrónico</label>
                     <input id="correo" name="correo" type="email" class="form-control"
-                           placeholder="usuario@utez.edu.mx" maxlength="100"
+                           placeholder="usuario@utez.edu.mx" maxlength="100" autocomplete="off"
                            value="${fn:escapeXml(usuarioEditado.correo)}" required>
                 </div>
                 <div class="col-md-6">
@@ -127,7 +127,7 @@
                     <div class="col-md-6">
                         <label class="form-label" for="contrasena">Contraseña temporal</label>
                         <input id="contrasena" name="contrasena" type="password" class="form-control" required
-                               minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+                               minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" autocomplete="off"
                                title="Mínimo 8 caracteres, con letras y números">
                         <span class="form-ayuda">Al menos 8 caracteres con letras y números. El usuario puede cambiarla desde "¿Olvidaste tu contraseña?".</span>
                     </div>

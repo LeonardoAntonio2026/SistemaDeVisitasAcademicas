@@ -1,8 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
     request.setAttribute("pageTitle", "Iniciar Sesión");
-    String error = request.getParameter("error");
-    String mensaje = request.getParameter("mensaje");
+
+    // LoginServlet y RegisterServlet llegan por forward con el texto ya armado en
+    // un atributo; el restablecimiento llega por redirect, así que trae código en la URL.
+    if ("restablecida".equals(request.getParameter("mensaje")) && request.getAttribute("mensaje") == null) {
+        request.setAttribute("mensaje", "Tu contraseña se actualizó. Ya puedes iniciar sesión.");
+    }
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -18,25 +23,19 @@
 
 <div class="auth-wrapper">
 
-    <% if (error != null) { %>
-    <div class="auth-alert">
-        <i class="bi bi-exclamation-circle"></i>
-        <%
-            if ("credenciales".equals(error)) {
-                out.print("Correo o contraseña incorrectos");
-            } else {
-                out.print("Correo inválido");
-            }
-        %>
-    </div>
-    <% } %>
+    <c:if test="${not empty error}">
+        <div class="auth-alert">
+            <i class="bi bi-exclamation-circle"></i>
+            <c:out value="${error}"/>
+        </div>
+    </c:if>
 
-    <% if ("restablecida".equals(mensaje)) { %>
-    <div class="auth-alert auth-alert-exito">
-        <i class="bi bi-check-circle"></i>
-        Tu contraseña se actualizó. Ya puedes iniciar sesión.
-    </div>
-    <% } %>
+    <c:if test="${not empty mensaje}">
+        <div class="auth-alert auth-alert-exito">
+            <i class="bi bi-check-circle"></i>
+            <c:out value="${mensaje}"/>
+        </div>
+    </c:if>
 
     <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" class="auth-logo">
     <div class="auth-subtitle">UNIVERSIDAD TECNOLÓGICA<br>EMILIANO ZAPATA DEL ESTADO DE MORELOS</div>
