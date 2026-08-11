@@ -93,7 +93,7 @@
     <h2 class="titulo-solicitudes">${editando ? 'Editar usuario' : 'Nuevo usuario'}</h2>
 
     <div class="form-section">
-        <form action="${pageContext.request.contextPath}/usuarios" method="POST">
+        <form action="${pageContext.request.contextPath}/usuarios" method="POST" autocomplete="off">
             <input type="hidden" name="action" value="${editando ? 'actualizar' : 'crear'}">
             <c:if test="${editando}">
                 <input type="hidden" name="id" value="${usuarioEditado.id}">
