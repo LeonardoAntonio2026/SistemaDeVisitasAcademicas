@@ -5,8 +5,11 @@
      viene ${solicitud} cargada, pero eso NO significa que se esté editando. --%>
 <% request.setAttribute("pageTitle", Boolean.TRUE.equals(request.getAttribute("editando")) ? "Editar solicitud" : "Nueva Solicitud"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
-<%-- Las divisiones académicas viven en el modelo para no repetirlas en cada vista --%>
-<% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
+<%-- El catálogo de divisiones y programas educativos vive en el modelo:
+     así el docente elige de una lista en vez de escribir a mano --%>
+<% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
+<% request.setAttribute("nombresDivision", com.example.demo.model.CatalogoAcademico.getNombres()); %>
+<% request.setAttribute("programasPorDivision", com.example.demo.model.CatalogoAcademico.getProgramas()); %>
 <%-- Tope inferior del selector de fecha: no se agenda una visita en el pasado --%>
 <% request.setAttribute("hoy", java.time.LocalDate.now().toString()); %>
 <%@ include file="layout/header.jsp" %>
@@ -17,7 +20,10 @@
 <main id="main-content">
     <c:set var="s" value="${solicitud}"/>
 
-    <form action="solicitud" method="POST" id="form-solicitud"
+    <%-- autocomplete="off": el autorrelleno del navegador escoge por su cuenta
+         los <select> del desglose (división, programa, cuatrimestre, grupo) y
+         deja capturados grupos que el docente nunca eligió --%>
+    <form action="solicitud" method="POST" id="form-solicitud" autocomplete="off"
           <c:if test="${editando}">onsubmit="return confirm('¿Guardar los cambios? Si ya habías subido el formato FO-UTEZ-EST-08 firmado se eliminará: descarga el formato actualizado, fírmalo y súbelo de nuevo.');"</c:if>>
         <input type="hidden" name="action" value="${editando ? 'update' : 'create'}">
         <c:if test="${editando}">
@@ -138,77 +144,26 @@
                 <small class="form-ayuda">Solo aparecen docentes registrados en el sistema.</small>
             </div>
 
-            <div class="mb-1">
-                <label class="form-label d-block mb-2">Número de estudiantes participantes por división académica</label>
-                <div class="division-table">
-                    <div class="division-header">
-                        <c:forEach var="division" items="${divisiones}">
-                            <span>${division}</span>
-                        </c:forEach>
-                        <span>Total</span>
-                    </div>
-                    <div class="division-inputs">
-                        <c:forEach var="division" items="${divisiones}">
-                            <input type="number" name="division_${division}" class="form-control" min="0" max="999" step="1"
-                                   value="${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}">
-                        </c:forEach>
-                        <input type="number" class="form-control division-total" value="0" readonly tabindex="-1">
-                    </div>
+            <%-- ===== Grupos que participan =====
+                 Todo se elige de listas: la división filtra los programas y los
+                 grupos que ya se usaron se van descartando. El desglose por
+                 división de abajo se calcula solo, ya no se captura. --%>
+            <label class="form-label d-block mb-1">Grupos que participan en la visita</label>
+            <small class="form-ayuda mb-2">Agrega una fila por cada grupo. Al elegir la división académica se muestran sus programas educativos.</small>
+
+            <div class="programa-tabla">
+                <div class="programa-header">
+                    <span>División académica</span>
+                    <span>Programa educativo</span>
+                    <span>Cuatrimestre</span>
+                    <span>Grupo</span>
+                    <span>Estudiantes</span>
+                    <span></span>
                 </div>
-                <small class="form-ayuda">El total debe ser igual a la suma del desglose por programa educativo.</small>
-                <div id="division-mismatch-msg" class="form-mismatch-msg" style="display:none;">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <span id="division-mismatch-text"></span>
-                </div>
-            </div>
-        </div>
 
-        <div class="form-section">
-            <h6>Desglose por programa educativo</h6>
-
-            <div class="programa-header mb-1">
-                <span class="form-label mb-0">Programa educativo</span>
-                <span class="form-label mb-0">Cuatrimestre</span>
-                <span class="form-label mb-0">Grupo</span>
-                <span class="form-label mb-0">No. estudiantes</span>
-                <span></span>
-            </div>
-
-            <div id="programas-container">
-                <%-- Se pintan las filas que ya existan: en edición vienen de la BD y al
-                     volver con errores de validación vienen de lo que se capturó --%>
-                <c:choose>
-                    <c:when test="${not empty s.programas}">
-                        <c:forEach var="p" items="${s.programas}">
-                            <div class="programa-row">
-                                <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required maxlength="100" value="<c:out value="${p.divisionAcademica}"/>">
-                                <input type="number" name="cuatrimestre" class="form-control" placeholder="5" required min="1" max="11" step="1" value="${p.cuatrimestre}">
-                                <input type="text" name="grupo" class="form-control" placeholder="A" required maxlength="10" value="<c:out value="${p.grupo}"/>">
-                                <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" required min="1" max="999" step="1" value="${p.noEstudiantes}">
-                                <button type="button" class="btn-delete-row" title="Eliminar fila">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.171a1 1 0 0 1 .707.293L7.5 3h1l.621-.707A1 1 0 0 1 9.829 2H13a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 0 0 1z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </c:forEach>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="programa-row">
-                            <input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required maxlength="100">
-                            <input type="number" name="cuatrimestre" class="form-control" placeholder="5" required min="1" max="11" step="1">
-                            <input type="text" name="grupo" class="form-control" placeholder="A" required maxlength="10">
-                            <input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" required min="1" max="999" step="1">
-                            <button type="button" class="btn-delete-row" title="Eliminar fila">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.171a1 1 0 0 1 .707.293L7.5 3h1l.621-.707A1 1 0 0 1 9.829 2H13a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 0 0 1z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                <%-- Las filas las arma solicitud-form.js con la plantilla de abajo:
+                     así el marcado de una fila vive en un solo lugar --%>
+                <div id="programas-container"></div>
             </div>
 
             <div id="programas-msg" class="form-mismatch-msg" style="display:none;">
@@ -216,8 +171,101 @@
                 <span id="programas-msg-text"></span>
             </div>
 
-            <button type="button" class="btn-agregar mt-3" id="btn-agregar-grupo">+ Agregar grupo</button>
+            <button type="button" class="btn-agregar mt-3" id="btn-agregar-grupo">
+                <i class="bi bi-plus-lg"></i> Agregar grupo
+            </button>
+
+            <%-- ===== Desglose por división académica (calculado) ===== --%>
+            <label class="form-label d-block mb-1 mt-4">Número de estudiantes participantes por división académica</label>
+            <div class="tabla-scroll" id="division-resumen">
+                <div class="division-table">
+                    <div class="division-header">
+                        <c:forEach var="division" items="${divisiones}">
+                            <span title="${nombresDivision[division]}">${division}</span>
+                        </c:forEach>
+                        <span>Total</span>
+                    </div>
+                    <div class="division-valores">
+                        <c:forEach var="division" items="${divisiones}">
+                            <span data-division="${division}">0</span>
+                        </c:forEach>
+                        <span data-division-total>0</span>
+                    </div>
+                </div>
+            </div>
+            <small class="form-ayuda">Se calcula automáticamente con los grupos capturados. Es el desglose que se imprime en el FO-UTEZ-EST-08.</small>
         </div>
+
+        <%-- ===== Datos para solicitud-form.js (no se ven) ===== --%>
+
+        <%-- Catálogo de programas educativos por división --%>
+        <div id="catalogo-programas" hidden>
+            <c:forEach var="entrada" items="${programasPorDivision}">
+                <c:forEach var="programa" items="${entrada.value}">
+                    <span data-division="${entrada.key}" data-programa="<c:out value="${programa}"/>"></span>
+                </c:forEach>
+            </c:forEach>
+        </div>
+
+        <%-- Grupos ya capturados: en edición vienen de la BD y al volver con
+             errores de validación vienen de lo que se acababa de escribir --%>
+        <div id="programas-iniciales" hidden>
+            <c:forEach var="p" items="${s.programas}">
+                <span data-programa="<c:out value="${p.programa}"/>"
+                      data-cuatrimestre="${p.cuatrimestre}"
+                      data-grupo="<c:out value="${p.grupo}"/>"
+                      data-estudiantes="${p.noEstudiantes}"></span>
+            </c:forEach>
+        </div>
+
+        <%-- Plantilla de una fila del desglose --%>
+        <template id="tpl-programa-row">
+            <div class="programa-row">
+                <div class="programa-campo" data-etiqueta="División académica">
+                    <select class="form-control campo-division" required aria-label="División académica">
+                        <option value="">Elige una división…</option>
+                        <c:forEach var="division" items="${divisiones}">
+                            <option value="${division}" title="${nombresDivision[division]}">${division}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="programa-campo" data-etiqueta="Programa educativo">
+                    <select class="form-control campo-programa" name="programaEducativo" required
+                            aria-label="Programa educativo">
+                        <option value="">Elige primero la división</option>
+                    </select>
+                </div>
+                <div class="programa-campo" data-etiqueta="Cuatrimestre">
+                    <select class="form-control campo-cuatrimestre" name="cuatrimestre" required
+                            aria-label="Cuatrimestre">
+                        <option value="">—</option>
+                        <c:forEach var="n" begin="1" end="11">
+                            <option value="${n}">${n}°</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="programa-campo" data-etiqueta="Grupo">
+                    <select class="form-control campo-grupo" name="grupo" required aria-label="Grupo">
+                        <option value="">—</option>
+                        <c:forTokens items="A,B,C,D,E,F,G,H,I,J" delims="," var="letra">
+                            <option value="${letra}">${letra}</option>
+                        </c:forTokens>
+                    </select>
+                </div>
+                <div class="programa-campo" data-etiqueta="Estudiantes">
+                    <input type="number" name="numEstudiantesGrupo" class="form-control campo-estudiantes"
+                           min="1" max="999" step="1" required placeholder="0" aria-label="Número de estudiantes">
+                </div>
+                <div class="programa-campo programa-campo--accion">
+                    <button type="button" class="btn-delete-row" title="Quitar este grupo" aria-label="Quitar este grupo">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.171a1 1 0 0 1 .707.293L7.5 3h1l.621-.707A1 1 0 0 1 9.829 2H13a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 0 0 1z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </template>
 
         <div class="form-section">
             <h6>Asignaturas que se reforzarán con la visita</h6>
@@ -242,15 +290,26 @@
         </div>
 
         <div class="acciones-form">
-            <c:set var="volverUrl">${pageContext.request.contextPath}/solicitud</c:set>
-            <c:if test="${editando}">
-                <c:set var="volverUrl">${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}</c:set>
-            </c:if>
-            <a href="${volverUrl}" class="btn-volver text-decoration-none">
-                <i class="bi bi-arrow-left"></i> Volver
+            <%-- El botón dice a dónde lleva y que se pierde lo capturado: un
+                 "Volver" a secas se entendía como "regresar un paso" --%>
+            <c:choose>
+                <c:when test="${editando}">
+                    <c:set var="volverUrl">${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}</c:set>
+                    <c:set var="volverTexto">Cancelar y volver a la solicitud</c:set>
+                </c:when>
+                <c:otherwise>
+                    <c:set var="volverUrl">${pageContext.request.contextPath}/solicitud</c:set>
+                    <c:set var="volverTexto">Cancelar y volver a solicitudes</c:set>
+                </c:otherwise>
+            </c:choose>
+            <a href="${volverUrl}" class="btn-volver text-decoration-none"
+               onclick="return confirm('Se perderán los datos capturados que no se hayan guardado. ¿Salir del formulario?');">
+                <i class="bi bi-arrow-left"></i> ${volverTexto}
             </a>
+            <%-- No dice "Crear/Enviar": guardar solo deja la solicitud lista;
+                 todavía falta descargar el formato, firmarlo, subirlo y enviar --%>
             <button type="submit" class="btncrear">
-                <i class="bi ${editando ? 'bi-check-lg' : 'bi-send'}"></i> ${editando ? 'Guardar cambios' : 'Crear Solicitud'}
+                <i class="bi bi-check-lg"></i> ${editando ? 'Guardar cambios' : 'Guardar y continuar'}
             </button>
         </div>
 

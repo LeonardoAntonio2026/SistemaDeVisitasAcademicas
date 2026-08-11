@@ -2,7 +2,6 @@
 <%-- Fragmento reutilizable: tarjetas de solicitudes (usado por index.jsp y solicitudes.jsp).
      Espera el atributo "listaSolicitudes" en el request. --%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
 
@@ -33,11 +32,12 @@
                                 <span>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
                             </div>
                         </div>
-                        <span class="badge-estado estado-${fn:replace(fn:toLowerCase(s.nombreEstado), ' ', '-')}">${s.nombreEstado}</span>
+                        <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
                     </div>
 
                         <%-- Stepper compacto: mismo componente que la página de detalles --%>
                     <c:set var="stepperEstado" value="${s.nombreEstado}"/>
+                    <c:set var="stepperEstadoReporte" value="${s.estadoReporte}"/>
                     <%@ include file="stepper.jsp" %>
 
                     <div class="solicitud-card-bottom">

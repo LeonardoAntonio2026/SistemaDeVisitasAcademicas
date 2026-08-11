@@ -121,23 +121,32 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return datos;
     }
 
+    /**
+     * La solicitud con todo su desglose. Las tablas hijas se consultan con la
+     * MISMA conexión que la solicitud: antes cada una pedía la suya al pool, y
+     * armar un solo detalle tenía 5 conexiones ocupadas de las 10 que hay.
+     */
     @Override
     public Solicitud getById(Integer id) {
         String sql = SELECT_BASE + " WHERE s.id_solicitud = ?";
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
+            Solicitud solicitud;
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Solicitud solicitud = mapRow(rs);
-                    solicitud.setProgramas(getProgramas(id));
-                    solicitud.setAsignaturas(getAsignaturas(id));
-                    solicitud.setEstudiantesPorDivision(getEstudiantesPorDivision(id));
-                    solicitud.setDocentesAcompanantes(getDocentesAcompanantes(id));
-                    return solicitud;
+                if (!rs.next()) {
+                    return null;
                 }
+                solicitud = mapRow(rs);
             }
+
+            solicitud.setProgramas(getProgramas(con, id));
+            solicitud.setAsignaturas(getAsignaturas(con, id));
+            solicitud.setEstudiantesPorDivision(getEstudiantesPorDivision(con, id));
+            solicitud.setDocentesAcompanantes(getDocentesAcompanantes(con, id));
+            return solicitud;
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -195,12 +204,12 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * docente aún no las envía (RN-02).
      */
     public List<Solicitud> getActivasParaRevision() {
-        return getPorEstados("e.nombre_estado IN ('En revisión', 'Aprobada')");
+        return getPorEstados(true, "En revisión", "Aprobada");
     }
 
     /** Todas las solicitudes ya enviadas (para la página Solicitudes del coordinador). */
     public List<Solicitud> getEnviadas() {
-        return getPorEstados("e.nombre_estado <> 'Pendiente'");
+        return getPorEstados(false, "Pendiente");
     }
 
     /**
@@ -229,15 +238,34 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return datos;
     }
 
-    private List<Solicitud> getPorEstados(String condicionEstado) {
+    /**
+     * Solicitudes cuyo estado está dentro de la lista, o fuera de ella si
+     * incluir es false. Los nombres de estado viajan como parámetros (?) en
+     * vez de pegarse al texto de la consulta, que es como se cuela una
+     * inyección de SQL. Lo único que se concatena son los signos de
+     * interrogación, uno por cada estado recibido.
+     */
+    private List<Solicitud> getPorEstados(boolean incluir, String... estados) {
         List<Solicitud> datos = new ArrayList<>();
-        String sql = SELECT_BASE + " WHERE " + condicionEstado + " ORDER BY s.fecha_creacion DESC";
-        try (Connection con = SQLConnector.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                datos.add(mapRow(rs));
+        String marcadores = "";
+        for (int i = 0; i < estados.length; i++) {
+            marcadores += (i == 0) ? "?" : ", ?";
+        }
+
+        String sql = SELECT_BASE
+                + " WHERE e.nombre_estado " + (incluir ? "" : "NOT ") + "IN (" + marcadores + ")"
+                + " ORDER BY s.fecha_creacion DESC";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            for (int i = 0; i < estados.length; i++) {
+                ps.setString(i + 1, estados[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.add(mapRow(rs));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -477,11 +505,10 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /** Devuelve siempre las 4 divisiones; las que no tienen fila quedan en 0. */
-    private Map<String, Integer> getEstudiantesPorDivision(int idSolicitud) throws SQLException {
+    private Map<String, Integer> getEstudiantesPorDivision(Connection con, int idSolicitud) throws SQLException {
         Map<String, Integer> divisiones = Solicitud.divisionesEnCero();
         String sql = "SELECT division, no_estudiantes FROM estudiantes_division WHERE id_solicitud = ?";
-        try (Connection con = SQLConnector.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idSolicitud);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -492,13 +519,12 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return divisiones;
     }
 
-    private List<Usuario> getDocentesAcompanantes(int idSolicitud) throws SQLException {
+    private List<Usuario> getDocentesAcompanantes(Connection con, int idSolicitud) throws SQLException {
         List<Usuario> docentes = new ArrayList<>();
         String sql = "SELECT u.id_usuario, u.nombre, u.correo FROM solicitud_docente sd "
                 + "JOIN usuario u ON u.id_usuario = sd.id_usuario "
                 + "WHERE sd.id_solicitud = ? ORDER BY u.nombre";
-        try (Connection con = SQLConnector.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idSolicitud);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -513,12 +539,11 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return docentes;
     }
 
-    private List<ProgramaEducativo> getProgramas(int idSolicitud) throws SQLException {
+    private List<ProgramaEducativo> getProgramas(Connection con, int idSolicitud) throws SQLException {
         List<ProgramaEducativo> programas = new ArrayList<>();
         String sql = "SELECT id_programa, id_solicitud, division_academica, cuatrimestre, grupo, no_estudiantes "
                 + "FROM programa_educativo WHERE id_solicitud = ? ORDER BY id_programa";
-        try (Connection con = SQLConnector.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idSolicitud);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -536,11 +561,10 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return programas;
     }
 
-    private List<String> getAsignaturas(int idSolicitud) throws SQLException {
+    private List<String> getAsignaturas(Connection con, int idSolicitud) throws SQLException {
         List<String> asignaturas = new ArrayList<>();
         String sql = "SELECT nombre FROM asignatura_reforzar_solicitud WHERE id_solicitud = ? ORDER BY id_asignatura";
-        try (Connection con = SQLConnector.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idSolicitud);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

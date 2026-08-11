@@ -85,3 +85,20 @@
 .btn-agregar-imagen {
     margin-top: 8px;
 }
+
+/* Pantallas angostas: las miniaturas se reparten el ancho en vez de
+   quedarse en 110px con un hueco enorme a la derecha. */
+@media (max-width: 575.98px) {
+    .galeria-item,
+    .galeria-item--lg {
+        width: calc(50% - 6px);
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+
+    .btn-resumen-solicitud,
+    .acciones-card .btn-ver-detalles {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -61,14 +61,15 @@
             <a class="navbar-brand mb-0" href="${pageContext.request.contextPath}/indexSv">
                 <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png"
                      alt="Logo UTEZ" width="70" height="34" class="d-inline-block align-text-top">
-                Sistema de Gestión de Visitas
+                <span class="navbar-brand-texto">Sistema de Gestión de Visitas</span>
             </a>
         </div>
 
         <!-- Bloque Derecho: Cerrar Sesión -->
         <div class="m-2">
-            <a class="nav-link rounded-2 text-danger d-block" href="${pageContext.request.contextPath}/logout">
-                <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+            <a class="nav-link rounded-2 text-danger d-block" href="${pageContext.request.contextPath}/logout"
+               title="Cerrar sesión">
+                <i class="bi bi-box-arrow-right me-2"></i><span class="texto-cerrar-sesion">Cerrar sesión</span>
             </a>
         </div>
 

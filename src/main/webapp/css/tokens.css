@@ -5,7 +5,12 @@
    Cárgalo SIEMPRE antes que las demás hojas.
    ============================================================ */
 
+/* Base de la escala rem: Bootstrap y buena parte de estas hojas miden en
+   rem, así que subir esto agranda el contenido de forma pareja. Se usa un
+   porcentaje (no px) para respetar el tamaño de letra del navegador. */
 :root {
+    font-size: 106.25%;  /* 17px con la configuración por defecto */
+
     /* ---------- Colores de marca ---------- */
     --color-azul: #183052;          /* primario: botones, títulos, marca */
     --color-azul-hover: #2C5084;    /* hover del primario / azul secundario */
@@ -42,20 +47,23 @@
     --sombra-card: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
     --sombra-elevada: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-    /* ---------- Tipografía (escala) ---------- */
-    --fs-2xl: 28px;   /* encabezado de página */
-    --fs-xl: 24px;    /* subtítulo de sección / título de detalle */
-    --fs-lg: 20px;    /* título de tarjeta */
-    --fs-md: 16px;    /* texto destacado */
-    --fs-base: 14px;  /* cuerpo */
-    --fs-sm: 13px;    /* secundario */
-    --fs-xs: 12px;    /* etiquetas, meta */
+    /* ---------- Tipografía (escala) ----------
+       Se subió un escalón respecto al prototipo: el contenido se veía
+       chico y costaba leerlo. Va de la mano con el font-size de :root,
+       que agranda todo lo que está en rem (Bootstrap incluido). */
+    --fs-2xl: 30px;   /* encabezado de página */
+    --fs-xl: 26px;    /* subtítulo de sección / título de detalle */
+    --fs-lg: 21px;    /* título de tarjeta */
+    --fs-md: 17px;    /* texto destacado */
+    --fs-base: 15px;  /* cuerpo */
+    --fs-sm: 14px;    /* secundario */
+    --fs-xs: 13px;    /* etiquetas, meta */
 
     /* ---------- Foco accesible ---------- */
     --anillo-foco: 0 0 0 0.2rem rgba(42, 122, 90, 0.15);
 
     /* ---------- Layout ---------- */
-    --ancho-contenido: 1080px;   /* tope del área principal: evita inputs kilométricos en pantallas anchas */
+    --ancho-contenido: 1180px;   /* tope del área principal: evita inputs kilométricos en pantallas anchas */
 
     /* ---------- Medidas de botón ---------- */
     --btn-pad-y: 0.6rem;         /* botón estándar (Crear, Volver, Enviar, Descargar grande...) */

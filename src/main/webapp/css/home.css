@@ -1,17 +1,18 @@
 /* Estilos propios de la página de inicio (index.jsp) */
 
 /* Misma "receta" de card en toda la app (ver --radio-card / --sombra-card) */
+/* Altura mínima, no fija: con textos largos o pantallas angostas el
+   subtítulo se salía de la tarjeta. */
 .superior {
     width: 100%;
-    height: 93px;
+    min-height: 93px;
     border-radius: var(--radio-card);
     background-color: var(--color-superficie);
     box-shadow: var(--sombra-card);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding: 1rem 2rem;
     box-sizing: border-box;
 }
 
@@ -119,9 +120,22 @@
     color: #495057;
 }
 
+/* Solicitud capturada pero todavía no enviada: es un borrador, no un
+   problema, así que va en neutro y no en rojo de alerta. */
+.estado-sin-enviar {
+    background-color: #E9ECEF;
+    color: #495057;
+}
+
 .estado-pendiente {
     background-color: #FDE2E4;
     color: var(--color-rojo);
+}
+
+/* Solicitud cerrada Y con el reporte aprobado: ahora sí terminó todo */
+.estado-finalizada {
+    background-color: #D9F2E3;
+    color: #1E7A46;
 }
 
 .estado-en-revisión,
@@ -185,7 +199,8 @@
 
 .solicitud-meta {
     display: flex;
-    gap: 2rem;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
 }
 
 .meta-item {
@@ -242,6 +257,51 @@
 
 .btn-rojo:hover {
     background-color: var(--color-rojo-oscuro) !important;
+}
+
+/* ============================================================
+   Pantallas angostas: las tarjetas dejan de intentar meter todo
+   en una línea. Antes el badge se encimaba con el título y los
+   botones se salían de la tarjeta.
+   ============================================================ */
+@media (max-width: 575.98px) {
+    .superior {
+        padding: 0.9rem 1.1rem;
+    }
+
+    .superior h2 { font-size: var(--fs-xl); }
+    .superior p { font-size: var(--fs-base); }
+
+    .solicitud-card,
+    .solicitud-vacia {
+        padding: 1rem 1.1rem;
+    }
+
+    .solicitud-vacia { padding: 2rem 1.1rem; }
+
+    /* El estado baja debajo del nombre de la empresa en vez de apretarlo */
+    .solicitud-card-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .solicitud-card-bottom {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .solicitud-meta { gap: 0.5rem 1.25rem; }
+
+    /* Los botones de acción ocupan el ancho: son más fáciles de tocar */
+    .solicitud-card-bottom .btn-ver-detalles,
+    .acciones-card .btn-ver-detalles {
+        width: 100%;
+    }
+
+    .acciones-card { flex-direction: column; }
+
+    .botonnueva { width: 100%; }
 }
 
 /* Roles de usuario: mismo badge de estado, paleta de la marca (RF-12) */

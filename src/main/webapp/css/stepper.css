@@ -93,11 +93,48 @@
 }
 
 .solicitud-card .step-label {
-    font-size: 11px;
+    font-size: 12px;
 }
 
-@media (max-width: 575.98px) {
+/* ============================================================
+   Pantallas angostas: el stepper se pone vertical. Antes se
+   ocultaban las etiquetas y quedaban cuatro puntos sin
+   significado, que es justo lo que había que comunicar.
+   ============================================================ */
+@media (max-width: 767.98px) {
+    .stepper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+        min-height: 38px;
+    }
+
+    /* La línea que unía los pasos ahora es vertical: va del punto
+       anterior a este (por eso arranca media fila más arriba). */
+    .step::before {
+        top: -50%;
+        left: 6.5px;
+        width: 3px;
+        height: 100%;
+    }
+
+    .step-dot {
+        margin: 0;
+        flex-shrink: 0;
+    }
+
     .step-label {
-        display: none;
+        margin-top: 0;
+        font-size: var(--fs-sm);
+    }
+
+    .solicitud-card .step-label {
+        font-size: var(--fs-sm);
     }
 }

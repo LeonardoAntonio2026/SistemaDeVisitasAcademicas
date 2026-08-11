@@ -3,13 +3,17 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Detalles de la visita"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
-<% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
+<% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
+<% request.setAttribute("nombresDivision", com.example.demo.model.CatalogoAcademico.getNombres()); %>
 <%@ include file="layout/header.jsp" %>
 <%@ include file="layout/sidebar.jsp" %>
 
 <main id="main-content">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/stepper.css">
+    <%-- form.css trae los campos (Motivo, carga de archivos) y el resumen por
+         división, para que se vean igual aquí que en el formulario --%>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/form.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
     <c:set var="s" value="${solicitud}"/>
@@ -78,17 +82,20 @@
                     <span><i class="bi bi-clock-history"></i>Solicitada el ${s.fechaCreacion}</span>
                 </div>
             </div>
-            <span class="badge-estado estado-${fn:replace(fn:toLowerCase(estado), ' ', '-')}">${estado}</span>
+            <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
         </div>
 
-        <%-- Mini card de instrucciones: el paso que toca hacer ahora --%>
+        <%-- Mini card de instrucciones: qué falta y a quién le toca. Cuando algo
+             fue rechazado manda el rechazo, nunca el "sube tal archivo": es lo
+             primero que el docente tiene que leer, y con el motivo a la vista. --%>
+        <c:set var="estadoReporte" value="${s.estadoReporte}"/>
         <c:choose>
             <c:when test="${estado == 'Pendiente' && esDocente && existeFirmado}">
                 <div class="instruccion instruccion-accion">
                     <i class="bi bi-send"></i>
                     <div>
-                        <div class="instruccion-titulo">Formato firmado cargado: solo falta enviar</div>
-                        <p>Tu FO-UTEZ-EST-08 firmado ya está en el sistema. Revisa que los datos sean correctos y da click en <strong>Enviar solicitud</strong> para mandarla a Estadías. Mientras no la envíes, puedes <strong>editar los datos</strong>.</p>
+                        <div class="instruccion-titulo">Formato firmado cargado: falta enviar la solicitud</div>
+                        <p>El FO-UTEZ-EST-08 firmado ya está en el sistema. Verifica que los datos sean correctos y presiona <strong>Enviar solicitud a Estadías</strong> al final de la página. Mientras la solicitud no se envíe, los datos todavía se pueden editar.</p>
                     </div>
                 </div>
             </c:when>
@@ -97,7 +104,7 @@
                     <i class="bi bi-exclamation-circle"></i>
                     <div>
                         <div class="instruccion-titulo">Sube el formato FO-UTEZ-EST-08 firmado</div>
-                        <p>Descarga el documento FO-UTEZ-EST-08, fírmalo y súbelo. Cuando esté cargado da click en <strong>Enviar solicitud</strong> para mandarlo a Estadías. Si necesitas corregir algo, puedes <strong>editar los datos</strong> antes de enviar.</p>
+                        <p>Descarga el formato FO-UTEZ-EST-08 en la sección <strong>Archivos</strong>, fírmalo y súbelo. El botón <strong>Enviar solicitud a Estadías</strong> se habilita hasta que el formato esté cargado. Los datos se pueden editar mientras la solicitud no se envíe.</p>
                     </div>
                 </div>
             </c:when>
@@ -105,29 +112,29 @@
                 <div class="instruccion instruccion-info">
                     <i class="bi bi-send-check"></i>
                     <div>
-                        <div class="instruccion-titulo">Solicitud enviada</div>
-                        <p>Tu solicitud fue recibida por el área de Estadías. Espera su revisión; te avisaremos por correo cuando haya una decisión.</p>
+                        <div class="instruccion-titulo">Solicitud enviada a revisión</div>
+                        <p>El área de Estadías recibió la solicitud. Se notificará por correo cuando haya una decisión.</p>
                     </div>
                 </div>
             </c:when>
             <c:when test="${estado == 'En revisión' && !esDocente}">
-                <div class="instruccion instruccion-info">
-                    <i class="bi bi-clock"></i>
+                <div class="instruccion instruccion-accion">
+                    <i class="bi bi-clipboard-check"></i>
                     <div>
-                        <div class="instruccion-titulo">Esta solicitud está en espera de revisión</div>
-                        <p>Revisa la solicitud y apruébala o recházala.</p>
-                        <p class="instruccion-detalle">Enviado por: ${s.nombreSolicitante}</p>
+                        <div class="instruccion-titulo">Solicitud pendiente de revisión</div>
+                        <p>Revisa los datos y los archivos de la solicitud, y apruébala o recházala al final de la página.</p>
+                        <p class="instruccion-detalle">Enviada por: ${s.nombreSolicitante}</p>
                     </div>
                 </div>
             </c:when>
             <c:when test="${estado == 'Aprobada' && esDocente}">
-                <div class="instruccion instruccion-exito">
-                    <i class="bi bi-check-circle"></i>
+                <div class="instruccion instruccion-accion">
+                    <i class="bi bi-file-earmark-arrow-up"></i>
                     <div>
-                        <div class="instruccion-titulo">Solicitud aprobada</div>
-                        <p>La visita cuenta con el visto bueno. Descarga la carta responsiva, fírmala y súbela para completar tu solicitud.</p>
+                        <div class="instruccion-titulo">Solicitud aprobada: falta la carta responsiva</div>
+                        <p>Descarga la carta responsiva en la sección <strong>Archivos</strong>, fírmala y súbela. Al subirla, la solicitud se cierra y se genera el reporte de la visita.</p>
                         <c:if test="${not empty s.detallesDecision}">
-                            <p class="instruccion-detalle">Detalles: ${s.detallesDecision}</p>
+                            <p class="instruccion-detalle">Comentarios de Estadías: ${s.detallesDecision}</p>
                         </c:if>
                     </div>
                 </div>
@@ -136,8 +143,8 @@
                 <div class="instruccion instruccion-info">
                     <i class="bi bi-clock"></i>
                     <div>
-                        <div class="instruccion-titulo">Se espera la carta responsiva</div>
-                        <p>La solicitud fue aprobada. El docente debe cargar la carta responsiva con las firmas correspondientes.</p>
+                        <div class="instruccion-titulo">Solicitud aprobada: en espera de la carta responsiva</div>
+                        <p>El docente ${s.nombreSolicitante} debe cargar la carta responsiva con las firmas correspondientes.</p>
                     </div>
                 </div>
             </c:when>
@@ -145,25 +152,74 @@
                 <div class="instruccion instruccion-rechazo">
                     <i class="bi bi-x-circle"></i>
                     <div>
-                        <div class="instruccion-titulo">Solicitud rechazada</div>
+                        <div class="instruccion-titulo">Solicitud rechazada por el área de Estadías</div>
                         <p>
                             <c:choose>
-                                <c:when test="${not empty s.detallesDecision}">Motivo: ${s.detallesDecision}</c:when>
-                                <c:otherwise>El área de Estadías rechazó esta solicitud.</c:otherwise>
+                                <c:when test="${not empty s.detallesDecision}"><strong>Motivo:</strong> ${s.detallesDecision}</c:when>
+                                <c:otherwise>No se registró un motivo.</c:otherwise>
                             </c:choose>
                         </p>
+                        <c:if test="${esDocente}">
+                            <p class="instruccion-detalle">Una solicitud rechazada ya no se puede editar. Si la visita continúa, registra una nueva solicitud considerando el motivo.</p>
+                        </c:if>
+                    </div>
+                </div>
+            </c:when>
+
+            <%-- ===== Solicitud cerrada: lo que falta (o no) es el reporte ===== --%>
+            <c:when test="${estado == 'Completada' && estadoReporte == 'Rechazado'}">
+                <div class="instruccion instruccion-rechazo">
+                    <i class="bi bi-x-circle"></i>
+                    <div>
+                        <div class="instruccion-titulo">Reporte de la visita rechazado por el área de Estadías</div>
+                        <p>
+                            <c:choose>
+                                <c:when test="${not empty reporte.motivo}"><strong>Motivo:</strong> <c:out value="${reporte.motivo}"/></c:when>
+                                <c:otherwise>No se registró un motivo.</c:otherwise>
+                            </c:choose>
+                        </p>
+                        <c:if test="${esDocente}">
+                            <p>Corrige el reporte y envíalo nuevamente:
+                                <a href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">ir al reporte de esta visita</a>.</p>
+                        </c:if>
+                    </div>
+                </div>
+            </c:when>
+            <c:when test="${estado == 'Completada' && estadoReporte == 'Completado'}">
+                <div class="instruccion instruccion-info">
+                    <i class="bi bi-hourglass-split"></i>
+                    <div>
+                        <div class="instruccion-titulo">Reporte enviado a revisión</div>
+                        <p>El área de Estadías está revisando el reporte de la visita. Se notificará por correo cuando haya una decisión.</p>
+                    </div>
+                </div>
+            </c:when>
+            <c:when test="${estado == 'Completada' && estadoReporte == 'Aprobado'}">
+                <div class="instruccion instruccion-exito">
+                    <i class="bi bi-check-circle"></i>
+                    <div>
+                        <div class="instruccion-titulo">Proceso concluido</div>
+                        <p>La visita se realizó y su reporte fue aprobado. La solicitud se puede consultar en el <a href="${pageContext.request.contextPath}/historico">Histórico</a>.</p>
                     </div>
                 </div>
             </c:when>
             <c:when test="${estado == 'Completada'}">
-                <div class="instruccion instruccion-exito">
-                    <i class="bi bi-check-circle"></i>
+                <%-- Reporte creado pero sin llenar: es el pendiente que más se
+                     confundía, porque el estado en la base dice "Completada" --%>
+                <div class="instruccion instruccion-accion">
+                    <i class="bi bi-journal-text"></i>
                     <div>
-                        <div class="instruccion-titulo">Solicitud completada</div>
+                        <div class="instruccion-titulo">Solicitud cerrada: falta el reporte de la visita</div>
                         <p>
                             <c:choose>
-                                <c:when test="${esDocente}">Sube el reporte de la solicitud cuando completes tu visita. Lo encuentras en la sección <a href="${pageContext.request.contextPath}/reportes">Reportes</a>.</c:when>
-                                <c:otherwise>El proceso de esta solicitud terminó. El reporte de la visita quedó pendiente por el docente.</c:otherwise>
+                                <c:when test="${esDocente}">
+                                    La solicitud quedó cerrada, pero el proceso concluye hasta entregar el reporte.
+                                    Complétalo después de realizar la visita:
+                                    <a href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">ir al reporte de esta visita</a>.
+                                </c:when>
+                                <c:otherwise>
+                                    La solicitud quedó cerrada. Falta que el docente ${s.nombreSolicitante} entregue el reporte de la visita.
+                                </c:otherwise>
                             </c:choose>
                         </p>
                     </div>
@@ -171,8 +227,9 @@
             </c:when>
         </c:choose>
 
-        <%-- Stepper de progreso (4 pasos) --%>
+        <%-- Línea de tiempo del trámite completo (5 pasos) --%>
         <c:set var="stepperEstado" value="${estado}"/>
+        <c:set var="stepperEstadoReporte" value="${estadoReporte}"/>
         <%@ include file="layout/stepper.jsp" %>
     </div>
 
@@ -240,52 +297,59 @@
             </c:otherwise>
         </c:choose>
 
-        <div class="dato-label" style="margin-top: 14px;">Número de estudiantes por división académica</div>
-        <table class="tabla-programas">
-            <thead>
-            <tr>
-                <c:forEach var="division" items="${divisiones}">
-                    <th>${division}</th>
-                </c:forEach>
-                <th>Total</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <c:forEach var="division" items="${divisiones}">
-                    <td>${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}</td>
-                </c:forEach>
-                <td>${s.totalPorDivision}</td>
-            </tr>
-            </tbody>
-        </table>
-
         <c:if test="${not empty s.programas}">
-            <div class="dato-label" style="margin-top: 14px;">Desglose por programa educativo</div>
-            <table class="tabla-programas">
-                <thead>
-                <tr>
-                    <th>Programa educativo</th>
-                    <th>Cuatrimestre</th>
-                    <th>Grupo</th>
-                    <th>No. estudiantes</th>
-                </tr>
-                </thead>
-                <tbody>
-                <c:forEach var="p" items="${s.programas}">
+            <div class="dato-label" style="margin-top: 14px;">Grupos que participan</div>
+            <div class="tabla-scroll">
+                <table class="tabla-programas">
+                    <thead>
                     <tr>
-                        <td>${p.divisionAcademica}</td>
-                        <td>${p.cuatrimestre}</td>
-                        <td>${empty p.grupo ? '—' : p.grupo}</td>
-                        <td>${p.noEstudiantes}</td>
+                        <th>División</th>
+                        <th>Programa educativo</th>
+                        <th>Cuatrimestre</th>
+                        <th>Grupo</th>
+                        <th>Estudiantes</th>
                     </tr>
-                </c:forEach>
-                <tr class="fila-total">
-                    <td colspan="3">Total de estudiantes</td>
-                    <td>${s.totalEstudiantes}</td>
-                </tr>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <c:forEach var="p" items="${s.programas}">
+                        <tr>
+                            <td title="${nombresDivision[p.division]}">${p.divisionMostrable}</td>
+                            <td>${p.programa}</td>
+                            <td>${p.cuatrimestre}°</td>
+                            <td>${empty p.grupo ? '—' : p.grupo}</td>
+                            <td>${p.noEstudiantes}</td>
+                        </tr>
+                    </c:forEach>
+                    <tr class="fila-total">
+                        <td colspan="4">Total de estudiantes</td>
+                        <td>${s.totalEstudiantes}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <%-- Desglose por división: se calcula con los grupos de arriba --%>
+            <div class="dato-label" style="margin-top: 14px;">Número de estudiantes por división académica</div>
+            <div class="tabla-scroll">
+                <table class="tabla-programas">
+                    <thead>
+                    <tr>
+                        <c:forEach var="division" items="${divisiones}">
+                            <th title="${nombresDivision[division]}">${division}</th>
+                        </c:forEach>
+                        <th>Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <c:forEach var="division" items="${divisiones}">
+                            <td>${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}</td>
+                        </c:forEach>
+                        <td>${s.totalPorDivision}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </c:if>
 
         <c:if test="${not empty s.asignaturas}">
@@ -302,99 +366,118 @@
     <div class="detalle-card">
         <h6>Archivos</h6>
 
-        <%-- Documentos que genera el sistema con los datos de la solicitud --%>
-        <c:if test="${estado != 'Pendiente'}">
-            <div class="separador-archivos">Generados por el sistema</div>
-            <div class="archivo-row">
-                <span class="archivo-pill"><i class="bi bi-file-earmark-pdf"></i>FO-UTEZ-EST-08</span>
+        <%-- Documentos que genera el sistema con los datos de la solicitud.
+             El FO se muestra siempre: aunque ya esté firmado y subido, si el
+             docente quiere rehacer la firma tiene que poder bajarlo otra vez. --%>
+        <div class="separador-archivos">Generados por el sistema</div>
+        <div class="archivo-row">
+            <span class="archivo-pill">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span>FO-UTEZ-EST-08<small>Formato de la solicitud</small></span>
+            </span>
+            <div class="archivo-acciones">
                 <a class="btn-descargar" target="_blank"
                    href="${pageContext.request.contextPath}/documento?gen=fo&solicitud=${s.idSolicitud}">
                     <i class="bi bi-download"></i> Descargar
                 </a>
             </div>
+        </div>
 
-            <%-- Documentos generados al aprobar (RF-07) --%>
-            <c:if test="${estado == 'Aprobada' || estado == 'Completada'}">
-                <div class="archivo-row">
-                    <span class="archivo-pill"><i class="bi bi-file-earmark-pdf"></i>OFICIO DE VISITA</span>
+        <%-- Documentos generados al aprobar (RF-07) --%>
+        <c:if test="${estado == 'Aprobada' || estado == 'Completada'}">
+            <div class="archivo-row">
+                <span class="archivo-pill">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>OFICIO DE VISITA<small>Autorización para el lugar de la visita</small></span>
+                </span>
+                <div class="archivo-acciones">
                     <a class="btn-descargar" target="_blank"
                        href="${pageContext.request.contextPath}/documento?gen=oficio&solicitud=${s.idSolicitud}">
                         <i class="bi bi-download"></i> Descargar
                     </a>
                 </div>
-            </c:if>
+            </div>
         </c:if>
 
-        <%-- Archivos subidos por el docente --%>
+        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
+            <div class="archivo-row">
+                <span class="archivo-pill">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>CARTA RESPONSIVA<small>Requiere firma del docente responsable</small></span>
+                </span>
+                <div class="archivo-acciones">
+                    <a class="btn-descargar" target="_blank"
+                       href="${pageContext.request.contextPath}/documento?gen=responsiva&solicitud=${s.idSolicitud}">
+                        <i class="bi bi-download"></i> Descargar
+                    </a>
+                </div>
+            </div>
+        </c:if>
+
+        <%-- Archivos subidos por el docente. El FO firmado es el único que se
+             puede reemplazar (y solo antes de enviar): por eso su fila lleva
+             "Volver a cargar", que es lo que abre la zona de carga. --%>
         <c:if test="${not empty documentos}">
             <div class="separador-archivos">${esDocente && esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
             <c:forEach var="d" items="${documentos}">
                 <div class="archivo-row">
-                    <span class="archivo-pill">
-                        <i class="bi bi-file-earmark-pdf"></i>
+                    <span class="archivo-pill archivo-pill--subido">
+                        <i class="bi bi-file-earmark-check"></i>
                         <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
                     </span>
-                    <a class="btn-descargar" href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
-                        <i class="bi bi-download"></i> Descargar
-                    </a>
+                    <div class="archivo-acciones">
+                        <a class="btn-descargar" href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
+                            <i class="bi bi-download"></i> Descargar
+                        </a>
+                        <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
+                            <button type="button" class="btn-recargar" data-abre-carga="carga-fo-firmado">
+                                <i class="bi bi-arrow-repeat"></i> Volver a cargar
+                            </button>
+                        </c:if>
+                    </div>
                 </div>
             </c:forEach>
         </c:if>
 
-        <%-- Zona del documento por firmar + carga: solo el docente dueño y
-             solo en los 2 momentos del proceso en los que toca subir algo --%>
+        <%-- Zonas de carga: solo el docente dueño y solo en los 2 momentos del
+             proceso en los que toca subir algo. Si el archivo ya está cargado
+             la zona nace oculta (se ve el archivo, no un recuadro vacío que
+             hace pensar que todavía falta subir algo). --%>
         <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
-            <div class="separador-firmar">Descarga y firma este documento</div>
-            <div class="archivo-row">
-                <span class="archivo-pill"><i class="bi bi-file-earmark-pdf"></i>FO-UTEZ-EST-08</span>
-                <a class="btn-descargar" target="_blank"
-                   href="${pageContext.request.contextPath}/documento?gen=fo&solicitud=${s.idSolicitud}">
-                    <i class="bi bi-download"></i> Descargar
-                </a>
-            </div>
-            <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data">
+            <form id="carga-fo-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
+                  enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
                 <input type="hidden" name="action" value="firmado">
                 <input type="hidden" name="solicitud" value="${s.idSolicitud}">
-                <div class="zona-carga ${existeFirmado ? 'zona-cargada' : ''}">
-                    <c:choose>
-                        <c:when test="${existeFirmado}">
-                            <i class="bi bi-check-circle" style="font-size: 1.6rem;"></i>
-                            <p>Tu formato firmado ya está cargado</p>
-                            <small>Si te equivocaste de archivo puedes subir otro; reemplazará al anterior.</small>
-                        </c:when>
-                        <c:otherwise>
-                            <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
-                            <p>Sube el formato FO-UTEZ-EST-08 firmado</p>
-                            <small>Máximo 10 MB · solo PDF</small>
-                        </c:otherwise>
-                    </c:choose>
+                <div class="separador-firmar">${existeFirmado ? 'Reemplazar el formato firmado' : 'Carga del formato firmado'}</div>
+                <div class="zona-carga">
+                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
+                    <p>${existeFirmado ? 'Selecciona el nuevo PDF; reemplazará al archivo actual' : 'Sube el formato FO-UTEZ-EST-08 firmado'}</p>
+                    <small>Máximo 10 MB · solo PDF</small>
                     <input type="file" name="archivo" class="form-control" accept="application/pdf" required>
                     <div class="aviso-seleccion">Archivo seleccionado, pero aún no se sube: da click en <strong>${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}</strong>.</div>
-                    <button type="submit" class="btn-subir">${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}</button>
+                    <button type="submit" class="btn-subir">
+                        <i class="bi bi-upload"></i> ${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}
+                    </button>
                 </div>
             </form>
         </c:if>
 
         <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
-            <div class="separador-firmar">Descarga y firma este documento</div>
-            <div class="archivo-row">
-                <span class="archivo-pill"><i class="bi bi-file-earmark-pdf"></i>CARTA RESPONSIVA</span>
-                <a class="btn-descargar" target="_blank"
-                   href="${pageContext.request.contextPath}/documento?gen=responsiva&solicitud=${s.idSolicitud}">
-                    <i class="bi bi-download"></i> Descargar
-                </a>
-            </div>
             <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data"
-                  onsubmit="return confirm('Al subir tu carta responsiva firmada la solicitud se cerrará como Completada. ¿Continuar?');">
+                  class="form-carga"
+                  onsubmit="return confirm('Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita. ¿Continuar?');">
                 <input type="hidden" name="action" value="responsiva">
                 <input type="hidden" name="solicitud" value="${s.idSolicitud}">
+                <div class="separador-firmar">Carga de la carta responsiva firmada</div>
                 <div class="zona-carga">
                     <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
                     <p>Sube la CARTA RESPONSIVA firmada</p>
                     <small>Máximo 10 MB · solo PDF</small>
                     <input type="file" name="archivo" class="form-control" accept="application/pdf" required>
                     <div class="aviso-seleccion">Archivo seleccionado, pero aún no se sube: da click en <strong>Subir archivo</strong>.</div>
-                    <button type="submit" class="btn-subir">Subir archivo</button>
+                    <button type="submit" class="btn-subir">
+                        <i class="bi bi-upload"></i> Subir archivo
+                    </button>
                 </div>
             </form>
         </c:if>
@@ -435,8 +518,10 @@
 
     <%-- ===================== Barra final: Volver / Editar / Enviar ===================== --%>
     <div class="acciones-form">
+        <%-- El botón dice a dónde lleva: "Volver" a secas se entendía como
+             "regresar al paso anterior" y aquí sale de la solicitud --%>
         <a href="${pageContext.request.contextPath}/solicitud" class="btn-volver-detalle">
-            <i class="bi bi-arrow-left"></i> Volver
+            <i class="bi bi-arrow-left"></i> Volver a solicitudes
         </a>
         <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
             <div class="acciones-derecha">
@@ -450,24 +535,14 @@
                     <input type="hidden" name="action" value="enviar">
                     <button type="submit" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
                             title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el formato firmado'}">
-                        <i class="bi bi-send"></i> Enviar solicitud
+                        <i class="bi bi-send"></i> Enviar solicitud a Estadías
                     </button>
                 </form>
             </div>
         </c:if>
     </div>
 
-    <script>
-        // Al elegir archivo se avisa que falta dar click en Subir (elegir != subir)
-        document.querySelectorAll('.zona-carga input[type="file"]').forEach(function (input) {
-            input.addEventListener('change', function () {
-                var aviso = input.closest('.zona-carga').querySelector('.aviso-seleccion');
-                if (aviso) {
-                    aviso.classList.toggle('visible', input.files.length > 0);
-                }
-            });
-        });
-    </script>
+    <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>
 </main>
 
 <%@ include file="layout/footer.jsp" %>

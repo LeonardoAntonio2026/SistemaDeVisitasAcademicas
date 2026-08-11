@@ -57,14 +57,72 @@
     color: var(--color-azul);
 }
 
+/* ============================================================
+   Desglose de grupos: división -> programa -> cuatrimestre ->
+   grupo -> estudiantes. En pantallas angostas cada fila se
+   convierte en una tarjeta con las etiquetas de cada campo.
+   ============================================================ */
+
+/* La tabla puede desplazarse a lo ancho antes de romperse a tarjetas */
+.programa-tabla {
+    overflow-x: auto;
+}
+
+.programa-header,
+.programa-row {
+    display: grid;
+    grid-template-columns: 1fr 2.6fr 1.1fr 0.9fr 1.1fr 40px;
+    gap: 8px;
+    align-items: center;
+    min-width: 620px;
+}
+
+.programa-header {
+    margin-bottom: 6px;
+}
+
+/* Mismos valores que .form-label: son las etiquetas de estos campos */
+.programa-header span {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--color-texto-2);
+    letter-spacing: 0.01em;
+}
+
+.programa-row {
+    margin-bottom: 8px;
+}
+
+.programa-campo--accion {
+    display: flex;
+    justify-content: center;
+}
+
+/* Fila heredada de una solicitud vieja: su programa ya no está en el catálogo
+   y hay que volver a elegirlo antes de poder guardar */
+.programa-row--revisar .campo-programa,
+.programa-row--revisar .campo-division {
+    border-color: var(--color-rojo);
+    background-color: #FFF7F7;
+}
+
+/* El nombre de un programa educativo es largo: que no estire la columna */
+.campo-programa {
+    max-width: 100%;
+}
+
+/* ---- Desglose por división académica ----
+   Misma tabla de siempre; la diferencia es que ya no se captura, se
+   calcula con los grupos de arriba (por eso las celdas son texto). */
 .division-table {
     border: 1.5px solid var(--color-borde);
     border-radius: var(--radio-input);
     overflow: hidden;
+    min-width: 380px;
 }
 
 .division-header,
-.division-inputs {
+.division-valores {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
 }
@@ -83,27 +141,22 @@
     border-right: 1px solid var(--color-borde);
 }
 
-.division-header span:last-child { border-right: none; }
-
-.division-inputs .form-control {
-    border-radius: 0;
-    border: none;
-    border-right: 1px solid var(--color-borde);
+.division-valores span {
+    padding: 0.55rem 0.85rem;
+    font-size: 0.875rem;
+    color: var(--color-texto);
     text-align: center;
+    border-right: 1px solid var(--color-borde);
 }
 
-.division-inputs .form-control:last-child { border-right: none; }
+.division-header span:last-child,
+.division-valores span:last-child { border-right: none; }
 
-.division-inputs .form-control:focus {
-    z-index: 1;
-    position: relative;
-}
-
-.division-total {
-    background-color: var(--color-fondo) !important;
+/* Celda del total: mismo trato que tenía el input de solo lectura */
+.division-valores span:last-child {
+    background-color: var(--color-fondo);
     color: var(--color-texto-2);
     font-weight: 600;
-    cursor: default;
 }
 
 .form-mismatch-msg {
@@ -150,15 +203,6 @@
 /* Campo marcado por el navegador solo después de intentar enviar */
 .form-control:user-invalid {
     border-color: var(--color-rojo);
-}
-
-.programa-header,
-.programa-row {
-    display: grid;
-    grid-template-columns: 3fr 1.2fr 1fr 1.2fr 36px;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 8px;
 }
 
 .btn-delete-row {
@@ -323,4 +367,80 @@
     font-size: var(--fs-base);
     font-weight: 600;
     cursor: pointer;
+}
+
+/* ============================================================
+   Pantallas angostas. Lo importante: la fila del desglose deja
+   de ser una cuadrícula de 6 columnas (que se salía de la
+   pantalla) y se convierte en una tarjeta con una etiqueta por
+   campo, tomada del atributo data-etiqueta del marcado.
+
+   El corte va en 991.98px y no en 768: con la barra lateral
+   abierta, una tablet ya no tiene ancho para las 6 columnas.
+   ============================================================ */
+@media (max-width: 991.98px) {
+    .programa-tabla { overflow-x: visible; }
+
+    /* Los encabezados de columna sobran: cada campo trae su etiqueta */
+    .programa-header { display: none; }
+
+    .programa-row {
+        display: flex;
+        flex-direction: column;
+        /* En columna, el align-items:center de la cuadrícula centraría los
+           campos a lo ancho: aquí tienen que ocupar toda la tarjeta */
+        align-items: stretch;
+        gap: 10px;
+        min-width: 0;
+        margin-bottom: 14px;
+        padding: 14px;
+        background: var(--color-superficie-2);
+        border: 1px solid var(--color-borde-suave);
+        border-radius: var(--radio-input);
+    }
+
+    .programa-campo::before {
+        content: attr(data-etiqueta);
+        display: block;
+        margin-bottom: 4px;
+        font-size: var(--fs-xs);
+        font-weight: 600;
+        color: var(--color-texto-tenue);
+    }
+
+    /* Sin encabezados de columna, un icono suelto no se entiende:
+       aquí el botón de quitar lleva su texto y ocupa toda la fila */
+    .programa-campo--accion::before { content: none; }
+
+    .btn-delete-row {
+        width: 100%;
+        gap: 8px;
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        height: 38px;
+    }
+
+    .btn-delete-row::after { content: 'Quitar grupo'; }
+}
+
+@media (max-width: 767.98px) {
+    .form-section { padding: 18px 16px; }
+
+    /* Volver y Crear en columna: en una fila se salían de la pantalla */
+    .acciones-form { flex-direction: column; align-items: stretch; }
+    .acciones-form .btn-volver,
+    .acciones-form .btncrear { width: 100%; }
+}
+
+@media (max-width: 575.98px) {
+    .form-section { padding: 16px 14px; }
+
+    /* Las 5 columnas del desglose por división caben en un teléfono si se
+       aprietan un poco; así no hay que desplazarlas por unos pocos píxeles */
+    .division-table { min-width: 300px; }
+
+    .division-header span,
+    .division-valores span { padding-inline: 0.25rem; }
+
+    .division-header span { font-size: 0.72rem; }
 }

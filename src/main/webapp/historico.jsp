@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Histórico"); %>
 <% request.setAttribute("activeNav", "historico"); %>
 <%@ include file="layout/header.jsp" %>
@@ -25,8 +24,9 @@
             </div>
         </c:when>
         <c:otherwise>
-            <div class="detalle-card" style="margin-top: 1rem; overflow-x: auto;">
-                <table class="tabla-programas" style="margin-top: 0;">
+            <div class="detalle-card" style="margin-top: 1rem;">
+                <div class="tabla-scroll">
+                <table class="tabla-programas">
                     <thead>
                     <tr>
                         <th>Empresa o actividad</th>
@@ -45,26 +45,9 @@
                             <td>${s.totalEstudiantes}</td>
                             <td>${empty s.fechaInicio ? '—' : s.fechaInicio}</td>
                             <td>
-                                <%-- "Completada" se lee como "ya no hay nada que hacer", así que
-                                     mientras falte el reporte se muestra que sigue pendiente. --%>
-                                <c:choose>
-                                    <c:when test="${s.nombreEstado == 'Completada'
-                                                    && (empty s.estadoReporte || s.estadoReporte == 'Pendiente')}">
-                                        <span class="badge-estado estado-reporte-pendiente">Reporte pendiente</span>
-                                    </c:when>
-                                    <c:when test="${s.nombreEstado == 'Completada' && s.estadoReporte == 'Rechazado'}">
-                                        <span class="badge-estado estado-reporte-rechazado">Reporte rechazado</span>
-                                    </c:when>
-                                    <c:when test="${s.nombreEstado == 'Completada' && s.estadoReporte == 'Completado'}">
-                                        <span class="badge-estado estado-completado">Reporte en revisión</span>
-                                    </c:when>
-                                    <c:when test="${s.nombreEstado == 'Completada' && s.estadoReporte == 'Aprobado'}">
-                                        <span class="badge-estado estado-aprobado">Reporte aprobado</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <span class="badge-estado estado-${fn:replace(fn:toLowerCase(s.nombreEstado), ' ', '-')}">${s.nombreEstado}</span>
-                                    </c:otherwise>
-                                </c:choose>
+                                <%-- El texto sale del modelo: "Completada" se lee como "ya no hay
+                                     nada que hacer" y mientras falte el reporte sí lo hay --%>
+                                <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
                             </td>
                             <td style="white-space: nowrap;">
                                 <a class="btn-descargar" style="margin-right: 6px;"
@@ -78,6 +61,7 @@
                     </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </div>
         </c:otherwise>
     </c:choose>

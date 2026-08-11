@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import com.example.demo.model.CatalogoAcademico;
 import com.example.demo.model.ProgramaEducativo;
 import com.example.demo.model.Solicitud;
 import com.example.demo.model.Usuario;
@@ -19,7 +20,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @WebServlet(name = "SolicitudServlet", value = "/solicitud")
@@ -182,49 +182,35 @@ public class SolicitudServlet extends HttpServlet {
             errores.add("El celular del docente responsable debe tener 10 dígitos.");
         }
 
-        for (Map.Entry<String, Integer> division : s.getEstudiantesPorDivision().entrySet()) {
-            int cantidad = (division.getValue() != null) ? division.getValue() : 0;
-            if (cantidad > MAX_ESTUDIANTES) {
-                errores.add("El número de estudiantes de " + division.getKey()
-                        + " no puede pasar de " + MAX_ESTUDIANTES + ".");
-            }
-        }
-
         // ---------- Desglose por programa educativo ----------
+        // El desglose por división ya no se captura: se calcula sumando estos
+        // grupos, así que aquí es donde se valida todo lo de los estudiantes.
         if (s.getProgramas().isEmpty()) {
             errores.add("Agrega al menos un grupo en el desglose por programa educativo.");
         }
+        // Un mismo programa + cuatrimestre + grupo no puede ir dos veces
+        Set<String> combinaciones = new LinkedHashSet<>();
         for (ProgramaEducativo p : s.getProgramas()) {
-            String programa = "\"" + p.getDivisionAcademica() + "\"";
-            if (p.getDivisionAcademica().length() > 100) {
-                errores.add("El nombre del programa educativo " + programa + " es demasiado largo.");
+            String programa = "\"" + p.getPrograma() + "\"";
+            if (!CatalogoAcademico.existePrograma(p.getPrograma())) {
+                errores.add("El programa educativo " + programa + " no está en el catálogo de la UTEZ. "
+                        + "Selecciónalo de la lista.");
             }
             if (p.getCuatrimestre() < 1 || p.getCuatrimestre() > 11) {
                 errores.add("El cuatrimestre del programa " + programa + " debe estar entre 1 y 11.");
             }
             if (Validador.vacio(p.getGrupo())) {
-                errores.add("Escribe el grupo del programa " + programa + ".");
+                errores.add("Elige el grupo del programa " + programa + ".");
             }
             if (p.getNoEstudiantes() < 1) {
                 errores.add("El programa " + programa + " debe llevar al menos 1 estudiante.");
             } else if (p.getNoEstudiantes() > MAX_ESTUDIANTES) {
                 errores.add("El programa " + programa + " no puede pasar de " + MAX_ESTUDIANTES + " estudiantes.");
             }
-        }
-
-        // ---------- Los dos totales de estudiantes tienen que cuadrar ----------
-        int totalDivision = s.getTotalPorDivision();
-        int totalProgramas = 0;
-        for (ProgramaEducativo p : s.getProgramas()) {
-            totalProgramas += Math.max(0, p.getNoEstudiantes());
-        }
-        if (totalDivision < 1) {
-            errores.add("Captura cuántos estudiantes participan por división académica.");
-        }
-        if (totalDivision != totalProgramas) {
-            errores.add("El total de estudiantes por división académica (" + totalDivision
-                    + ") no coincide con el total del desglose por programa educativo ("
-                    + totalProgramas + ").");
+            if (!combinaciones.add(p.getPrograma() + "|" + p.getCuatrimestre() + "|" + p.getGrupo())) {
+                errores.add("El grupo " + p.getCuatrimestre() + "-" + p.getGrupo() + " de " + programa
+                        + " está capturado dos veces.");
+            }
         }
 
         // ---------- Asignaturas ----------
@@ -285,29 +271,9 @@ public class SolicitudServlet extends HttpServlet {
         solicitud.setCelularResponsable(request.getParameter("celularResponsable"));
         solicitud.setProgramas(leerProgramas(request));
         solicitud.setAsignaturas(leerAsignaturas(request));
-        solicitud.setEstudiantesPorDivision(leerDivisiones(request));
         solicitud.setDocentesAcompanantes(leerAcompanantes(request));
-    }
-
-    /**
-     * Estudiantes capturados por división académica. Cada input viene con
-     * name="division_DACEA", name="division_DATEFI", etc.
-     */
-    private Map<String, Integer> leerDivisiones(HttpServletRequest request) {
-        Map<String, Integer> divisiones = Solicitud.divisionesEnCero();
-        for (String division : Solicitud.DIVISIONES) {
-            String valor = request.getParameter("division_" + division);
-            int cantidad = 0;
-            if (valor != null && !valor.isBlank()) {
-                try {
-                    cantidad = Math.max(0, Integer.parseInt(valor.trim()));
-                } catch (NumberFormatException e) {
-                    cantidad = 0;
-                }
-            }
-            divisiones.put(division, cantidad);
-        }
-        return divisiones;
+        // El desglose por división ya no se captura: sale de los grupos de arriba
+        solicitud.recalcularEstudiantesPorDivision();
     }
 
     /**
@@ -367,24 +333,26 @@ public class SolicitudServlet extends HttpServlet {
 
     /**
      * Arma las filas del desglose por programa educativo; ignora las filas vacías.
+     * La división académica no viaja en el POST: se deduce del programa elegido
+     * (el select de división solo sirve para filtrar la lista en el navegador).
      */
     private List<ProgramaEducativo> leerProgramas(HttpServletRequest request) {
         List<ProgramaEducativo> programas = new ArrayList<>();
-        String[] divisiones = request.getParameterValues("programaEducativo");
+        String[] nombres = request.getParameterValues("programaEducativo");
         String[] cuatrimestres = request.getParameterValues("cuatrimestre");
         String[] grupos = request.getParameterValues("grupo");
         String[] estudiantes = request.getParameterValues("numEstudiantesGrupo");
 
-        if (divisiones == null) {
+        if (nombres == null) {
             return programas;
         }
-        for (int i = 0; i < divisiones.length; i++) {
-            String division = divisiones[i] != null ? divisiones[i].trim() : "";
-            if (division.isEmpty()) {
+        for (int i = 0; i < nombres.length; i++) {
+            String nombre = nombres[i] != null ? nombres[i].trim() : "";
+            if (nombre.isEmpty()) {
                 continue;
             }
             ProgramaEducativo p = new ProgramaEducativo();
-            p.setDivisionAcademica(division);
+            p.setPrograma(nombre);
             p.setCuatrimestre(parseEntero(cuatrimestres, i));
             p.setGrupo(grupos != null && i < grupos.length ? grupos[i].trim() : null);
             p.setNoEstudiantes(parseEntero(estudiantes, i));

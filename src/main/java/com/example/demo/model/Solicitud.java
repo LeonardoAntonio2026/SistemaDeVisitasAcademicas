@@ -9,7 +9,7 @@ import java.util.Map;
 public class Solicitud implements Serializable {
 
     /** Divisiones académicas del formato FO-UTEZ-EST-08, en el orden en que se imprimen. */
-    public static final List<String> DIVISIONES = List.of("DACEA", "DATEFI", "DATID", "DAMI");
+    public static final List<String> DIVISIONES = CatalogoAcademico.DIVISIONES;
 
     private int idSolicitud;
     private int idUsuarioSolicitante;
@@ -189,6 +189,48 @@ public class Solicitud implements Serializable {
         this.nombreEstado = nombreEstado;
     }
 
+    /**
+     * Estado tal como se le muestra al usuario. El nombre que guarda la base de
+     * datos describe la fila, no el trámite, y se malinterpreta:
+     *  - "Pendiente" suena a que ya se envió y está esperando, cuando en
+     *    realidad todavía no sale del escritorio del docente.
+     *  - "Completada" suena a "ya acabé", pero la solicitud se cierra al subir
+     *    la carta responsiva y todavía falta todo el reporte de la visita.
+     * Por eso el estado visible de una solicitud cerrada depende del reporte.
+     */
+    public String getEstadoLegible() {
+        if ("Pendiente".equalsIgnoreCase(nombreEstado)) {
+            return "Sin enviar";
+        }
+        if (!"Completada".equalsIgnoreCase(nombreEstado)) {
+            return nombreEstado; // En revisión / Aprobada / Rechazada se leen bien
+        }
+        if ("Aprobado".equalsIgnoreCase(estadoReporte)) {
+            return "Finalizada";
+        }
+        if ("Rechazado".equalsIgnoreCase(estadoReporte)) {
+            return "Reporte rechazado";
+        }
+        if ("Completado".equalsIgnoreCase(estadoReporte)) {
+            return "Reporte en revisión";
+        }
+        return "Falta el reporte";
+    }
+
+    /** Sufijo de la clase CSS del badge (.estado-…) que corresponde al estado visible. */
+    public String getClaseEstado() {
+        switch (getEstadoLegible()) {
+            case "Sin enviar":          return "sin-enviar";
+            case "En revisión":         return "en-revision";
+            case "Aprobada":            return "aprobada";
+            case "Rechazada":           return "rechazada";
+            case "Finalizada":          return "finalizada";
+            case "Reporte rechazado":   return "reporte-rechazado";
+            case "Reporte en revisión": return "completado";
+            default:                    return "reporte-pendiente";
+        }
+    }
+
     /** Estado del reporte de esta solicitud, null si todavía no existe. */
     public String getEstadoReporte() {
         return estadoReporte;
@@ -244,6 +286,24 @@ public class Solicitud implements Serializable {
 
     public void setEstudiantesPorDivision(Map<String, Integer> estudiantesPorDivision) {
         this.estudiantesPorDivision = estudiantesPorDivision;
+    }
+
+    /**
+     * Rehace el desglose por división sumando los grupos capturados. El docente
+     * ya no captura estas cifras: elige el programa educativo de cada grupo y la
+     * división sale del catálogo, así que los dos totales nunca se desfasan.
+     * Se guarda en ESTUDIANTES_DIVISION igual que antes.
+     */
+    public void recalcularEstudiantesPorDivision() {
+        Map<String, Integer> mapa = divisionesEnCero();
+        for (ProgramaEducativo p : programas) {
+            String division = p.getDivision();
+            if (division == null) {
+                continue; // Programa fuera del catálogo (solicitudes viejas)
+            }
+            mapa.merge(division, Math.max(0, p.getNoEstudiantes()), Integer::sum);
+        }
+        this.estudiantesPorDivision = mapa;
     }
 
     /** Suma de los estudiantes capturados por división académica. */

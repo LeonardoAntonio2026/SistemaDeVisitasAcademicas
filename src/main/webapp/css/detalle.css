@@ -143,6 +143,13 @@
     grid-column: 1 / -1;
 }
 
+/* La caja .tabla-scroll vive en layout.css (la usan varias páginas);
+   aquí solo se le dice cuánto necesita esta tabla para no apretarse. */
+.tabla-scroll .tabla-programas {
+    margin-top: 0;
+    min-width: 520px;
+}
+
 .tabla-programas {
     width: 100%;
     border: 1.5px solid var(--color-borde-suave);
@@ -216,6 +223,19 @@
     opacity: 0.85;
 }
 
+/* Un archivo ya subido se distingue de uno por firmar */
+.archivo-pill--subido {
+    background-color: var(--color-azul);
+}
+
+/* Botonera de cada archivo: Descargar y, si aplica, Volver a cargar */
+.archivo-acciones {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .btn-descargar {
     display: inline-flex;
     align-items: center;
@@ -228,6 +248,30 @@
     font-size: var(--fs-sm);
     text-decoration: none;
     white-space: nowrap;
+}
+
+/* Reemplazar un archivo es la acción secundaria: va en contorno para que no
+   compita con Descargar y para que el recuadro de carga no tenga que estar
+   siempre a la vista. */
+.btn-recargar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--color-superficie);
+    color: var(--color-azul);
+    border: 1.5px solid var(--color-borde);
+    border-radius: var(--radio-btn);
+    padding: calc(var(--btn-sm-pad-y) - 1.5px) var(--btn-sm-pad-x);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn-recargar:hover {
+    background-color: var(--color-fondo);
+    border-color: var(--color-azul);
 }
 
 .separador-firmar {
@@ -301,17 +345,6 @@
 .zona-carga .form-control {
     max-width: 380px;
     margin: 0 auto 10px;
-}
-
-/* Cuando el archivo ya está en el sistema la zona pasa a modo "reemplazar" */
-.zona-carga.zona-cargada {
-    border-color: #7FBFA3;
-    background: #F2FAF6;
-}
-
-.zona-carga.zona-cargada p,
-.zona-carga.zona-cargada i {
-    color: #1E7A46 !important;
 }
 
 /* Aviso al elegir archivo: seleccionar NO es subir, falta dar click en Subir */
@@ -451,7 +484,51 @@
     cursor: not-allowed;
 }
 
+/* ============================================================
+   Pantallas angostas
+   ============================================================ */
+@media (max-width: 767.98px) {
+    .detalle-card {
+        padding: 18px 16px;
+    }
+
+    /* El badge de estado baja debajo del título en vez de apretarlo */
+    .resumen-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .resumen-titulo { font-size: var(--fs-lg); }
+
+    .resumen-meta { gap: 0.35rem 1rem; font-size: var(--fs-sm); }
+
+    /* Volver / Editar / Enviar en columna: en una fila se salían */
+    .acciones-form { flex-direction: column; align-items: stretch; }
+
+    .acciones-derecha { flex-direction: column; align-items: stretch; }
+
+    .acciones-form .btn-volver-detalle,
+    .acciones-form .btn-editar-datos,
+    .acciones-form .btn-enviar-solicitud,
+    .acciones-derecha form,
+    .acciones-derecha .btn-enviar-solicitud {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .acciones-evaluar { flex-direction: column-reverse; }
+
+    .acciones-evaluar .btn-aprobar,
+    .acciones-evaluar .btn-rechazar {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 @media (max-width: 575.98px) {
+    .detalle-card { padding: 16px 14px; }
+
     .datos-grid {
         grid-template-columns: 1fr;
     }
@@ -460,4 +537,11 @@
         flex-direction: column;
         align-items: stretch;
     }
+
+    .archivo-row .btn-descargar,
+    .archivo-row .btn-recargar {
+        justify-content: center;
+    }
+
+    .zona-carga { padding: 16px 12px; }
 }

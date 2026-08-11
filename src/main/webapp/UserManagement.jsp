@@ -79,7 +79,7 @@
                 <input type="hidden" name="id" value="${usuarioABorrar.id}">
                 <div class="acciones-form">
                     <a href="${pageContext.request.contextPath}/usuarios" class="btn-volver text-decoration-none">
-                        <i class="bi bi-arrow-left"></i> Cancelar
+                        <i class="bi bi-arrow-left"></i> Cancelar y volver a la lista
                     </a>
                     <button type="submit" class="btncrear" style="background-color: var(--color-rojo);">
                         <i class="bi bi-trash"></i> Sí, eliminar todo
@@ -137,7 +137,7 @@
             <div class="acciones-form ${editando ? '' : 'acciones-form--derecha'}">
                 <c:if test="${editando}">
                     <a href="${pageContext.request.contextPath}/usuarios" class="btn-volver text-decoration-none">
-                        <i class="bi bi-arrow-left"></i> Cancelar
+                        <i class="bi bi-arrow-left"></i> Cancelar edición
                     </a>
                 </c:if>
                 <button type="submit" class="btncrear">
@@ -159,8 +159,9 @@
             </div>
         </c:when>
         <c:otherwise>
-            <div class="detalle-card" style="margin-top: 1rem; overflow-x: auto;">
-                <table class="tabla-programas" style="margin-top: 0;">
+            <div class="detalle-card" style="margin-top: 1rem;">
+                <div class="tabla-scroll">
+                <table class="tabla-programas">
                     <thead>
                     <tr>
                         <th>Nombre</th>
@@ -197,6 +198,7 @@
                     </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </div>
         </c:otherwise>
     </c:choose>

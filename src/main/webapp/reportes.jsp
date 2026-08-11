@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Reportes"); %>
 <% request.setAttribute("activeNav", "reportes"); %>
 <%@ include file="layout/header.jsp" %>
@@ -53,7 +52,7 @@
                                 </div>
                             </c:if>
                         </div>
-                        <span class="badge-estado estado-${fn:toLowerCase(r.nombreEstado)}">${r.nombreEstado}</span>
+                        <span class="badge-estado estado-${r.claseEstado}">${r.estadoLegible}</span>
                     </div>
 
                     <div class="solicitud-card-bottom">

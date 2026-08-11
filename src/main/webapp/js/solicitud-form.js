@@ -1,11 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
     var btnAgregarGrupo = document.getElementById("btn-agregar-grupo");
     var programasContainer = document.getElementById("programas-container");
+    var plantillaFila = document.getElementById("tpl-programa-row");
+    var catalogo = document.getElementById("catalogo-programas");
+    var iniciales = document.getElementById("programas-iniciales");
+    var resumenDivisiones = document.getElementById("division-resumen");
     var tagsWrapper = document.getElementById("tags-wrapper");
     var tagsInput = document.getElementById("tags-input");
-    var divisionInputs = document.querySelector(".division-inputs");
-    var mismatchMsg = document.getElementById("division-mismatch-msg");
-    var mismatchText = document.getElementById("division-mismatch-text");
     var programasMsg = document.getElementById("programas-msg");
     var programasText = document.getElementById("programas-msg-text");
     var asignaturasMsg = document.getElementById("asignaturas-msg");
@@ -14,10 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
     var acompWrapper = document.getElementById("acompanantes-wrapper");
     var acompInput = document.getElementById("acompanantes-input");
     var acompSugerencias = document.getElementById("acompanantes-sugerencias");
-
-    function getTrashSvg() {
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h3.171a1 1 0 0 1 .707.293L7.5 3h1l.621-.707A1 1 0 0 1 9.829 2H13a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 0 0 1z"/></svg>';
-    }
 
     // Cada chip lleva un input hidden name="asignaturas" para que el valor llegue al servlet
     function addTag(text) {
@@ -35,30 +32,6 @@ document.addEventListener("DOMContentLoaded", function () {
         chip.appendChild(hidden);
 
         tagsWrapper.insertBefore(chip, tagsInput);
-    }
-
-    // Suma el número de estudiantes capturado por división académica (DACEA, DATEFI, DATID, DAMI)
-    function getDivisionTotal() {
-        if (!divisionInputs) {
-            return 0;
-        }
-        var total = 0;
-        divisionInputs.querySelectorAll('input[type="number"]:not(.division-total)').forEach(function (i) {
-            total += parseInt(i.value, 10) || 0;
-        });
-        return total;
-    }
-
-    // Suma el número de estudiantes capturado en el desglose por programa educativo
-    function getProgramasTotal() {
-        if (!programasContainer) {
-            return 0;
-        }
-        var total = 0;
-        programasContainer.querySelectorAll('input[name="numEstudiantesGrupo"]').forEach(function (i) {
-            total += parseInt(i.value, 10) || 0;
-        });
-        return total;
     }
 
     // Cuántas asignaturas (chips) lleva capturadas el formulario
@@ -79,30 +52,184 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Verifica que el total por división académica coincida con el total del desglose
-    // por programa. exigirMinimo solo se usa al enviar: en un formulario recién
-    // abierto ambos totales son 0 y no tiene caso reclamarle nada al docente todavía.
-    function validarTotales(exigirMinimo) {
-        var totalDivision = getDivisionTotal();
-        var totalProgramas = getProgramasTotal();
-        var mensaje = "";
+    // ===================== Desglose por programa educativo =====================
+    // Cada fila es un grupo: división -> programa educativo -> cuatrimestre ->
+    // grupo -> estudiantes. Todo sale de listas, y las opciones que ya se usaron
+    // se descartan para que no se capture dos veces el mismo grupo.
 
-        if (totalDivision !== totalProgramas) {
-            mensaje = "El total de estudiantes por división académica (" + totalDivision +
-                ") no coincide con el total del desglose por programa educativo (" + totalProgramas + ").";
-        } else if (exigirMinimo && totalDivision < 1) {
-            mensaje = "Captura cuántos estudiantes participan en la visita.";
-        }
-
-        mostrarMensaje(mismatchMsg, mismatchText, mensaje);
-        return !mensaje;
+    // Catálogo que dejó el JSP: [{division: "DATID", programa: "..."}, ...]
+    var programasCatalogo = [];
+    if (catalogo) {
+        catalogo.querySelectorAll("span").forEach(function (item) {
+            programasCatalogo.push({
+                division: item.dataset.division,
+                programa: item.dataset.programa
+            });
+        });
     }
 
-    // Debe haber al menos un grupo en el desglose por programa educativo
+    function filas() {
+        return programasContainer
+            ? Array.prototype.slice.call(programasContainer.querySelectorAll(".programa-row"))
+            : [];
+    }
+
+    function campos(fila) {
+        return {
+            division: fila.querySelector(".campo-division"),
+            programa: fila.querySelector(".campo-programa"),
+            cuatrimestre: fila.querySelector(".campo-cuatrimestre"),
+            grupo: fila.querySelector(".campo-grupo"),
+            estudiantes: fila.querySelector(".campo-estudiantes")
+        };
+    }
+
+    // Llena el select de programas con los de la división elegida
+    function pintarProgramas(fila, programaElegido) {
+        var c = campos(fila);
+        var division = c.division.value;
+        c.programa.innerHTML = "";
+
+        var vacio = document.createElement("option");
+        vacio.value = "";
+        vacio.textContent = division ? "Elige el programa educativo…" : "Elige primero la división";
+        c.programa.appendChild(vacio);
+
+        programasCatalogo.forEach(function (item) {
+            if (item.division !== division) {
+                return;
+            }
+            var opcion = document.createElement("option");
+            opcion.value = item.programa;
+            opcion.textContent = item.programa;
+            c.programa.appendChild(opcion);
+        });
+
+        if (programaElegido) {
+            c.programa.value = programaElegido;
+        }
+    }
+
+    // Descarta los grupos ya capturados para el mismo programa y cuatrimestre:
+    // así no se puede agregar dos veces el 5° A de la misma carrera.
+    function descartarGruposUsados() {
+        // Quién tiene tomado cada grupo. Si al cambiar de programa o de
+        // cuatrimestre una fila choca con otra, la que pierde el grupo es la
+        // que llegó después: la primera se queda con lo que ya tenía.
+        var tomados = {};
+        filas().forEach(function (fila) {
+            var c = campos(fila);
+            if (!c.programa.value || !c.cuatrimestre.value || !c.grupo.value) {
+                return;
+            }
+            var llave = c.programa.value + "|" + c.cuatrimestre.value + "|" + c.grupo.value;
+            if (tomados[llave]) {
+                c.grupo.value = "";
+            } else {
+                tomados[llave] = true;
+            }
+        });
+
+        filas().forEach(function (fila) {
+            var c = campos(fila);
+            var prefijo = c.programa.value + "|" + c.cuatrimestre.value + "|";
+            Array.prototype.forEach.call(c.grupo.options, function (opcion) {
+                opcion.disabled = !!opcion.value
+                    && opcion.value !== c.grupo.value
+                    && !!tomados[prefijo + opcion.value];
+            });
+        });
+    }
+
+    // Suma los estudiantes de cada división a partir de los grupos capturados
+    function pintarResumenDivisiones() {
+        if (!resumenDivisiones) {
+            return;
+        }
+        var porDivision = {};
+        var total = 0;
+
+        filas().forEach(function (fila) {
+            var c = campos(fila);
+            var cantidad = parseInt(c.estudiantes.value, 10) || 0;
+            var division = c.division.value;
+            if (!division || cantidad <= 0) {
+                return;
+            }
+            porDivision[division] = (porDivision[division] || 0) + cantidad;
+            total += cantidad;
+        });
+
+        resumenDivisiones.querySelectorAll("[data-division]").forEach(function (celda) {
+            celda.textContent = porDivision[celda.dataset.division] || 0;
+        });
+
+        var celdaTotal = resumenDivisiones.querySelector("[data-division-total]");
+        if (celdaTotal) {
+            celdaTotal.textContent = total;
+        }
+    }
+
+    // Todo lo que cambia cuando se toca una fila
+    function refrescar() {
+        descartarGruposUsados();
+        pintarResumenDivisiones();
+        validarProgramas();
+    }
+
+    function agregarFila(datos) {
+        if (!programasContainer || !plantillaFila) {
+            return null;
+        }
+        var fila = plantillaFila.content.firstElementChild.cloneNode(true);
+        programasContainer.appendChild(fila);
+
+        var c = campos(fila);
+        if (datos && datos.programa) {
+            // Fila que ya existía: la división se deduce del programa guardado
+            var enCatalogo = programasCatalogo.find(function (item) {
+                return item.programa === datos.programa;
+            });
+            if (enCatalogo) {
+                c.division.value = enCatalogo.division;
+                pintarProgramas(fila, datos.programa);
+            } else {
+                // Programa de una solicitud vieja capturada con texto libre:
+                // se ofrece como opción para no perder el dato al editar
+                var suelta = document.createElement("option");
+                suelta.value = datos.programa;
+                suelta.textContent = datos.programa + " (fuera del catálogo)";
+                c.programa.appendChild(suelta);
+                c.programa.value = datos.programa;
+            }
+            c.cuatrimestre.value = datos.cuatrimestre || "";
+            c.grupo.value = datos.grupo || "";
+            c.estudiantes.value = datos.estudiantes || "";
+        }
+        return fila;
+    }
+
+    // Debe haber al menos un grupo, y ninguno con un programa fuera del catálogo
+    // (pasa al editar solicitudes viejas, capturadas cuando era texto libre)
     function validarProgramas() {
-        var filas = programasContainer ? programasContainer.querySelectorAll(".programa-row").length : 0;
-        var mensaje = filas === 0 ? "Agrega al menos un grupo en el desglose por programa educativo." : "";
+        var mensaje = "";
+        var fueraDeCatalogo = filas().filter(function (fila) {
+            var c = campos(fila);
+            return c.programa.value && !c.division.value;
+        }).length;
+
+        if (filas().length === 0) {
+            mensaje = "Agrega al menos un grupo en el desglose por programa educativo.";
+        } else if (fueraDeCatalogo > 0) {
+            mensaje = fueraDeCatalogo === 1
+                ? "Un grupo tiene un programa educativo que ya no está en el catálogo. Vuelve a seleccionar su división académica y su programa."
+                : "Hay " + fueraDeCatalogo + " grupos con programas educativos que ya no están en el catálogo. Vuelve a seleccionar su división académica y su programa.";
+        }
         mostrarMensaje(programasMsg, programasText, mensaje);
+        filas().forEach(function (fila) {
+            var c = campos(fila);
+            fila.classList.toggle("programa-row--revisar", !!c.programa.value && !c.division.value);
+        });
         return !mensaje;
     }
 
@@ -117,42 +244,69 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Todo lo que el navegador no puede validar solo con required/pattern
     function validarFormulario() {
-        // Se evalúan las tres para que se pinten todos los mensajes de una vez
+        // Se evalúan las dos para que se pinten todos los mensajes de una vez
         var programasOk = validarProgramas();
-        var totalesOk = validarTotales(true);
         var asignaturasOk = validarAsignaturas();
-        return programasOk && totalesOk && asignaturasOk;
+        return programasOk && asignaturasOk;
     }
 
-    if (btnAgregarGrupo && programasContainer) {
-        btnAgregarGrupo.addEventListener("click", function () {
-            var row = document.createElement("div");
-            row.className = "programa-row";
-            row.innerHTML =
-                '<input type="text" name="programaEducativo" class="form-control" placeholder="Ejemplo" required maxlength="100">' +
-                '<input type="number" name="cuatrimestre" class="form-control" placeholder="5" required min="1" max="11" step="1">' +
-                '<input type="text" name="grupo" class="form-control" placeholder="A" required maxlength="10">' +
-                '<input type="number" name="numEstudiantesGrupo" class="form-control" placeholder="4" required min="1" max="999" step="1">' +
-                '<button type="button" class="btn-delete-row" title="Eliminar fila">' + getTrashSvg() + "</button>";
-            programasContainer.appendChild(row);
-            validarProgramas();
-            validarTotales();
-        });
+    if (programasContainer && plantillaFila) {
+        // Filas que ya existían (edición o vuelta con errores); si no hay, una vacía
+        var hayIniciales = false;
+        if (iniciales) {
+            iniciales.querySelectorAll("span").forEach(function (item) {
+                agregarFila({
+                    programa: item.dataset.programa,
+                    cuatrimestre: item.dataset.cuatrimestre,
+                    grupo: item.dataset.grupo,
+                    estudiantes: item.dataset.estudiantes
+                });
+                hayIniciales = true;
+            });
+        }
+        if (!hayIniciales) {
+            agregarFila(null);
+        }
+        refrescar();
+
+        if (btnAgregarGrupo) {
+            btnAgregarGrupo.addEventListener("click", function () {
+                var fila = agregarFila(null);
+                refrescar();
+                if (fila) {
+                    fila.querySelector(".campo-division").focus();
+                }
+            });
+        }
 
         programasContainer.addEventListener("click", function (e) {
             var btn = e.target.closest(".btn-delete-row");
-            if (btn) {
-                var row = btn.closest(".programa-row");
-                if (row) {
-                    row.remove();
-                    validarProgramas();
-                    validarTotales();
-                }
+            if (!btn) {
+                return;
+            }
+            var fila = btn.closest(".programa-row");
+            if (fila) {
+                fila.remove();
+                refrescar();
             }
         });
 
-        programasContainer.addEventListener("input", function () {
-            validarTotales();
+        programasContainer.addEventListener("change", function (e) {
+            var fila = e.target.closest(".programa-row");
+            if (!fila) {
+                return;
+            }
+            if (e.target.classList.contains("campo-division")) {
+                pintarProgramas(fila, null);
+            }
+            refrescar();
+        });
+
+        // El número de estudiantes se escribe: el resumen se actualiza al teclear
+        programasContainer.addEventListener("input", function (e) {
+            if (e.target.classList.contains("campo-estudiantes")) {
+                pintarResumenDivisiones();
+            }
         });
     }
 
@@ -351,27 +505,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function pintarDivisionTotal() {
-        if (!divisionInputs) {
-            return;
-        }
-        var totalInput = divisionInputs.querySelector(".division-total");
-        if (totalInput) {
-            totalInput.value = getDivisionTotal();
-        }
-    }
-
-    if (divisionInputs) {
-        divisionInputs.addEventListener("input", function () {
-            pintarDivisionTotal();
-            validarTotales();
-        });
-        // En edición los inputs ya vienen con valores: el total se pinta al cargar
-        pintarDivisionTotal();
-    }
-
     // No permite enviar mientras falte algo que el navegador no valida solo:
-    // los dos totales de estudiantes, los grupos y las asignaturas
+    // los grupos del desglose y las asignaturas
     if (form) {
         form.addEventListener("submit", function (e) {
             // Si escribió una asignatura y envió sin presionar Enter, la convertimos en chip
@@ -382,7 +517,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!validarFormulario()) {
                 e.preventDefault();
-                var primero = [programasMsg, mismatchMsg, asignaturasMsg].find(function (caja) {
+                var primero = [programasMsg, asignaturasMsg].find(function (caja) {
                     return caja && caja.style.display !== "none";
                 });
                 if (primero) {
@@ -391,8 +526,4 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
-
-    // Al cargar solo se revisan los totales: los otros dos mensajes aparecerían
-    // en rojo antes de que el docente escriba nada en un formulario nuevo
-    validarTotales();
 });

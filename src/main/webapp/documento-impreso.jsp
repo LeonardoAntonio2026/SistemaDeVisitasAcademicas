@@ -5,7 +5,7 @@
      (Ctrl+P), la firma y la sube. tipoFormato: fo | oficio | responsiva | reporte --%>
 <c:set var="s" value="${solicitud}"/>
 <c:set var="r" value="${reporte}"/>
-<% request.setAttribute("divisiones", com.example.demo.model.Solicitud.DIVISIONES); %>
+<% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
 <%-- Docente responsable capturado en el formato; las solicitudes viejas no lo
      tienen, ahí se usa el docente que creó la solicitud --%>
 <c:set var="responsable" value="${empty s.docenteResponsable ? s.nombreSolicitante : s.docenteResponsable}"/>
@@ -90,11 +90,11 @@
 <div class="toolbar">
     <c:choose>
         <c:when test="${tipoFormato == 'reporte'}">
-            <a href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">&#8592; Volver al reporte</a>
+            <a href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">&#8592; Volver al reporte de la visita</a>
             <span style="font-size: 13px;">Imprime o guarda como PDF, firma el reporte y súbelo en el detalle del reporte</span>
         </c:when>
         <c:otherwise>
-            <a href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">&#8592; Volver a detalles</a>
+            <a href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">&#8592; Volver a la solicitud</a>
             <span style="font-size: 13px;">Imprime o guarda como PDF, firma el documento y súbelo en los detalles de tu solicitud</span>
         </c:otherwise>
     </c:choose>
@@ -152,6 +152,7 @@
             <c:if test="${not empty s.programas}">
                 <table class="campos">
                     <tr>
+                        <th style="width:auto;">División</th>
                         <th style="width:auto;">Programa educativo</th>
                         <th style="width:auto;">Cuatrimestre</th>
                         <th style="width:auto;">Grupo</th>
@@ -159,14 +160,15 @@
                     </tr>
                     <c:forEach var="p" items="${s.programas}">
                         <tr>
-                            <td>${p.divisionAcademica}</td>
+                            <td>${p.divisionMostrable}</td>
+                            <td>${p.programa}</td>
                             <td>${p.cuatrimestre}</td>
                             <td>${empty p.grupo ? '' : p.grupo}</td>
                             <td>${p.noEstudiantes}</td>
                         </tr>
                     </c:forEach>
                     <tr>
-                        <td colspan="3" style="font-weight:bold;">Total de estudiantes</td>
+                        <td colspan="4" style="font-weight:bold;">Total de estudiantes</td>
                         <td style="font-weight:bold;">${s.totalEstudiantes}</td>
                     </tr>
                 </table>

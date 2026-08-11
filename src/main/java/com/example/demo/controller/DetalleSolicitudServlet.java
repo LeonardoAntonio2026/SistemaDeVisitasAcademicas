@@ -43,6 +43,9 @@ public class DetalleSolicitudServlet extends HttpServlet {
         request.setAttribute("documentos", documentoDao.getBySolicitud(solicitud.getIdSolicitud()));
         request.setAttribute("existeFirmado",
                 documentoDao.existeTipoEnSolicitud(solicitud.getIdSolicitud(), TIPO_FO_FIRMADO));
+        // La vista lo usa para poner el botón "Volver a cargar" solo en la fila
+        // del FO firmado (el único archivo que se puede reemplazar)
+        request.setAttribute("tipoFoFirmado", TIPO_FO_FIRMADO);
         request.setAttribute("reporte", reporteDao.getBySolicitud(solicitud.getIdSolicitud()));
 
         request.getRequestDispatcher("detalle.jsp").forward(request, response);
