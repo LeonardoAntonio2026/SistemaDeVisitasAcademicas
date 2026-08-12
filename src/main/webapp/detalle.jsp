@@ -92,7 +92,7 @@
         </div>
     </c:if>
 
-    <%-- ===================== Card de resumen ===================== --%>
+
     <div class="detalle-card" style="margin-top: 1rem;">
         <div class="resumen-top">
             <div>

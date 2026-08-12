@@ -373,6 +373,56 @@
 .btncrear:hover { background-color: var(--color-azul-hover); }
 
 /* ============================================================
+   Modales (editar usuario y confirmar baja). La mecánica la pone
+   Bootstrap; aquí solo se alinean radios, tipografía y bordes con
+   las cards del resto del sistema, para que un modal se lea como
+   una card más y no como un cuadro de diálogo ajeno.
+   ============================================================ */
+.modal-content {
+    border: none;
+    border-radius: var(--radio-card);
+    box-shadow: var(--sombra-elevada);
+}
+
+.modal-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+/* Mismo peso y tamaño que el h6 que titula las cards */
+.modal-title {
+    font-weight: 700;
+    font-size: var(--fs-md);
+    color: var(--color-texto);
+    margin: 0;
+}
+
+.modal-body {
+    padding: 20px 24px;
+    color: var(--color-texto-2);
+    font-size: var(--fs-base);
+}
+
+.modal-body p:last-child { margin-bottom: 0; }
+
+.modal-footer {
+    padding: 16px 24px;
+    gap: 12px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+/* Bootstrap separa los botones del pie con márgenes propios; con el gap
+   de arriba sobran y descuadran el par Cancelar / acción principal. */
+.modal-footer > * { margin: 0; }
+
+/* El aviso de error encabeza el cuerpo del modal: al revés que en la
+   página, el margen le toca abajo. */
+#aviso-modal-editar .instruccion {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+/* ============================================================
    Pantallas angostas. Lo importante: la fila del desglose deja
    de ser una cuadrícula de 6 columnas (que se salía de la
    pantalla) y se convierte en una tarjeta con una etiqueta por
