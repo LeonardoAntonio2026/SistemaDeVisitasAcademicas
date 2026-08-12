@@ -46,7 +46,8 @@ public class SolicitudServlet extends HttpServlet {
         if ("editar".equals(request.getParameter("action"))) {
             Solicitud solicitud = cargarEditablePorDueno(request);
             if (solicitud == null) {
-                response.sendRedirect("solicitud");
+                // O no es suya, o ya se envió y por eso dejó de ser editable
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
             request.setAttribute("solicitud", solicitud);
@@ -60,14 +61,17 @@ public class SolicitudServlet extends HttpServlet {
         Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
         String rol = (session != null) ? (String) session.getAttribute("rol") : null;
 
+        // Mismas consultas que el inicio (IndexSv): solo las ACTIVAS. Antes se
+        // traían todas y la vista escondía las terminadas, así que un docente
+        // con puras solicitudes rechazadas veía la página vacía sin el mensaje
+        // de "No tienes ninguna solicitud".
         List<Solicitud> solicitudes;
         if (idUsuario == null) {
             solicitudes = new ArrayList<>();
         } else if (rol != null && !"Docente".equalsIgnoreCase(rol)) {
-            // Estadías/Admin ven todas las ya enviadas (las Pendientes aún no)
-            solicitudes = solicitudDao.getEnviadas();
+            solicitudes = solicitudDao.getActivasParaRevision();
         } else {
-            solicitudes = solicitudDao.getBySolicitante(idUsuario);
+            solicitudes = solicitudDao.getActivasBySolicitante(idUsuario);
         }
         request.setAttribute("listaSolicitudes", solicitudes);
 
@@ -112,10 +116,17 @@ public class SolicitudServlet extends HttpServlet {
                 response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud());
                 return;
             }
+            // Falló el INSERT: se regresa al formulario con lo capturado en vez
+            // de mandarlo al inicio sin decirle que su solicitud no se guardó
+            errores.add("No se pudo guardar la solicitud en la base de datos. "
+                    + "No se registró nada; revisa tu conexión e inténtalo de nuevo.");
+            regresarAlFormulario(request, response, solicitud, errores, false);
+            return;
         } else if ("update".equals(action)) {
             Solicitud solicitud = cargarEditablePorDueno(request);
             if (solicitud == null) {
-                response.sendRedirect("solicitud");
+                // O no es suya, o ya se envió y por eso dejó de ser editable
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
 
@@ -135,7 +146,10 @@ public class SolicitudServlet extends HttpServlet {
                 response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud() + "&actualizado=1");
                 return;
             }
-            response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud());
+            // Falló el UPDATE: se regresa al formulario con los cambios a la vista
+            errores.add("No se pudieron guardar los cambios en la base de datos. "
+                    + "La solicitud quedó como estaba; inténtalo de nuevo.");
+            regresarAlFormulario(request, response, solicitud, errores, true);
             return;
         }
 

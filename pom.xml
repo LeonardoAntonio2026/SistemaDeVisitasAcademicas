@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>mx.edu.utez</groupId>
-    <artifactId>Integradora_POO_2026</artifactId>
+    <artifactId>SGVA</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>Integradora_POO_2026</name>
+    <name>SGVA</name>
     <packaging>war</packaging>
 
     <properties>

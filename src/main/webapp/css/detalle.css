@@ -248,7 +248,10 @@
     font-size: var(--fs-sm);
     text-decoration: none;
     white-space: nowrap;
+    transition: background-color 0.15s;
 }
+
+.btn-descargar:hover { background-color: var(--color-azul-hover); }
 
 /* Reemplazar un archivo es la acción secundaria: va en contorno para que no
    compita con Descargar y para que el recuadro de carga no tenga que estar
@@ -376,7 +379,10 @@
     padding: var(--btn-pad-y) var(--btn-pad-x);
     font-size: var(--fs-base);
     cursor: pointer;
+    transition: background-color 0.15s;
 }
+
+.btn-subir:hover:not(:disabled) { background-color: var(--color-azul-hover); }
 
 .btn-subir:disabled {
     opacity: 0.55;
@@ -404,15 +410,20 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    transition: background-color 0.15s;
 }
 
 .btn-rechazar {
     background-color: var(--color-rojo);
 }
 
+.btn-rechazar:hover { background-color: var(--color-rojo-oscuro); }
+
 .btn-aprobar {
     background-color: var(--color-azul);
 }
+
+.btn-aprobar:hover { background-color: var(--color-azul-hover); }
 
 .acciones-derecha {
     display: flex;

@@ -155,6 +155,33 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
      */
     @Override
     public boolean delete(Integer id) {
+        return eliminarConDetalle(id).ok();
+    }
+
+    /**
+     * Resultado de una baja: si se pudo y, cuando no, la clave del motivo para
+     * que el servlet arme el mensaje que ve el administrador.
+     */
+    public record Baja(boolean ok, String error) {
+        static Baja exitosa() {
+            return new Baja(true, null);
+        }
+
+        static Baja fallida(String error) {
+            return new Baja(false, error);
+        }
+    }
+
+    /** Código de Oracle cuando una llave foránea impide borrar el registro padre. */
+    private static final int ORA_HIJO_ENCONTRADO = 2292;
+
+    /**
+     * Igual que {@link #delete(Integer)}, pero explica por qué falló. Si alguna
+     * tabla que no contempla el borrado en cascada sigue apuntando al usuario,
+     * Oracle responde ORA-02292 y eso se traduce a "está ligado a otra
+     * información" en lugar de un "no se pudo" genérico.
+     */
+    public Baja eliminarConDetalle(Integer id) {
         // Subconsulta reutilizada: las solicitudes de las que el usuario es dueño
         final String SUS_SOLICITUDES = "SELECT id_solicitud FROM solicitud WHERE id_usuario_solicitante = ?";
 
@@ -213,7 +240,8 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
             }
 
             con.commit();
-            return filas > 0;
+            // Si no borró ninguna fila es que la cuenta ya no existía
+            return filas > 0 ? Baja.exitosa() : Baja.fallida("noexiste");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -224,7 +252,7 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
                     ex.printStackTrace();
                 }
             }
-            return false;
+            return Baja.fallida(e.getErrorCode() == ORA_HIJO_ENCONTRADO ? "ligado" : "eliminar");
         } finally {
             if (con != null) {
                 try {

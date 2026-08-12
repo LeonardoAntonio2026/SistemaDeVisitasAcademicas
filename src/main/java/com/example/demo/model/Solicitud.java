@@ -226,7 +226,7 @@ public class Solicitud implements Serializable {
             case "Rechazada":           return "rechazada";
             case "Finalizada":          return "finalizada";
             case "Reporte rechazado":   return "reporte-rechazado";
-            case "Reporte en revisión": return "completado";
+            case "Reporte en revisión": return "en-revision"; // mismo amarillo que "En revisión"
             default:                    return "reporte-pendiente";
         }
     }

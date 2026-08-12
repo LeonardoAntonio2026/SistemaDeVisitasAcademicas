@@ -50,9 +50,11 @@ public class FiltroAutenticacion extends HttpFilter {
                 requestURI.contains("/layout/");
 
         if (loggedIn) {
-            // CON sesión: si intenta ir al login/registro, lo mandamos al inicio
+            // CON sesión: si intenta ir al login/registro, lo mandamos al inicio.
+            // Al SERVLET (/indexSv), no al JSP: el JSP solo no carga las
+            // solicitudes y se veía "No tienes ninguna solicitud" en falso.
             if (loginRequest) {
-                response.sendRedirect(request.getContextPath() + "/index.jsp");
+                response.sendRedirect(request.getContextPath() + "/indexSv");
             } else {
                 chain.doFilter(request, response);
             }

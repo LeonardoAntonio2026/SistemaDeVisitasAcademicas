@@ -64,7 +64,24 @@
                         <c:when test="${param.error == 'firmado-tipo'}">El reporte firmado debe ser un PDF.</c:when>
                         <c:when test="${param.error == 'firmado-tamano'}">El reporte firmado debe pesar máximo 10 MB.</c:when>
                         <c:when test="${param.error == 'firmado-vacio'}">Selecciona el PDF del reporte firmado antes de subirlo.</c:when>
-                        <c:otherwise>Ocurrió un problema al guardar. Intenta de nuevo.</c:otherwise>
+                        <c:when test="${param.error == 'sinformulario'}">
+                            Primero completa el formulario del reporte: sin los resultados capturados no se puede enviar.
+                        </c:when>
+                        <c:when test="${param.error == 'sinfirmado'}">
+                            Primero sube el PDF del reporte firmado: sin él no se puede enviar a Estadías.
+                        </c:when>
+                        <c:when test="${param.error == 'yaenviado'}">
+                            Este reporte ya se había enviado a Estadías, así que no se envió otra vez.
+                        </c:when>
+                        <c:when test="${param.error == 'sinmotivo'}">
+                            Para rechazar un reporte es obligatorio escribir el motivo, porque es lo que se le notifica al docente.
+                        </c:when>
+                        <c:when test="${param.error == 'yaevaluado'}">
+                            Este reporte ya fue evaluado por alguien más: recarga la página para ver en qué estado quedó.
+                        </c:when>
+                        <c:otherwise>
+                            Ocurrió un problema al guardar en la base de datos y no se registró ningún cambio. Intenta de nuevo.
+                        </c:otherwise>
                     </c:choose>
                 </p>
             </div>
@@ -226,7 +243,8 @@
                         </c:forEach>
                     </div>
                 </c:if>
-                <a class="btn-descargar btn-resumen-solicitud"
+                <%-- Mismo botón de editar (contorno azul) que en el detalle de la solicitud --%>
+                <a class="btn-editar-datos btn-resumen-solicitud"
                    href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}&editar=1"
                    title="Al editar deberás volver a firmar y subir el formato">
                     <i class="bi bi-pencil"></i> Editar formulario
@@ -261,7 +279,8 @@
                                 <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
                             </span>
                             <div class="archivo-acciones">
-                                <a class="btn-descargar" href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
+                                <a class="btn-descargar" download
+                                   href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
                                     <i class="bi bi-download"></i> Descargar
                                 </a>
                                 <button type="button" class="btn-recargar" data-abre-carga="carga-reporte-firmado">
@@ -354,7 +373,8 @@
                                     <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
                                 </span>
                                 <div class="archivo-acciones">
-                                    <a class="btn-descargar" href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
+                                    <a class="btn-descargar" download
+                                       href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
                                         <i class="bi bi-download"></i> Descargar
                                     </a>
                                 </div>
@@ -389,9 +409,10 @@
                     <div class="detalle-card">
                         <h6>Corregir reporte</h6>
                         <p>Edita los datos del reporte conforme a lo solicitado y vuelve a enviarlo.</p>
-                        <a class="btn-descargar btn-verde"
+                        <%-- Mismo botón de editar (contorno azul) que en el detalle de la solicitud --%>
+                        <a class="btn-editar-datos"
                            href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}&editar=1">
-                            <i class="bi bi-pencil-square"></i> Editar formulario
+                            <i class="bi bi-pencil"></i> Editar formulario
                         </a>
                     </div>
                 </c:if>

@@ -34,8 +34,10 @@ public class UsuarioServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Gestión de usuarios es solo del Administrador: a los demás se les dice
+        // por qué no pueden entrar, en vez de rebotarlos al inicio sin explicación
         if (!esAdministrador(request)) {
-            response.sendRedirect(request.getContextPath() + "/indexSv");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -78,8 +80,10 @@ public class UsuarioServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
+        // Gestión de usuarios es solo del Administrador: a los demás se les dice
+        // por qué no pueden entrar, en vez de rebotarlos al inicio sin explicación
         if (!esAdministrador(request)) {
-            response.sendRedirect(request.getContextPath() + "/indexSv");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -148,37 +152,42 @@ public class UsuarioServlet extends HttpServlet {
             return "usuarios?error=noexiste";
         }
 
+        // Si algo falla, el redirect conserva action=editar&id: sin esto el
+        // error caía en el formulario de "Nuevo usuario" vacío y el
+        // administrador perdía la edición que traía a medias.
+        String volverAEditar = "usuarios?action=editar&id=" + id;
+
         String nombre = limpiar(request.getParameter("nombre"));
         String correo = limpiar(request.getParameter("correo"));
         String rol = limpiar(request.getParameter("rol"));
 
         if (nombre.isEmpty() || correo.isEmpty() || rol.isEmpty()) {
-            return "usuarios?error=campos";
+            return volverAEditar + "&error=campos";
         }
         if (nombre.length() > 100) {
-            return "usuarios?error=nombrelargo";
+            return volverAEditar + "&error=nombrelargo";
         }
         if (!Validador.correoValido(correo)) {
-            return "usuarios?error=correoformato";
+            return volverAEditar + "&error=correoformato";
         }
         int idRol = rolDao.getIdPorNombre(rol);
         if (idRol == 0) {
-            return "usuarios?error=rol";
+            return volverAEditar + "&error=rol";
         }
         // Si se quitara a sí mismo el rol de admin se quedaría fuera del panel
         if (id.equals(idEnSesion(request)) && idRol != usuario.getIdRol()) {
-            return "usuarios?error=autorol";
+            return volverAEditar + "&error=autorol";
         }
         // El correo es la credencial de acceso: no puede chocar con otra cuenta
         if (!correo.equalsIgnoreCase(usuario.getCorreo()) && usuarioDao.existeCorreo(correo)) {
-            return "usuarios?error=correo";
+            return volverAEditar + "&error=correo";
         }
 
         usuario.setNombre(nombre);
         usuario.setCorreo(correo);
         usuario.setIdRol(idRol);
 
-        return usuarioDao.update(usuario) ? "usuarios?ok=actualizado" : "usuarios?error=actualizar";
+        return usuarioDao.update(usuario) ? "usuarios?ok=actualizado" : volverAEditar + "&error=actualizar";
     }
 
     private String eliminar(HttpServletRequest request) {
@@ -192,8 +201,9 @@ public class UsuarioServlet extends HttpServlet {
 
         // Se cuenta ANTES: después del borrado ya no hay de dónde sacarlo
         UsuarioDao.Historial h = usuarioDao.contarHistorial(id);
-        if (!usuarioDao.delete(id)) {
-            return "usuarios?error=eliminar";
+        UsuarioDao.Baja baja = usuarioDao.eliminarConDetalle(id);
+        if (!baja.ok()) {
+            return "usuarios?error=" + baja.error();
         }
         return "usuarios?ok=eliminado&s=" + h.solicitudes() + "&r=" + h.reportes();
     }
@@ -251,6 +261,13 @@ public class UsuarioServlet extends HttpServlet {
             case "autoeliminar" -> request.setAttribute("error", "No puedes eliminar tu propia cuenta.");
             case "eliminar" -> request.setAttribute("error",
                     "No se pudo eliminar el usuario. No se borró nada; inténtalo de nuevo.");
+            case "ligado" -> request.setAttribute("error",
+                    "No se puede eliminar este usuario porque está ligado a información de otros "
+                            + "registros del sistema. No se borró nada.");
+            case "actualizar" -> request.setAttribute("error",
+                    "No se pudieron guardar los cambios del usuario. Inténtalo de nuevo.");
+            case "crear" -> request.setAttribute("error",
+                    "No se pudo crear el usuario. Inténtalo de nuevo.");
             default -> request.setAttribute("error", "No se pudo completar la operación. Inténtalo de nuevo.");
         }
     }

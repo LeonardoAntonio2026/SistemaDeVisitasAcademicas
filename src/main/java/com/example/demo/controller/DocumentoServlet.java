@@ -62,14 +62,18 @@ public class DocumentoServlet extends HttpServlet {
         // El documento cuelga de una solicitud O de un reporte; en ambos
         // casos se valida el acceso antes de servirlo
         Documento doc = documentoDao.getById(idDocumento);
+        if (doc == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         boolean permitido = false;
-        if (doc != null && doc.getIdSolicitud() != null) {
+        if (doc.getIdSolicitud() != null) {
             permitido = solicitudPermitida(request, doc.getIdSolicitud()) != null;
-        } else if (doc != null && doc.getIdReporte() != null) {
+        } else if (doc.getIdReporte() != null) {
             permitido = reportePermitido(request, doc.getIdReporte()) != null;
         }
         if (!permitido) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -99,7 +103,7 @@ public class DocumentoServlet extends HttpServlet {
         try {
             idSolicitud = Integer.parseInt(request.getParameter("solicitud"));
         } catch (NumberFormatException e) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -107,10 +111,13 @@ public class DocumentoServlet extends HttpServlet {
         Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
         Solicitud solicitud = solicitudDao.getById(idSolicitud);
 
+        if (solicitud == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         // Los archivos solo los sube el docente dueño de la solicitud
-        if (idUsuario == null || solicitud == null
-                || solicitud.getIdUsuarioSolicitante() != idUsuario) {
-            response.sendRedirect("indexSv");
+        if (idUsuario == null || solicitud.getIdUsuarioSolicitante() != idUsuario) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -165,7 +172,7 @@ public class DocumentoServlet extends HttpServlet {
         try {
             idReporte = Integer.parseInt(request.getParameter("reporte"));
         } catch (NumberFormatException e) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -173,13 +180,19 @@ public class DocumentoServlet extends HttpServlet {
         Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
         Reporte reporte = reporteDao.getById(idReporte);
 
-        boolean tieneResultados = reporte != null && reporte.getResultados() != null
-                && !reporte.getResultados().isBlank();
-        if (idUsuario == null || reporte == null
-                || reporte.getIdUsuarioSolicitante() != idUsuario
-                || !"Pendiente".equalsIgnoreCase(reporte.getNombreEstado())
-                || !tieneResultados) {
-            response.sendRedirect("indexSv");
+        if (reporte == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        // Solo el docente dueño sube el firmado de su reporte
+        if (idUsuario == null || reporte.getIdUsuarioSolicitante() != idUsuario) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        // Y solo mientras el reporte siga Pendiente y con el formulario generado
+        boolean tieneResultados = reporte.getResultados() != null && !reporte.getResultados().isBlank();
+        if (!"Pendiente".equalsIgnoreCase(reporte.getNombreEstado()) || !tieneResultados) {
+            response.sendRedirect("reporte?id=" + idReporte + "&error=sinformulario");
             return;
         }
 
@@ -229,13 +242,13 @@ public class DocumentoServlet extends HttpServlet {
         try {
             idSolicitud = Integer.parseInt(request.getParameter("solicitud"));
         } catch (NumberFormatException e) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
         Solicitud solicitud = solicitudPermitida(request, idSolicitud);
         if (solicitud == null) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -266,17 +279,17 @@ public class DocumentoServlet extends HttpServlet {
         try {
             idReporte = Integer.parseInt(request.getParameter("reporte"));
         } catch (NumberFormatException e) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
         Reporte reporte = reportePermitido(request, idReporte);
         if (reporte == null) {
-            response.sendRedirect("indexSv");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
         if (reporte.getResultados() == null || reporte.getResultados().isBlank()) {
-            response.sendRedirect("reporte?id=" + idReporte);
+            response.sendRedirect("reporte?id=" + idReporte + "&error=sinformulario");
             return;
         }
 

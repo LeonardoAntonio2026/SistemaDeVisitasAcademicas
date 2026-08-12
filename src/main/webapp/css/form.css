@@ -367,7 +367,10 @@
     font-size: var(--fs-base);
     font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s;
 }
+
+.btncrear:hover { background-color: var(--color-azul-hover); }
 
 /* ============================================================
    Pantallas angostas. Lo importante: la fila del desglose deja

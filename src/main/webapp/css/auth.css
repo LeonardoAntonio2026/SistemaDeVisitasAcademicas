@@ -128,6 +128,22 @@
     color: #ffffff;
 }
 
+/* El mismo botón cuando es un enlace (p. ej. "Solicitar un enlace nuevo") */
+a.btn-auth {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+/* Texto de ayuda debajo de un campo (reglas de la contraseña) */
+.auth-ayuda {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: #6b6b70;
+}
+
 .auth-link {
     display: block;
     text-align: center;

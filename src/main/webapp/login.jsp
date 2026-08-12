@@ -40,7 +40,7 @@
     <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" class="auth-logo">
     <div class="auth-subtitle">UNIVERSIDAD TECNOLÓGICA<br>EMILIANO ZAPATA DEL ESTADO DE MORELOS</div>
 
-    <h1 class="auth-title">Sistema de Visitas Academicas</h1>
+    <h1 class="auth-title">Sistema de Gestión de Visitas Académicas</h1>
 
     <div class="auth-card">
         <form action="${pageContext.request.contextPath}/login" method="POST">

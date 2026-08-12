@@ -70,9 +70,11 @@
         if (!href || href.charAt(0) === "#" || href.indexOf("javascript:") === 0) {
             return;
         }
-        // No mostrar en descargas ni en enlaces que abren pestaña nueva
-        // (los botones "Descargar" bajan un archivo sin recargar la página)
-        if (a.target === "_blank" || a.hasAttribute("download") || a.classList.contains("btn-descargar")) {
+        // No mostrar en descargas ni en enlaces que abren pestaña nueva.
+        // OJO: se decide por el atributo download y no por la clase
+        // .btn-descargar, porque esa clase también viste enlaces que solo
+        // navegan (Ver solicitud, Editar...) y se quedaban sin la barra.
+        if (a.target === "_blank" || a.hasAttribute("download")) {
             return;
         }
         // Solo navegación del mismo sitio

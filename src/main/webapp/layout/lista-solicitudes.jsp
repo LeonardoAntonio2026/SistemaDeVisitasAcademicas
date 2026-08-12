@@ -21,48 +21,47 @@
         </div>
     </c:when>
     <c:otherwise>
+        <%-- El servlet ya trae solo las solicitudes activas: aquí no se filtra
+             nada, para que el estado vacío de arriba sí corresponda a lo que se ve --%>
         <c:forEach var="s" items="${listaSolicitudes}">
-            <c:if test="${s.nombreEstado eq 'Pendiente' or s.nombreEstado eq 'En revisión' or s.nombreEstado eq 'Aprobada'}">
-                <div class="solicitud-card">
-                    <div class="solicitud-card-top">
-                        <div>
-                            <h5 class="solicitud-empresa">${s.nombreEmpresaActividad}</h5>
-                            <div class="solicitud-ubicacion">
-                                <i class="bi bi-pin-map"></i>
-                                <span>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
-                            </div>
+            <div class="solicitud-card">
+                <div class="solicitud-card-top">
+                    <div>
+                        <h5 class="solicitud-empresa">${s.nombreEmpresaActividad}</h5>
+                        <div class="solicitud-ubicacion">
+                            <i class="bi bi-pin-map"></i>
+                            <span>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
                         </div>
-                        <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
                     </div>
-
-                        <%-- Stepper compacto: mismo componente que la página de detalles --%>
-                    <c:set var="stepperEstado" value="${s.nombreEstado}"/>
-                    <c:set var="stepperEstadoReporte" value="${s.estadoReporte}"/>
-                    <%@ include file="stepper.jsp" %>
-
-                    <div class="solicitud-card-bottom">
-                        <div class="solicitud-meta">
-                            <div class="meta-item">
-                                <span class="meta-label">Alumnos</span>
-                                <span class="meta-valor">${s.totalEstudiantes}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Solicitada</span>
-                                <span class="meta-valor">${s.fechaCreacion}</span>
-                            </div>
-                            <c:if test="${not empty s.fechaInicio}">
-                                <div class="meta-item">
-                                    <span class="meta-label">Visita</span>
-                                    <span class="meta-valor">${s.fechaInicio}</span>
-                                </div>
-                            </c:if>
-                        </div>
-                        <a class="btn-ver-detalles" style="text-decoration: none;"
-                           href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver detalles</a>
-                    </div>
+                    <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
                 </div>
-            </c:if>
 
+                    <%-- Stepper compacto: mismo componente que la página de detalles --%>
+                <c:set var="stepperEstado" value="${s.nombreEstado}"/>
+                <c:set var="stepperEstadoReporte" value="${s.estadoReporte}"/>
+                <%@ include file="stepper.jsp" %>
+
+                <div class="solicitud-card-bottom">
+                    <div class="solicitud-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Alumnos</span>
+                            <span class="meta-valor">${s.totalEstudiantes}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Solicitada</span>
+                            <span class="meta-valor">${s.fechaCreacion}</span>
+                        </div>
+                        <c:if test="${not empty s.fechaInicio}">
+                            <div class="meta-item">
+                                <span class="meta-label">Visita</span>
+                                <span class="meta-valor">${s.fechaInicio}</span>
+                            </div>
+                        </c:if>
+                    </div>
+                    <a class="btn-ver-detalles" style="text-decoration: none;"
+                       href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver detalles</a>
+                </div>
+            </div>
         </c:forEach>
     </c:otherwise>
 </c:choose>

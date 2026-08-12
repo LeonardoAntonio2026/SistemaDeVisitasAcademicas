@@ -43,7 +43,10 @@
     text-align: center;
     text-decoration: none;
     cursor: pointer;
+    transition: background-color 0.15s;
 }
+
+.botonnueva:hover { background-color: var(--color-azul-hover); }
 
 .titulo-solicitudes {
     color: var(--color-azul);
@@ -127,18 +130,13 @@
     color: #495057;
 }
 
-.estado-pendiente {
-    background-color: #FDE2E4;
-    color: var(--color-rojo);
-}
-
 /* Solicitud cerrada Y con el reporte aprobado: ahora sí terminó todo */
 .estado-finalizada {
     background-color: #D9F2E3;
     color: #1E7A46;
 }
 
-.estado-en-revisión,
+/* En revisión (de la solicitud o del reporte): amarillo de "en espera de Estadías" */
 .estado-en-revision {
     background-color: #FFF3CD;
     color: #8A6D0B;
@@ -154,11 +152,6 @@
     color: var(--color-rojo-oscuro);
 }
 
-.estado-completada {
-    background-color: #D6E4F0;
-    color: var(--color-azul);
-}
-
 /* Solicitud completada a la que todavía le falta el reporte */
 .estado-reporte-pendiente {
     background-color: #FFF3CD;
@@ -171,11 +164,6 @@
 }
 
 /* Estados del reporte (misma paleta que los de la solicitud) */
-.estado-completado {
-    background-color: #D6E4F0;
-    color: var(--color-azul);
-}
-
 .estado-aprobado {
     background-color: #D9F2E3;
     color: #1E7A46;
@@ -231,7 +219,10 @@
     padding: var(--btn-pad-y) var(--btn-pad-x);
     font-size: var(--fs-base);
     cursor: pointer;
+    transition: background-color 0.15s;
 }
+
+.btn-ver-detalles:hover { background-color: var(--color-azul-hover); }
 
 .btn-ver-detalles:disabled {
     opacity: 0.6;
@@ -249,8 +240,9 @@
     background-color: var(--color-verde-hover) !important;
 }
 
-/* Modificador destructivo (eliminar en filas de tabla). Mismo patrón que
-   .btn-verde: aplica sobre .btn-ver-detalles y .btn-descargar. */
+/* Modificador destructivo (eliminar en filas de tabla y confirmaciones de
+   borrado). Mismo patrón que .btn-verde: aplica sobre .btn-ver-detalles,
+   .btn-descargar y .btncrear. */
 .btn-rojo {
     background-color: var(--color-rojo) !important;
 }

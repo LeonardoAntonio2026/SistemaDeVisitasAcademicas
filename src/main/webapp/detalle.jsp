@@ -2,7 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Detalles de la visita"); %>
-<% request.setAttribute("activeNav", "solicitudes"); %>
+<%-- Una solicitud terminada (rechazada o completada) ya no vive en Solicitudes
+     sino en el Histórico: el menú y el botón de volver apuntan allá --%>
+<c:set var="esTerminada" scope="request"
+       value="${solicitud.nombreEstado == 'Rechazada' || solicitud.nombreEstado == 'Completada'}"/>
+<c:set var="activeNav" scope="request" value="${esTerminada ? 'historico' : 'solicitudes'}"/>
 <% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
 <% request.setAttribute("nombresDivision", com.example.demo.model.CatalogoAcademico.getNombres()); %>
 <%@ include file="layout/header.jsp" %>
@@ -51,18 +55,37 @@
         </div>
     </c:if>
 
-    <%-- Mensajes de error al subir archivos (RN-07) --%>
+    <%-- Errores de la subida de archivos (RN-07) y de las acciones de la página
+         (enviar / aprobar / rechazar). El título cambia según de cuál se trate. --%>
     <c:if test="${not empty param.error}">
+        <c:set var="errorDeArchivo"
+               value="${param.error == 'tipo' || param.error == 'tamano' || param.error == 'vacio'}"/>
         <div class="instruccion instruccion-rechazo" style="margin-top: 1rem;">
             <i class="bi bi-exclamation-triangle"></i>
             <div>
-                <div class="instruccion-titulo">No se pudo subir el archivo</div>
+                <div class="instruccion-titulo">
+                    ${errorDeArchivo ? 'No se pudo subir el archivo' : 'No se pudo completar la operación'}
+                </div>
                 <p>
                     <c:choose>
                         <c:when test="${param.error == 'tipo'}">Solo se permiten archivos PDF.</c:when>
                         <c:when test="${param.error == 'tamano'}">El archivo supera el tamaño máximo de 10 MB.</c:when>
                         <c:when test="${param.error == 'vacio'}">Selecciona un archivo antes de subir.</c:when>
-                        <c:otherwise>Ocurrió un problema al guardar. Intenta de nuevo.</c:otherwise>
+                        <c:when test="${param.error == 'sinfirmado'}">
+                            Primero sube el formato FO-UTEZ-EST-08 firmado: sin él la solicitud no se puede enviar a revisión.
+                        </c:when>
+                        <c:when test="${param.error == 'enviada'}">
+                            Esta solicitud ya se había enviado a Estadías, así que no se envió otra vez.
+                        </c:when>
+                        <c:when test="${param.error == 'sinmotivo'}">
+                            Para rechazar una solicitud es obligatorio escribir el motivo, porque es lo que se le notifica al docente.
+                        </c:when>
+                        <c:when test="${param.error == 'yaevaluada'}">
+                            Esta solicitud ya fue evaluada por alguien más: recarga la página para ver en qué estado quedó.
+                        </c:when>
+                        <c:otherwise>
+                            Ocurrió un problema al guardar en la base de datos y no se registró ningún cambio. Intenta de nuevo.
+                        </c:otherwise>
                     </c:choose>
                 </p>
             </div>
@@ -426,7 +449,8 @@
                         <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
                     </span>
                     <div class="archivo-acciones">
-                        <a class="btn-descargar" href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
+                        <a class="btn-descargar" download
+                           href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
                             <i class="bi bi-download"></i> Descargar
                         </a>
                         <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
@@ -519,10 +543,21 @@
     <%-- ===================== Barra final: Volver / Editar / Enviar ===================== --%>
     <div class="acciones-form">
         <%-- El botón dice a dónde lleva: "Volver" a secas se entendía como
-             "regresar al paso anterior" y aquí sale de la solicitud --%>
-        <a href="${pageContext.request.contextPath}/solicitud" class="btn-volver-detalle">
-            <i class="bi bi-arrow-left"></i> Volver a solicitudes
-        </a>
+             "regresar al paso anterior" y aquí sale de la solicitud. Una
+             solicitud terminada ya no aparece en Solicitudes: se vuelve al
+             Histórico, que es donde quedó. --%>
+        <c:choose>
+            <c:when test="${esTerminada}">
+                <a href="${pageContext.request.contextPath}/historico" class="btn-volver-detalle">
+                    <i class="bi bi-arrow-left"></i> Volver al histórico
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a href="${pageContext.request.contextPath}/solicitud" class="btn-volver-detalle">
+                    <i class="bi bi-arrow-left"></i> Volver a solicitudes
+                </a>
+            </c:otherwise>
+        </c:choose>
         <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
             <div class="acciones-derecha">
                 <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"

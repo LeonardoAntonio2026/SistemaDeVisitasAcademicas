@@ -118,7 +118,8 @@ public class Reporte implements Serializable {
             return "reporte-pendiente";
         }
         if ("Completado".equalsIgnoreCase(nombreEstado)) {
-            return "completado";
+            // Se lee "En revisión": mismo amarillo que la solicitud en revisión
+            return "en-revision";
         }
         return "Aprobado".equalsIgnoreCase(nombreEstado) ? "aprobado" : "rechazado";
     }

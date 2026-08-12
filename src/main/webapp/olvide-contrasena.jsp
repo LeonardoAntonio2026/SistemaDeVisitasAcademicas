@@ -1,4 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Misma plantilla visual que login.jsp (auth.css): antes esta pantalla usaba
+     otra card de Bootstrap y parecía de otro sistema. --%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,41 +10,51 @@
     <title>Recuperar Contraseña - Visitas Académicas</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/tokens.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/auth.css">
 </head>
-<body style="background-color: var(--color-fondo);">
-<div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-    <div class="card border-0 shadow-sm p-4" style="max-width: 420px; width: 100%; border-radius: var(--radio-lg);">
+<body class="auth-body">
 
-        <div class="text-center mb-4">
-            <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" height="48" class="mb-3">
-            <h4 class="fw-semibold" style="color: var(--color-azul);">Recuperar contraseña</h4>
-            <p class="text-muted small mb-0">Sistema de Gestión de Visitas Académicas</p>
-            <p class="text-muted small mb-0">Ingresa el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.</p>
+<div class="auth-wrapper">
+
+    <c:if test="${not empty error}">
+        <div class="auth-alert">
+            <i class="bi bi-exclamation-circle"></i>
+            <c:out value="${error}"/>
         </div>
+    </c:if>
 
-        <% if (request.getAttribute("error") != null) { %>
-        <div class="alert alert-danger py-2 small"><%= request.getAttribute("error") %></div>
-        <% } %>
-        <% if (request.getAttribute("mensaje") != null) { %>
-        <div class="alert alert-success py-2 small"><%= request.getAttribute("mensaje") %></div>
-        <% } %>
+    <c:if test="${not empty mensaje}">
+        <div class="auth-alert auth-alert-exito">
+            <i class="bi bi-check-circle"></i>
+            <c:out value="${mensaje}"/>
+        </div>
+    </c:if>
+
+    <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" class="auth-logo">
+    <div class="auth-subtitle">UNIVERSIDAD TECNOLÓGICA<br>EMILIANO ZAPATA DEL ESTADO DE MORELOS</div>
+
+    <h1 class="auth-title">Recuperar contraseña</h1>
+
+    <div class="auth-card">
+        <p class="auth-instructions">Ingresa el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.</p>
 
         <form action="${pageContext.request.contextPath}/olvide-contrasena" method="POST">
-            <div class="mb-3">
-                <label class="form-label" for="correo">Correo electrónico</label>
-                <input type="email" id="correo" name="correo" class="form-control"
-                       placeholder="docente@utez.edu.mx" required maxlength="100">
+
+            <div class="auth-field">
+                <label for="correo">Correo</label>
+                <div class="auth-input-group">
+                    <span class="auth-input-icon"><i class="bi bi-envelope-fill"></i></span>
+                    <input type="email" id="correo" name="correo" placeholder="correo@utez.edu.mx" required maxlength="100">
+                </div>
             </div>
-            <button type="submit" class="btn w-100 text-white" style="background-color: var(--color-azul);">
-                Enviar enlace
-            </button>
+
+            <button type="submit" class="btn-auth">Enviar enlace</button>
+
+            <a href="${pageContext.request.contextPath}/login.jsp" class="auth-link">Volver a iniciar sesión</a>
         </form>
-
-        <a href="${pageContext.request.contextPath}/login.jsp" class="text-center small mt-3 text-decoration-none"
-           style="color: var(--color-azul);">Volver a iniciar sesión</a>
-
     </div>
+
 </div>
+
 </body>
 </html>

@@ -2,10 +2,14 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%-- Esta vista se sirve desde /usuarios (UsuarioServlet). El candado de aquí es
-     por si alguien escribe la URL del JSP a mano: el rol sale de la sesión. --%>
-<c:if test="${sessionScope.rol != 'Administrador'}">
-    <c:redirect url="/indexSv"/>
-</c:if>
+     por si alguien escribe la URL del JSP a mano: el rol sale de la sesión.
+     Manda un 403, que el contenedor convierte en la página de "No tienes permiso". --%>
+<%
+    if (!"Administrador".equals(session.getAttribute("rol"))) {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        return;
+    }
+%>
 <% request.setAttribute("pageTitle", "Gestión de usuarios"); %>
 <% request.setAttribute("activeNav", "usuarios"); %>
 <%@ include file="layout/header.jsp" %>
@@ -24,11 +28,18 @@
         <p>Da de alta cuentas y define con qué rol entran al sistema</p>
     </div>
 
+    <%-- Mismas mini cards de aviso que usan los detalles de la solicitud --%>
     <c:if test="${not empty mensaje}">
-        <div class="alert alert-success py-2 small mb-0 mt-3">${mensaje}</div>
+        <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
+            <i class="bi bi-check-circle"></i>
+            <div>${mensaje}</div>
+        </div>
     </c:if>
     <c:if test="${not empty error}">
-        <div class="alert alert-danger py-2 small mb-0 mt-3">${error}</div>
+        <div class="instruccion instruccion-rechazo" style="margin-top: 1rem;">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div>${error}</div>
+        </div>
     </c:if>
 
     <c:if test="${confirmandoBaja}">
@@ -42,18 +53,21 @@
 
             <c:choose>
                 <c:when test="${bajaSolicitudes > 0 or bajaReportes > 0}">
-                    <div class="form-mismatch-msg" style="display: block;">
-                        Se borrarán para siempre:
-                        <ul style="margin: 6px 0 0 0; padding-left: 20px;">
-                            <c:if test="${bajaSolicitudes > 0}">
-                                <li>${bajaSolicitudes} solicitud${bajaSolicitudes == 1 ? '' : 'es'} de visita,
-                                    con su desglose de grupos y sus documentos</li>
-                            </c:if>
-                            <c:if test="${bajaReportes > 0}">
-                                <li>${bajaReportes} reporte${bajaReportes == 1 ? '' : 's'} de visita,
-                                    con sus evidencias fotográficas</li>
-                            </c:if>
-                        </ul>
+                    <div class="instruccion instruccion-rechazo">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <div>
+                            <div class="instruccion-titulo">Se borrarán para siempre:</div>
+                            <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+                                <c:if test="${bajaSolicitudes > 0}">
+                                    <li>${bajaSolicitudes} solicitud${bajaSolicitudes == 1 ? '' : 'es'} de visita,
+                                        con su desglose de grupos y sus documentos</li>
+                                </c:if>
+                                <c:if test="${bajaReportes > 0}">
+                                    <li>${bajaReportes} reporte${bajaReportes == 1 ? '' : 's'} de visita,
+                                        con sus evidencias fotográficas</li>
+                                </c:if>
+                            </ul>
+                        </div>
                     </div>
                 </c:when>
                 <c:otherwise>
@@ -81,7 +95,7 @@
                     <a href="${pageContext.request.contextPath}/usuarios" class="btn-volver text-decoration-none">
                         <i class="bi bi-arrow-left"></i> Cancelar y volver a la lista
                     </a>
-                    <button type="submit" class="btncrear" style="background-color: var(--color-rojo);">
+                    <button type="submit" class="btncrear btn-rojo">
                         <i class="bi bi-trash"></i> Sí, eliminar todo
                     </button>
                 </div>

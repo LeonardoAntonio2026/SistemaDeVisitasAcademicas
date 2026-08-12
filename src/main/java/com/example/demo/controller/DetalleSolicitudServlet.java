@@ -33,10 +33,9 @@ public class DetalleSolicitudServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        Solicitud solicitud = cargarSolicitudPermitida(request);
+        Solicitud solicitud = cargarSolicitudPermitida(request, response);
         if (solicitud == null) {
-            response.sendRedirect("indexSv");
-            return;
+            return; // el helper ya mandó la página de error que corresponde
         }
 
         request.setAttribute("solicitud", solicitud);
@@ -56,10 +55,9 @@ public class DetalleSolicitudServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        Solicitud solicitud = cargarSolicitudPermitida(request);
+        Solicitud solicitud = cargarSolicitudPermitida(request, response);
         if (solicitud == null) {
-            response.sendRedirect("indexSv");
-            return;
+            return; // el helper ya mandó la página de error que corresponde
         }
 
         HttpSession session = request.getSession(false);
@@ -68,42 +66,70 @@ public class DetalleSolicitudServlet extends HttpServlet {
         String action = request.getParameter("action");
         int id = solicitud.getIdSolicitud();
 
+        // Clave del aviso que verá el usuario si la operación no se pudo hacer;
+        // null significa que todo salió bien. Antes cualquier fallo terminaba en
+        // la misma recarga sin explicación y el botón parecía no responder.
+        String error = null;
+
         if ("enviar".equals(action)) {
             // El paso "Enviar solicitud" solo se completa dando click en ENVIAR,
             // y solo si el docente ya subió su FO-UTEZ-EST-08 firmado (RN-02)
-            if (esDocente && "Pendiente".equalsIgnoreCase(solicitud.getNombreEstado())
-                    && documentoDao.existeTipoEnSolicitud(id, TIPO_FO_FIRMADO)) {
-                solicitudDao.cambiarEstado(id, "En revisión");
+            if (!esDocente) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+            if (!"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado())) {
+                error = "enviada";
+            } else if (!documentoDao.existeTipoEnSolicitud(id, TIPO_FO_FIRMADO)) {
+                error = "sinfirmado";
+            } else if (!solicitudDao.cambiarEstado(id, "En revisión")) {
+                error = "guardar";
             }
         } else if ("aprobar".equals(action) || "rechazar".equals(action)) {
             // Solo el coordinador de Estadías (o Admin) evalúa, y solo En revisión
+            if (esDocente) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
             String motivo = request.getParameter("motivo");
             boolean esRechazo = "rechazar".equals(action);
-            if (!esDocente && "En revisión".equalsIgnoreCase(solicitud.getNombreEstado())
-                    && (!esRechazo || (motivo != null && !motivo.isBlank()))) {
 
+            if (!"En revisión".equalsIgnoreCase(solicitud.getNombreEstado())) {
+                error = "yaevaluada";
+            } else if (esRechazo && (motivo == null || motivo.isBlank())) {
+                error = "sinmotivo";
+            } else {
                 Integer idAutoriza = (Integer) session.getAttribute("idUsuario");
                 String nuevoEstado = esRechazo ? "Rechazada" : "Aprobada";
                 boolean ok = solicitudDao.decidir(id, nuevoEstado,
                         motivo != null ? motivo.trim() : null, idAutoriza);
                 if (ok) {
                     notificarDecision(solicitud, nuevoEstado, motivo);
+                } else {
+                    error = "guardar";
                 }
             }
         }
 
         // Patrón PRG: recargar los detalles ya con el nuevo estado
-        response.sendRedirect("detalle?id=" + id);
+        response.sendRedirect("detalle?id=" + id + (error != null ? "&error=" + error : ""));
     }
 
     /**
      * Carga la solicitud validando el acceso: el docente solo ve las suyas y
-     * el coordinador solo las que ya fueron enviadas
+     * el coordinador solo las que ya fueron enviadas.
+     *
+     * Devuelve null cuando no se puede mostrar, pero antes manda la página de
+     * error que corresponde: 404 si la solicitud no existe y 403 si existe pero
+     * no es de quien la pide. Antes los dos casos redirigían al inicio en
+     * silencio y parecía que el sistema no había hecho nada.
      */
-    private Solicitud cargarSolicitudPermitida(HttpServletRequest request) {
+    private Solicitud cargarSolicitudPermitida(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
         HttpSession session = request.getSession(false);
         Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
         if (idUsuario == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
 
@@ -111,21 +137,28 @@ public class DetalleSolicitudServlet extends HttpServlet {
         try {
             id = Integer.parseInt(request.getParameter("id"));
         } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return null;
         }
 
         Solicitud solicitud = solicitudDao.getById(id);
         if (solicitud == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return null;
         }
 
         String rol = (String) session.getAttribute("rol");
         boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
-        if (esDocente) {
-            return solicitud.getIdUsuarioSolicitante() == idUsuario ? solicitud : null;
+        boolean permitida = esDocente
+                ? solicitud.getIdUsuarioSolicitante() == idUsuario
+                // Coordinador/Admin: las Pendientes aún no se envían, no le aparecen
+                : !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado());
+
+        if (!permitida) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
         }
-        // Coordinador/Admin: las Pendientes aún no se envían, no le aparecen
-        return "Pendiente".equalsIgnoreCase(solicitud.getNombreEstado()) ? null : solicitud;
+        return solicitud;
     }
 
     /** Correo automático al docente cuando su solicitud es aprobada o rechazada  */
@@ -154,13 +187,10 @@ public class DetalleSolicitudServlet extends HttpServlet {
         String cuerpo = MessageFormat.format(plantillaHtml,
                 aprobada ? "aprobada" : "rechazada",
                 solicitud.getNombreEmpresaActividad(), bloqueMotivo, siguientePaso);
-        try {
-            EmailSender.sendMail(solicitud.getCorreoSolicitante(),
-                    "Solicitud " + (aprobada ? "aprobada" : "rechazada") + " - Visitas Académicas",
-                    cuerpo);
-        } catch (RuntimeException e) {
-            // La decisión ya quedó guardada; si falla el correo no bloqueamos el flujo
-            System.err.println("No se pudo enviar la notificación: " + e.getMessage());
-        }
+        // En un hilo aparte: la decisión ya quedó guardada y el SMTP tarda
+        // varios segundos; el coordinador no tiene que esperar a Gmail
+        EmailSender.sendMailAsync(solicitud.getCorreoSolicitante(),
+                "Solicitud " + (aprobada ? "aprobada" : "rechazada") + " - Visitas Académicas",
+                cuerpo);
     }
 }

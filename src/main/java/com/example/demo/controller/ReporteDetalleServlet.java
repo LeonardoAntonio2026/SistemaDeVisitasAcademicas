@@ -61,10 +61,9 @@ mostrarImagen(idImagen, request, response);
 return;
 }
 
-Reporte reporte = cargarReportePermitido(request);
+Reporte reporte = cargarReportePermitido(request, response);
 if (reporte == null) {
-response.sendRedirect("indexSv");
-return;
+return; // el helper ya mandó la página de error que corresponde
 }
 int idReporte = reporte.getIdReporte();
 
@@ -112,10 +111,9 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
 throws ServletException, IOException {
 request.setCharacterEncoding("UTF-8");
 
-Reporte reporte = cargarReportePermitido(request);
+Reporte reporte = cargarReportePermitido(request, response);
 if (reporte == null) {
-response.sendRedirect("indexSv");
-return;
+return; // el helper ya mandó la página de error que corresponde
 }
 int idReporte = reporte.getIdReporte();
 
@@ -127,40 +125,66 @@ boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
 String estado = reporte.getNombreEstado();
 String action = request.getParameter("action");
 
+// Clave del aviso si la operación no se pudo hacer; null = todo bien.
+// Antes cualquier fallo recargaba la página sin decir nada.
+String error = null;
+
 if ("generar".equals(action)) {
 // El dueño llena/corrige el formulario: desde Pendiente o Rechazado
-if (esDueno && ("Pendiente".equalsIgnoreCase(estado) || "Rechazado".equalsIgnoreCase(estado))) {
+if (!esDueno) {
+response.sendError(HttpServletResponse.SC_FORBIDDEN);
+return;
+}
+if ("Pendiente".equalsIgnoreCase(estado) || "Rechazado".equalsIgnoreCase(estado)) {
 generarReporte(request, response, reporte);
 return;
 }
+error = "yaenviado";
 } else if ("enviar".equals(action)) {
 // Enviar exige formulario generado y el PDF firmado ya subido (RN-02)
-boolean tieneResultados = reporte.getResultados() != null && !reporte.getResultados().isBlank();
-if (esDueno && "Pendiente".equalsIgnoreCase(estado) && tieneResultados
-&& documentoDao.existeTipoEnReporte(idReporte, TIPO_REPORTE_FIRMADO)) {
-boolean ok = reporteDao.enviar(idReporte);
-response.sendRedirect("reporte?id=" + idReporte + (ok ? "&enviado=1" : "&error=guardar"));
+if (!esDueno) {
+response.sendError(HttpServletResponse.SC_FORBIDDEN);
 return;
+}
+boolean tieneResultados = reporte.getResultados() != null && !reporte.getResultados().isBlank();
+if (!"Pendiente".equalsIgnoreCase(estado)) {
+error = "yaenviado";
+} else if (!tieneResultados) {
+error = "sinformulario";
+} else if (!documentoDao.existeTipoEnReporte(idReporte, TIPO_REPORTE_FIRMADO)) {
+error = "sinfirmado";
+} else if (reporteDao.enviar(idReporte)) {
+response.sendRedirect("reporte?id=" + idReporte + "&enviado=1");
+return;
+} else {
+error = "guardar";
 }
 } else if ("aprobar".equals(action) || "rechazar".equals(action)) {
 // Solo Estadías/Admin evalúa, y solo un reporte enviado (Completado)
+if (esDocente) {
+response.sendError(HttpServletResponse.SC_FORBIDDEN);
+return;
+}
 String motivo = request.getParameter("motivo");
 boolean esRechazo = "rechazar".equals(action);
-if (!esDocente && "Completado".equalsIgnoreCase(estado)
-&& (!esRechazo || (motivo != null && !motivo.isBlank()))) {
 
+if (!"Completado".equalsIgnoreCase(estado)) {
+error = "yaevaluado";
+} else if (esRechazo && (motivo == null || motivo.isBlank())) {
+error = "sinmotivo";
+} else {
 String nuevoEstado = esRechazo ? "Rechazado" : "Aprobado";
 boolean ok = reporteDao.decidir(idReporte, nuevoEstado,
 motivo != null ? motivo.trim() : null);
 if (ok) {
 notificarDecisionReporte(reporte, nuevoEstado, motivo);
+} else {
+error = "guardar";
 }
-response.sendRedirect("reporte?id=" + idReporte);
-return;
 }
 }
 
-response.sendRedirect("reporte?id=" + idReporte);
+response.sendRedirect("reporte?id=" + idReporte + (error != null ? "&error=" + error : ""));
 }
 
 /**
@@ -309,10 +333,12 @@ return esPng ? "image/png" : "image/jpeg";
  * de sus propias solicitudes; Estadías/Admin pueden ver cualquiera.
  * Mismo patrón que DetalleSolicitudServlet.cargarSolicitudPermitida().
  */
-private Reporte cargarReportePermitido(HttpServletRequest request) {
+private Reporte cargarReportePermitido(HttpServletRequest request, HttpServletResponse response)
+throws IOException {
 HttpSession session = request.getSession(false);
 Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
 if (idUsuario == null) {
+response.sendError(HttpServletResponse.SC_FORBIDDEN);
 return null;
 }
 
@@ -320,14 +346,20 @@ int id;
 try {
 id = Integer.parseInt(request.getParameter("id"));
 } catch (NumberFormatException e) {
+response.sendError(HttpServletResponse.SC_NOT_FOUND);
 return null;
 }
 
 Reporte reporte = reporteDao.getById(id);
 if (reporte == null) {
+response.sendError(HttpServletResponse.SC_NOT_FOUND);
 return null;
 }
-return puedeVer(request, reporte) ? reporte : null;
+if (!puedeVer(request, reporte)) {
+response.sendError(HttpServletResponse.SC_FORBIDDEN);
+return null;
+}
+return reporte;
 }
 
 /** Regla de acceso de solo lectura: docente dueño, o Estadías/Admin (cualquiera). */
@@ -371,13 +403,10 @@ String siguientePaso = aprobado
 String cuerpo = MessageFormat.format(plantillaHtml,
 aprobado ? "aprobado" : "rechazado",
 reporte.getNombreEmpresaActividad(), bloqueMotivo, siguientePaso);
-try {
-EmailSender.sendMail(reporte.getCorreoSolicitante(),
+// En un hilo aparte: la decisión ya quedó guardada y el SMTP tarda
+// varios segundos; el coordinador no tiene que esperar a Gmail
+EmailSender.sendMailAsync(reporte.getCorreoSolicitante(),
 "Reporte de visita " + (aprobado ? "aprobado" : "rechazado") + " - Visitas Académicas",
 cuerpo);
-} catch (RuntimeException e) {
-// La decisión ya quedó guardada; si falla el correo no bloqueamos el flujo
-System.err.println("No se pudo enviar la notificación: " + e.getMessage());
-}
 }
 }

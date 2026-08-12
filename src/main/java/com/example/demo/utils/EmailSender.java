@@ -9,6 +9,22 @@ import java.util.Properties;
 
 public class EmailSender {
 
+    /**
+     * Envía el correo en un hilo aparte, para las notificaciones que no deben
+     * detener la respuesta al usuario (aprobar/rechazar). Abrir la conexión
+     * SMTP tarda varios segundos y eso hacía sentir lentos esos botones.
+     * Si el envío falla solo se registra en la consola.
+     */
+    public static void sendMailAsync(String to, String subject, String body) {
+        new Thread(() -> {
+            try {
+                sendMail(to, subject, body);
+            } catch (RuntimeException e) {
+                System.err.println("No se pudo enviar la notificación: " + e.getMessage());
+            }
+        }, "correo-notificacion").start();
+    }
+
     public static void sendMail(String to, String subject, String body) {
         // 1. Configuración del servidor SMTP (Actualizado para TLS moderno)
         Properties props = new Properties();
