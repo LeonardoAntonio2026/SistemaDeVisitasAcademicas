@@ -9,8 +9,8 @@
                 <i class="bi bi-person-fill text-dark" style="font-size: 1.4rem;"></i>
             </div>
             <div>
-                <div class="mb-0" style="font-size: 0.75rem;">${sessionScope.nombreUsuario != null ? sessionScope.nombreUsuario : 'Invitado'}</div>
-                <div class="text-white-50 fw-normal" style="font-size: 0.7rem;">${sessionScope.rol != null ? sessionScope.rol : 'Docente'}</div>
+                <div class="mb-0" style="font-size: 0.75rem;"><c:out value="${sessionScope.nombreUsuario != null ? sessionScope.nombreUsuario : 'Invitado'}"/></div>
+                <div class="text-white-50 fw-normal" style="font-size: 0.7rem;"><c:out value="${sessionScope.rol != null ? sessionScope.rol : 'Docente'}"/></div>
             </div>
         </div>
     </div>

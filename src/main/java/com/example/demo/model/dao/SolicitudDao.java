@@ -23,6 +23,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             + "s.docente_responsable, s.celular_responsable, "
             + "s.id_estado, s.detalles_decision, TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
             + "e.nombre_estado, us.nombre AS nombre_solicitante, us.correo AS correo_solicitante, "
+            // Quien autorizó, para la firma "Autoriza" del formato impreso
+            + "ua.nombre AS nombre_autoriza, "
             + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes, "
             // Estado del reporte de la visita; null si todavía no se generó.
             // Va como subselect y no como JOIN para no duplicar filas.
@@ -34,7 +36,10 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS id_reporte "
             + "FROM solicitud s "
             + "JOIN estado_solicitud e ON e.id_estado = s.id_estado "
-            + "JOIN usuario us ON us.id_usuario = s.id_usuario_solicitante";
+            + "JOIN usuario us ON us.id_usuario = s.id_usuario_solicitante "
+            // LEFT: mientras Estadías no decide, id_usuario_autoriza es null y
+            // un JOIN normal dejaría fuera todas las solicitudes en trámite
+            + "LEFT JOIN usuario ua ON ua.id_usuario = s.id_usuario_autoriza";
 
     @Override
     public boolean create(Solicitud entidad) {
@@ -56,11 +61,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 ps.setString(3, entidad.getLugarDireccion());
                 ps.setString(4, entidad.getTelefonoContacto());
                 ps.setString(5, entidad.getCorreoContacto());
-                if (entidad.getFechaInicio() != null && !entidad.getFechaInicio().isBlank()) {
-                    ps.setDate(6, Date.valueOf(entidad.getFechaInicio()));
-                } else {
-                    ps.setNull(6, java.sql.Types.DATE);
-                }
+                setFecha(ps, 6, entidad.getFechaInicio());
                 ps.setString(7, entidad.getObjetivo());
                 ps.setString(8, entidad.getAreaSolicitante());
                 ps.setString(9, entidad.getDocenteResponsable());
@@ -336,11 +337,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                 ps.setString(2, entidad.getLugarDireccion());
                 ps.setString(3, entidad.getTelefonoContacto());
                 ps.setString(4, entidad.getCorreoContacto());
-                if (entidad.getFechaInicio() != null && !entidad.getFechaInicio().isBlank()) {
-                    ps.setDate(5, Date.valueOf(entidad.getFechaInicio()));
-                } else {
-                    ps.setNull(5, java.sql.Types.DATE);
-                }
+                setFecha(ps, 5, entidad.getFechaInicio());
                 ps.setString(6, entidad.getObjetivo());
                 ps.setString(7, entidad.getAreaSolicitante());
                 ps.setString(8, entidad.getDocenteResponsable());
@@ -492,6 +489,18 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         }
     }
 
+    /**
+     * Fecha en yyyy-MM-dd, o NULL si el campo viene vacío. Los formularios
+     * mandan "" cuando el docente no elige fecha y Date.valueOf("") revienta.
+     */
+    private void setFecha(PreparedStatement ps, int indice, String iso) throws SQLException {
+        if (iso != null && !iso.isBlank()) {
+            ps.setDate(indice, Date.valueOf(iso.trim()));
+        } else {
+            ps.setNull(indice, java.sql.Types.DATE);
+        }
+    }
+
     /** Borra las tablas hijas para volver a escribirlas (update) o eliminar la solicitud. */
     private void borrarHijos(Connection con, int idSolicitud) throws SQLException {
         String[] tablas = {"asignatura_reforzar_solicitud", "programa_educativo",
@@ -599,6 +608,7 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         s.setIdReporte(rs.wasNull() ? null : idReporte);
         s.setNombreSolicitante(rs.getString("nombre_solicitante"));
         s.setCorreoSolicitante(rs.getString("correo_solicitante"));
+        s.setNombreAutoriza(rs.getString("nombre_autoriza"));
         s.setTotalEstudiantes(rs.getInt("total_estudiantes"));
         return s;
     }

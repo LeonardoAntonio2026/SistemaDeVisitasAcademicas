@@ -40,15 +40,15 @@
                 <div class="solicitud-card">
                     <div class="solicitud-card-top">
                         <div>
-                            <h5 class="solicitud-empresa">${r.nombreEmpresaActividad}</h5>
+                            <h5 class="solicitud-empresa"><c:out value="${r.nombreEmpresaActividad}"/></h5>
                             <div class="solicitud-ubicacion">
                                 <i class="bi bi-pin-map"></i>
-                                <span>${empty r.lugarDireccion ? 'Sin dirección' : r.lugarDireccion}</span>
+                                <span><c:out value="${empty r.lugarDireccion ? 'Sin dirección' : r.lugarDireccion}"/></span>
                             </div>
                             <c:if test="${!esDocente}">
                                 <div class="solicitud-ubicacion">
                                     <i class="bi bi-person"></i>
-                                    <span>${r.nombreSolicitante}</span>
+                                    <span><c:out value="${r.nombreSolicitante}"/></span>
                                 </div>
                             </c:if>
                         </div>

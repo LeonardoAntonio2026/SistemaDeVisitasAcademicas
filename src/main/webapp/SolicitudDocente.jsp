@@ -23,8 +23,15 @@
     <%-- autocomplete="off": el autorrelleno del navegador escoge por su cuenta
          los <select> del desglose (división, programa, cuatrimestre, grupo) y
          deja capturados grupos que el docente nunca eligió --%>
+    <%-- Al editar, guardar tiene una consecuencia que hay que avisar antes:
+         el formato firmado que ya se había subido se elimina. La confirmación
+         la pinta js/modales.js con los data-confirmar. --%>
     <form action="solicitud" method="POST" id="form-solicitud" autocomplete="off"
-          <c:if test="${editando}">onsubmit="return confirm('¿Guardar los cambios? Si ya habías subido el formato FO-UTEZ-EST-08 firmado se eliminará: descarga el formato actualizado, fírmalo y súbelo de nuevo.');"</c:if>>
+          <c:if test="${editando}">data-confirmar="Si ya habías subido el formato FO-UTEZ-EST-08 firmado, se eliminará."
+          data-confirmar-titulo="Guardar los cambios"
+          data-confirmar-detalle="Tendrás que descargar el formato actualizado, firmarlo y subirlo de nuevo."
+          data-confirmar-tipo="aviso"
+          data-confirmar-ok="Sí, guardar cambios"</c:if>>
         <input type="hidden" name="action" value="${editando ? 'update' : 'create'}">
         <c:if test="${editando}">
             <input type="hidden" name="id" value="${s.idSolicitud}">
@@ -303,7 +310,11 @@
                 </c:otherwise>
             </c:choose>
             <a href="${volverUrl}" class="btn-volver text-decoration-none"
-               onclick="return confirm('Se perderán los datos capturados que no se hayan guardado. ¿Salir del formulario?');">
+               data-confirmar="Se perderán los datos capturados que no se hayan guardado."
+               data-confirmar-titulo="Salir del formulario"
+               data-confirmar-tipo="aviso"
+               data-confirmar-ok="Sí, salir"
+               data-confirmar-cancelar="Seguir capturando">
                 <i class="bi bi-arrow-left"></i> ${volverTexto}
             </a>
             <%-- No dice "Crear/Enviar": guardar solo deja la solicitud lista;

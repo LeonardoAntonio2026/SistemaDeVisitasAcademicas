@@ -22,13 +22,12 @@ import java.util.List;
  *
  * El permiso se decide SIEMPRE con el atributo "rol" que LoginServlet guardó en
  * la sesión: nunca con un parámetro de la URL, que el usuario podría escribir a
- * mano. Quien no sea Administrador se va al inicio.
+ * mano. Quien no sea Administrador recibe un 403.
  *
- * El servlet responde de dos formas y la lógica es la misma para las dos:
- *  - HTML (por defecto): forward al JSP y patrón PRG en los POST, para que el
- *    panel siga funcionando aunque el navegador no ejecute JavaScript.
- *  - JSON (con ?formato=json): lo que consume gestion-usuarios.js con fetch
- *    para dar de alta, editar y borrar sin recargar la página.
+ * El JSP se pinta una sola vez, al entrar (GET sin action). De ahí en adelante
+ * todo pasa por JSON y lo consume gestion-usuarios.js con fetch: los modales
+ * piden datos con GET y las tres operaciones van por POST. Así la página nunca
+ * se recarga y no hay dos versiones de la misma pantalla que mantener.
  */
 @WebServlet(name = "UsuarioServlet", value = "/usuarios")
 public class UsuarioServlet extends HttpServlet {
@@ -50,81 +49,66 @@ public class UsuarioServlet extends HttpServlet {
             return;
         }
 
-        String accion = request.getParameter("action");
-
-        // El panel pide por fetch lo que necesitan sus modales: los datos del
-        // usuario que se va a editar, o el resumen de lo que se perdería al
-        // darlo de baja. Sin JavaScript el flujo sigue por las ramas de abajo.
-        if (pideJson(request)) {
-            responderJson(response, consultar(accion, request));
+        // Con action el panel está pidiendo lo que necesitan sus modales:
+        // los datos del usuario a editar o el resumen de lo que se perdería al
+        // darlo de baja. Sin action es la carga normal de la página.
+        String action = request.getParameter("action");
+        if ("editar".equals(action) || "confirmar".equals(action)) {
+            responderJson(response, consultar(action, request));
             return;
-        }
-
-        // Editar: el mismo formulario de alta, precargado con el usuario elegido
-        if ("editar".equals(accion)) {
-            Integer id = parseId(request.getParameter("id"));
-            Usuario enEdicion = (id != null) ? usuarioDao.getById(id) : null;
-            if (enEdicion != null) {
-                request.setAttribute("usuarioEditado", enEdicion);
-            }
-        }
-
-        // Confirmar baja: la eliminación es irreversible y se lleva las solicitudes
-        // y reportes del usuario, así que primero se le enseña al administrador
-        // exactamente qué va a perder.
-        if ("confirmar".equals(accion)) {
-            Integer id = parseId(request.getParameter("id"));
-            Usuario aBorrar = (id != null) ? usuarioDao.getById(id) : null;
-            if (aBorrar != null && !id.equals(idEnSesion(request))) {
-                UsuarioDao.Historial h = usuarioDao.contarHistorial(id);
-                request.setAttribute("usuarioABorrar", aBorrar);
-                request.setAttribute("bajaSolicitudes", h.solicitudes());
-                request.setAttribute("bajaReportes", h.reportes());
-                request.setAttribute("bajaAutorizaciones", h.autorizaciones());
-                request.setAttribute("bajaAcompanamientos", h.acompanamientos());
-            }
         }
 
         request.setAttribute("listaUsuarios", usuarioDao.getAll());
         request.setAttribute("rolesDisponibles", rolDao.getNombres());
-        traducirAvisos(request);
 
         request.getRequestDispatcher("UserManagement.jsp").forward(request, response);
     }
 
+    /** Las tres operaciones responden JSON: el panel se actualiza sin recargar. */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        // Gestión de usuarios es solo del Administrador: a los demás se les dice
-        // por qué no pueden entrar, en vez de rebotarlos al inicio sin explicación
         if (!esAdministrador(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         String action = request.getParameter("action");
-        Resultado resultado = switch (action != null ? action : "") {
+        Respuesta respuesta = switch (action != null ? action : "") {
             case "crear" -> crear(request);
             case "actualizar" -> actualizar(request);
             case "eliminar" -> eliminar(request);
-            default -> Resultado.error("desconocida");
+            default -> Respuesta.error("No se pudo completar la operación. Inténtalo de nuevo.");
         };
 
-        // Con fetch la respuesta se queda en la página: el panel pinta el aviso
-        // y repinta solo la fila que cambió, sin perder lo que hubiera escrito
-        if (pideJson(request)) {
-            responderJson(response, aRespuesta(resultado));
-            return;
-        }
-
-        // Patrón PRG: el resultado viaja en la URL para que recargar no repita la operación
-        response.sendRedirect(destino(resultado, action, request));
+        responderJson(response, respuesta);
     }
 
+    /** Datos que alimentan los modales: edición y confirmación de baja. */
+    private Respuesta consultar(String action, HttpServletRequest request) {
+        Integer id = parseId(request.getParameter("id"));
+        Usuario usuario = (id != null) ? usuarioDao.getById(id) : null;
+        if (usuario == null) {
+            return Respuesta.error("Ese usuario ya no existe.");
+        }
+
+        if ("confirmar".equals(action)) {
+            if (id.equals(idEnSesion(request))) {
+                return Respuesta.error("No puedes eliminar tu propia cuenta.");
+            }
+            // El borrado es irreversible, así que primero se le enseña al
+            // administrador exactamente qué va a perder
+            return new Respuesta(true, null, UsuarioJson.de(usuario), usuarioDao.contarHistorial(id));
+        }
+        return new Respuesta(true, null, UsuarioJson.de(usuario), null);
+    }
+
+    // ==================== Operaciones ====================
+
     /** Alta de cuenta: valida, resuelve el rol y delega en el DAO (que hashea la contraseña). */
-    private Resultado crear(HttpServletRequest request) {
+    private Respuesta crear(HttpServletRequest request) {
         String nombre = limpiar(request.getParameter("nombre"));
         String correo = limpiar(request.getParameter("correo"));
         String contrasena = request.getParameter("contrasena");
@@ -133,28 +117,28 @@ public class UsuarioServlet extends HttpServlet {
 
         if (nombre.isEmpty() || correo.isEmpty() || rol.isEmpty()
                 || contrasena == null || contrasena.isBlank()) {
-            return Resultado.error("campos");
+            return Respuesta.error("Completa todos los campos obligatorios.");
         }
         if (nombre.length() > 100) {
-            return Resultado.error("nombrelargo");
+            return Respuesta.error("El nombre no debe pasar de 100 caracteres.");
         }
         if (!Validador.correoValido(correo)) {
-            return Resultado.error("correoformato");
+            return Respuesta.error("El correo electrónico no tiene un formato válido.");
         }
         if (!Validador.contrasenaValida(contrasena)) {
-            return Resultado.error("contrasena");
+            return Respuesta.error(Validador.REGLA_CONTRASENA);
         }
         // La confirmación se vuelve a comparar aquí: el navegador ya avisa al
         // escribir, pero un POST directo se salta esa validación
         if (!contrasena.equals(confirmacion)) {
-            return Resultado.error("contrasenas");
+            return Respuesta.error("Las contraseñas no coinciden.");
         }
         int idRol = rolDao.getIdPorNombre(rol);
         if (idRol == 0) {
-            return Resultado.error("rol");
+            return Respuesta.error("El rol seleccionado no es válido.");
         }
         if (usuarioDao.existeCorreo(correo)) {
-            return Resultado.error("correo");
+            return Respuesta.error("Ya existe una cuenta registrada con ese correo.");
         }
 
         Usuario nuevo = new Usuario();
@@ -164,23 +148,20 @@ public class UsuarioServlet extends HttpServlet {
         nuevo.setContrasena(contrasena);
 
         if (!usuarioDao.create(nuevo)) {
-            return Resultado.error("crear");
+            return Respuesta.error("No se pudo crear el usuario. Inténtalo de nuevo.");
         }
         // create() deja el id generado en la entidad; el nombre del rol se
         // completa para que el panel pueda pintar la fila nueva sin releer la BD
         nuevo.setNombreRol(rol);
-        return Resultado.exito("creado", nuevo);
+        return Respuesta.exito("Usuario creado correctamente.", nuevo);
     }
 
     /** Edición de nombre, correo y rol. La contraseña no se toca desde aquí. */
-    private Resultado actualizar(HttpServletRequest request) {
+    private Respuesta actualizar(HttpServletRequest request) {
         Integer id = parseId(request.getParameter("id"));
-        if (id == null) {
-            return Resultado.error("noexiste");
-        }
-        Usuario usuario = usuarioDao.getById(id);
+        Usuario usuario = (id != null) ? usuarioDao.getById(id) : null;
         if (usuario == null) {
-            return Resultado.error("noexiste");
+            return Respuesta.error("Ese usuario ya no existe.");
         }
 
         String nombre = limpiar(request.getParameter("nombre"));
@@ -188,25 +169,25 @@ public class UsuarioServlet extends HttpServlet {
         String rol = limpiar(request.getParameter("rol"));
 
         if (nombre.isEmpty() || correo.isEmpty() || rol.isEmpty()) {
-            return Resultado.error("campos");
+            return Respuesta.error("Completa todos los campos obligatorios.");
         }
         if (nombre.length() > 100) {
-            return Resultado.error("nombrelargo");
+            return Respuesta.error("El nombre no debe pasar de 100 caracteres.");
         }
         if (!Validador.correoValido(correo)) {
-            return Resultado.error("correoformato");
+            return Respuesta.error("El correo electrónico no tiene un formato válido.");
         }
         int idRol = rolDao.getIdPorNombre(rol);
         if (idRol == 0) {
-            return Resultado.error("rol");
+            return Respuesta.error("El rol seleccionado no es válido.");
         }
         // Si se quitara a sí mismo el rol de admin se quedaría fuera del panel
         if (id.equals(idEnSesion(request)) && idRol != usuario.getIdRol()) {
-            return Resultado.error("autorol");
+            return Respuesta.error("No puedes cambiar tu propio rol: perderías el acceso a este panel.");
         }
         // El correo es la credencial de acceso: no puede chocar con otra cuenta
         if (!correo.equalsIgnoreCase(usuario.getCorreo()) && usuarioDao.existeCorreo(correo)) {
-            return Resultado.error("correo");
+            return Respuesta.error("Ya existe una cuenta registrada con ese correo.");
         }
 
         usuario.setNombre(nombre);
@@ -214,109 +195,55 @@ public class UsuarioServlet extends HttpServlet {
         usuario.setIdRol(idRol);
         usuario.setNombreRol(rol);
 
-        return usuarioDao.update(usuario)
-                ? Resultado.exito("actualizado", usuario)
-                : Resultado.error("actualizar");
+        if (!usuarioDao.update(usuario)) {
+            return Respuesta.error("No se pudieron guardar los cambios del usuario. Inténtalo de nuevo.");
+        }
+        return Respuesta.exito("Usuario actualizado correctamente.", usuario);
     }
 
-    private Resultado eliminar(HttpServletRequest request) {
+    private Respuesta eliminar(HttpServletRequest request) {
         Integer id = parseId(request.getParameter("id"));
         if (id == null) {
-            return Resultado.error("noexiste");
+            return Respuesta.error("Ese usuario ya no existe.");
         }
         if (id.equals(idEnSesion(request))) {
-            return Resultado.error("autoeliminar");
+            return Respuesta.error("No puedes eliminar tu propia cuenta.");
         }
 
         // Se consultan ANTES: después del borrado ya no hay de dónde sacarlos
         Usuario usuario = usuarioDao.getById(id);
         if (usuario == null) {
-            return Resultado.error("noexiste");
+            return Respuesta.error("Ese usuario ya no existe.");
         }
-        UsuarioDao.Historial h = usuarioDao.contarHistorial(id);
+        UsuarioDao.Historial historial = usuarioDao.contarHistorial(id);
 
         UsuarioDao.Baja baja = usuarioDao.eliminarConDetalle(id);
         if (!baja.ok()) {
-            return Resultado.error(baja.error());
-        }
-        return new Resultado(true, "eliminado", usuario, h);
-    }
-
-    // ==================== Salida HTML (flujo sin JavaScript) ====================
-
-    /**
-     * A dónde vuelve el navegador después del POST. El resultado viaja como
-     * clave en la URL (patrón PRG) y traducirAvisos lo convierte en texto.
-     */
-    private String destino(Resultado resultado, String action, HttpServletRequest request) {
-        if (resultado.ok()) {
-            if (resultado.historial() != null) {
-                return "usuarios?ok=" + resultado.clave()
-                        + "&s=" + resultado.historial().solicitudes()
-                        + "&r=" + resultado.historial().reportes();
+            if ("ligado".equals(baja.error())) {
+                return Respuesta.error("No se puede eliminar este usuario porque está ligado a información "
+                        + "de otros registros del sistema. No se borró nada.");
             }
-            return "usuarios?ok=" + resultado.clave();
+            return Respuesta.error("No se pudo eliminar el usuario. No se borró nada; inténtalo de nuevo.");
         }
-
-        // Si algo falla al editar, el redirect conserva action=editar&id: sin
-        // esto el error caía en el formulario de "Nuevo usuario" vacío y el
-        // administrador perdía la edición que traía a medias.
-        Integer id = parseId(request.getParameter("id"));
-        if ("actualizar".equals(action) && id != null && !"noexiste".equals(resultado.clave())) {
-            return "usuarios?action=editar&id=" + id + "&error=" + resultado.clave();
-        }
-        return "usuarios?error=" + resultado.clave();
+        return Respuesta.exito(detalleBaja(historial), usuario);
     }
 
-    /** Convierte los códigos que viajan en la URL (PRG) al texto que ve el usuario. */
-    private void traducirAvisos(HttpServletRequest request) {
-        String ok = request.getParameter("ok");
-        if (ok != null) {
-            request.setAttribute("mensaje", mensajeExito(ok,
-                    parseConteo(request.getParameter("s")),
-                    parseConteo(request.getParameter("r"))));
+    /** Resume qué se llevó por delante la baja, para confirmárselo al administrador. */
+    private String detalleBaja(UsuarioDao.Historial historial) {
+        List<String> borrado = new ArrayList<>();
+        if (historial.solicitudes() > 0) {
+            borrado.add(historial.solicitudes() == 1 ? "1 solicitud" : historial.solicitudes() + " solicitudes");
         }
-        String error = request.getParameter("error");
-        if (error != null) {
-            request.setAttribute("error", mensajeError(error));
+        if (historial.reportes() > 0) {
+            borrado.add(historial.reportes() == 1 ? "1 reporte" : historial.reportes() + " reportes");
         }
+        if (borrado.isEmpty()) {
+            return "Usuario eliminado correctamente.";
+        }
+        return "Usuario eliminado junto con " + String.join(" y ", borrado) + ".";
     }
 
-    // ==================== Salida JSON (panel con fetch) ====================
-
-    /** El panel pide JSON con ?formato=json; el resto del sitio sigue recibiendo HTML. */
-    private boolean pideJson(HttpServletRequest request) {
-        return "json".equals(request.getParameter("formato"));
-    }
-
-    /** Datos que alimentan los modales del panel: edición y confirmación de baja. */
-    private Respuesta consultar(String accion, HttpServletRequest request) {
-        Integer id = parseId(request.getParameter("id"));
-        Usuario usuario = (id != null) ? usuarioDao.getById(id) : null;
-        if (usuario == null) {
-            return Respuesta.error(mensajeError("noexiste"));
-        }
-
-        if ("confirmar".equals(accion)) {
-            if (id.equals(idEnSesion(request))) {
-                return Respuesta.error(mensajeError("autoeliminar"));
-            }
-            return new Respuesta(true, null, UsuarioJson.de(usuario), usuarioDao.contarHistorial(id));
-        }
-        return new Respuesta(true, null, UsuarioJson.de(usuario), null);
-    }
-
-    /** El mismo resultado del POST, pero con el texto ya armado para el panel. */
-    private Respuesta aRespuesta(Resultado resultado) {
-        if (!resultado.ok()) {
-            return Respuesta.error(mensajeError(resultado.clave()));
-        }
-        UsuarioDao.Historial h = resultado.historial();
-        String mensaje = mensajeExito(resultado.clave(),
-                h != null ? h.solicitudes() : 0,
-                h != null ? h.reportes() : 0);
-        return new Respuesta(true, mensaje, UsuarioJson.de(resultado.usuario()), null);
-    }
+    // ==================== Respuesta JSON ====================
 
     private void responderJson(HttpServletResponse response, Respuesta respuesta) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
@@ -325,69 +252,18 @@ public class UsuarioServlet extends HttpServlet {
         }
     }
 
-    // ==================== Avisos (compartidos por las dos salidas) ====================
-
-    /** Los conteos solo los usa la baja, que resume qué se llevó por delante. */
-    private String mensajeExito(String clave, int solicitudes, int reportes) {
-        return switch (clave) {
-            case "creado" -> "Usuario creado correctamente.";
-            case "actualizado" -> "Usuario actualizado correctamente.";
-            case "eliminado" -> detalleBaja(solicitudes, reportes);
-            default -> "Operación completada.";
-        };
-    }
-
-    private String mensajeError(String clave) {
-        return switch (clave) {
-            case "campos" -> "Completa todos los campos obligatorios.";
-            case "correo" -> "Ya existe una cuenta registrada con ese correo.";
-            case "correoformato" -> "El correo electrónico no tiene un formato válido.";
-            case "contrasena" -> Validador.REGLA_CONTRASENA;
-            case "contrasenas" -> "Las contraseñas no coinciden.";
-            case "nombrelargo" -> "El nombre no debe pasar de 100 caracteres.";
-            case "rol" -> "El rol seleccionado no es válido.";
-            case "noexiste" -> "Ese usuario ya no existe.";
-            case "autorol" -> "No puedes cambiar tu propio rol: perderías el acceso a este panel.";
-            case "autoeliminar" -> "No puedes eliminar tu propia cuenta.";
-            case "eliminar" -> "No se pudo eliminar el usuario. No se borró nada; inténtalo de nuevo.";
-            case "ligado" -> "No se puede eliminar este usuario porque está ligado a información de otros "
-                    + "registros del sistema. No se borró nada.";
-            case "actualizar" -> "No se pudieron guardar los cambios del usuario. Inténtalo de nuevo.";
-            case "crear" -> "No se pudo crear el usuario. Inténtalo de nuevo.";
-            default -> "No se pudo completar la operación. Inténtalo de nuevo.";
-        };
-    }
-
-    /** Resume qué se llevó por delante la baja, para confirmárselo al administrador. */
-    private String detalleBaja(int solicitudes, int reportes) {
-        List<String> borrado = new ArrayList<>();
-        if (solicitudes > 0) {
-            borrado.add(solicitudes == 1 ? "1 solicitud" : solicitudes + " solicitudes");
-        }
-        if (reportes > 0) {
-            borrado.add(reportes == 1 ? "1 reporte" : reportes + " reportes");
-        }
-        if (borrado.isEmpty()) {
-            return "Usuario eliminado correctamente.";
-        }
-        return "Usuario eliminado junto con " + String.join(" y ", borrado) + ".";
-    }
-
-    // ==================== Tipos de apoyo ====================
-
     /**
-     * Lo que dejó una operación de alta, edición o baja: la clave del aviso, el
-     * usuario afectado y —solo en la baja— el conteo de lo que se borró con él.
-     * De aquí salen las dos respuestas del servlet, así la validación y las
-     * reglas viven en un solo lugar.
+     * Sobre común de todas las respuestas. Gson omite los campos nulos, así que
+     * cada petición manda solo lo suyo: el usuario para pintar o repintar su
+     * fila y, en la confirmación de baja, el conteo de lo que se perdería.
      */
-    private record Resultado(boolean ok, String clave, Usuario usuario, UsuarioDao.Historial historial) {
-        static Resultado error(String clave) {
-            return new Resultado(false, clave, null, null);
+    private record Respuesta(boolean ok, String mensaje, UsuarioJson usuario, UsuarioDao.Historial baja) {
+        static Respuesta error(String mensaje) {
+            return new Respuesta(false, mensaje, null, null);
         }
 
-        static Resultado exito(String clave, Usuario usuario) {
-            return new Resultado(true, clave, usuario, null);
+        static Respuesta exito(String mensaje, Usuario usuario) {
+            return new Respuesta(true, mensaje, UsuarioJson.de(usuario), null);
         }
     }
 
@@ -399,17 +275,6 @@ public class UsuarioServlet extends HttpServlet {
     private record UsuarioJson(int id, String nombre, String correo, String rol) {
         static UsuarioJson de(Usuario u) {
             return new UsuarioJson(u.getId(), u.getNombre(), u.getCorreo(), u.getNombreRol());
-        }
-    }
-
-    /**
-     * Sobre común de las respuestas JSON. Gson omite los campos nulos, así que
-     * cada petición manda solo lo suyo: el usuario para repintar su fila y, en
-     * la confirmación de baja, el conteo de lo que se perdería.
-     */
-    private record Respuesta(boolean ok, String mensaje, UsuarioJson usuario, UsuarioDao.Historial baja) {
-        static Respuesta error(String mensaje) {
-            return new Respuesta(false, mensaje, null, null);
         }
     }
 
@@ -431,14 +296,6 @@ public class UsuarioServlet extends HttpServlet {
             return Integer.valueOf(valor.trim());
         } catch (NumberFormatException | NullPointerException e) {
             return null;
-        }
-    }
-
-    private int parseConteo(String valor) {
-        try {
-            return Math.max(0, Integer.parseInt(valor));
-        } catch (NumberFormatException | NullPointerException e) {
-            return 0;
         }
     }
 

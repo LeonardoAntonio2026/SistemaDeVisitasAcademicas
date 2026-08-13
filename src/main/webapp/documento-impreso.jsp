@@ -2,13 +2,22 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%-- Vista imprimible de los documentos generados a partir de la solicitud
      o del reporte de visita. El usuario la imprime o la guarda como PDF
-     (Ctrl+P), la firma y la sube. tipoFormato: fo | oficio | responsiva | reporte --%>
+     (Ctrl+P), la firma y la sube. tipoFormato: fo | oficio | responsiva | reporte
+
+     El FO, la carta responsiva y el reporte calcan los formatos oficiales del
+     sistema de calidad (FO-UTEZ-EST-08 Rev. 08, la carta responsiva grupal y el
+     reporte de visita académica): mismos rótulos, mismo orden y mismos textos
+     legales, para que lo que se imprime aquí sea aceptado tal cual. El oficio no
+     es un formato controlado, lo redacta el sistema. --%>
 <c:set var="s" value="${solicitud}"/>
 <c:set var="r" value="${reporte}"/>
 <% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
+<%-- Fecha con letra para el encabezado de la carta responsiva --%>
+<% request.setAttribute("hoyLetra", com.example.demo.utils.FechaTexto.hoyLargo()); %>
 <%-- Docente responsable capturado en el formato; las solicitudes viejas no lo
      tienen, ahí se usa el docente que creó la solicitud --%>
 <c:set var="responsable" value="${empty s.docenteResponsable ? s.nombreSolicitante : s.docenteResponsable}"/>
+<c:set var="img" value="${pageContext.request.contextPath}/img"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -16,18 +25,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
         <c:choose>
-            <c:when test="${tipoFormato == 'fo'}">FO-UTEZ-EST-08 - Solicitud de visita académica</c:when>
+            <c:when test="${tipoFormato == 'fo'}">FO-UTEZ-EST-08 - Formato de visita académica</c:when>
             <c:when test="${tipoFormato == 'oficio'}">Oficio de visita académica</c:when>
             <c:when test="${tipoFormato == 'reporte'}">Reporte de visita académica</c:when>
-            <c:otherwise>Carta responsiva</c:otherwise>
+            <c:otherwise>Carta responsiva visitas académicas</c:otherwise>
         </c:choose>
     </title>
     <style>
         body {
-            font-family: 'Times New Roman', Georgia, serif;
+            font-family: Arial, Helvetica, sans-serif;
             background: #E8E8ED;
             margin: 0;
-            color: #1c1c1e;
+            color: #000;
         }
         .toolbar {
             background: #183052;
@@ -36,7 +45,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: Arial, sans-serif;
+            gap: 16px;
         }
         .toolbar a, .toolbar button {
             background: #ffffff;
@@ -48,41 +57,146 @@
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
+            white-space: nowrap;
         }
         .hoja {
             background: #fff;
             width: 216mm;
             max-width: 95%;
             margin: 24px auto;
-            padding: 22mm 20mm;
+            padding: 14mm 14mm 8mm;
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
             box-sizing: border-box;
         }
-        .encabezado {
+
+        /* ---------- Encabezados ---------- */
+        .enc-formato {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 3px solid #183052;
-            padding-bottom: 10px;
-            margin-bottom: 24px;
-            font-family: Arial, sans-serif;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 4px;
         }
-        .encabezado h1 { font-size: 15px; margin: 0; color: #183052; }
-        .encabezado .codigo { font-size: 12px; color: #555; }
-        h2.titulo-doc { text-align: center; font-size: 17px; margin: 0 0 22px; text-transform: uppercase; }
-        table.campos { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 18px; }
-        table.campos th, table.campos td { border: 1px solid #444; padding: 7px 10px; text-align: left; }
-        table.campos th { background: #EFEFF4; width: 34%; font-weight: 700; }
-        p.parrafo { font-size: 14px; line-height: 1.7; text-align: justify; }
-        .fotos-reporte { display: flex; flex-wrap: wrap; gap: 4%; margin: 10px 0 18px; }
+        .enc-formato h1, .enc-reporte h1 {
+            font-size: 15pt;
+            font-weight: 700;
+            margin: 0;
+            text-align: center;
+            flex: 1;
+        }
+        .enc-formato .logo-estadias { height: 17mm; }
+        .enc-formato .logo-utez { height: 17mm; }
+        .enc-reporte {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+        .enc-reporte h1 { text-align: left; }
+        .enc-reporte .logos { display: flex; align-items: center; gap: 10px; }
+        .enc-reporte .logos img { height: 15mm; }
+        .codigo-formato {
+            text-align: right;
+            font-size: 10.5pt;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        /* ---------- Tablas de los formatos ---------- */
+        table.tabla {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5pt;
+            margin-bottom: 12px;
+        }
+        table.tabla th, table.tabla td {
+            border: 1px solid #000;
+            padding: 4px 7px;
+            text-align: left;
+            vertical-align: top;
+        }
+        table.tabla th { font-weight: 700; background: #EDEBE4; }
+        table.tabla .seccion {
+            background: #D8D5CC;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        /* Rótulo de sección que en el formato original no va en mayúsculas */
+        table.tabla .seccion-normal { text-transform: none; }
+        .centro { text-align: center; }
+        table.tabla .fino { font-weight: 400; font-size: 8.5pt; }
+        /* Celdas de texto libre: el formato las imprime altas aunque vayan vacías */
+        table.tabla .alta { height: 16mm; }
+        table.tabla .muy-alta { height: 40mm; }
+        /* Dos tablas seguidas se leen como una sola caja, igual que en el formato */
+        table.tabla.pegada { margin-bottom: 0; }
+        .tabla-fecha { width: 45%; margin-left: auto; }
+        .nota-seccion { font-size: 10.5pt; font-weight: 700; margin: 14px 0 8px; }
+
+        /* ---------- Firmas ---------- */
+        .firmas {
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+            margin-top: 26px;
+        }
+        .firmas.una { justify-content: center; }
+        .firma { flex: 1; max-width: 78mm; text-align: center; font-size: 10pt; }
+        .firma .rotulo { font-weight: 700; margin-bottom: 16mm; }
+        .firma .nombre { font-size: 10pt; min-height: 14px; }
+        .firma .linea { border-top: 1px solid #000; margin-top: 2px; padding-top: 4px; }
+
+        /* ---------- Pie institucional ---------- */
+        .pie-institucional { margin: 22px -14mm 0; }
+        .pie-institucional img { width: 100%; display: block; }
+        .leyenda-seguro {
+            font-size: 8pt;
+            font-style: italic;
+            color: #8a1b1b;
+            text-align: center;
+            line-height: 1.4;
+            margin: 0 14mm 6px;
+        }
+
+        /* ---------- Carta responsiva (documento de texto corrido) ---------- */
+        .titulo-carta { font-size: 12pt; font-weight: 700; text-align: center; margin: 0 0 18px; }
+        .lugar-fecha { font-size: 11pt; margin-bottom: 18px; }
+        .destinatario { font-size: 11pt; font-weight: 700; line-height: 1.5; margin-bottom: 16px; }
+        p.parrafo { font-size: 10.5pt; line-height: 1.55; text-align: justify; margin: 0 0 12px; }
+        ul.compromisos { font-size: 10.5pt; line-height: 1.55; margin: 0 0 12px; padding-left: 22px; }
+        ul.compromisos li { margin-bottom: 4px; }
+        .dato-lleno { font-weight: 700; }
+        /* Hueco que se llena a mano al momento de firmar */
+        .hueco { display: inline-block; min-width: 90px; border-bottom: 1px solid #000; }
+        table.firmantes { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 6px; }
+        table.firmantes th, table.firmantes td { border: 1px solid #000; padding: 5px 7px; }
+        table.firmantes th { background: #EDEBE4; text-align: center; }
+        table.firmantes td { height: 8mm; }
+        table.firmantes tr { page-break-inside: avoid; }
+
+        /* ---------- Anexo de evidencia fotográfica del reporte ---------- */
+        .fotos-reporte { display: flex; flex-wrap: wrap; gap: 4%; margin: 10px 0 0; }
         .fotos-reporte img { width: 48%; max-height: 75mm; object-fit: cover; border: 1px solid #444; margin-bottom: 8px; }
-        .firmas { display: flex; justify-content: space-around; margin-top: 70px; gap: 40px; }
-        .firma { text-align: center; flex: 1; font-size: 13px; }
-        .firma .linea { border-top: 1.5px solid #1c1c1e; margin-bottom: 6px; padding-top: 6px; }
+
         @media print {
             .toolbar { display: none; }
             body { background: #fff; }
-            .hoja { box-shadow: none; margin: 0; width: auto; max-width: none; padding: 6mm 4mm; }
+            .hoja {
+                box-shadow: none;
+                margin: 0;
+                width: auto;
+                max-width: none;
+                padding: 8mm 10mm 30mm;
+            }
+            /* La carta responsiva no lleva banda institucional: no hay que
+               reservarle el espacio de abajo, y su tabla de firmas es larga */
+            .hoja.sin-pie { padding-bottom: 10mm; }
+            /* Fijo abajo para que la banda salga en todas las hojas del documento */
+            .pie-institucional { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; }
+            .leyenda-seguro { margin: 0 8mm 3px; }
+            .salto-pagina { page-break-before: always; }
         }
     </style>
 </head>
@@ -93,6 +207,10 @@
             <a href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">&#8592; Volver al reporte de la visita</a>
             <span style="font-size: 13px;">Imprime o guarda como PDF, firma el reporte y súbelo en el detalle del reporte</span>
         </c:when>
+        <c:when test="${tipoFormato == 'responsiva'}">
+            <a href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">&#8592; Volver a la solicitud</a>
+            <span style="font-size: 13px;">Imprímela, recoge las firmas de los estudiantes, escanéala y súbela en los detalles de tu solicitud</span>
+        </c:when>
         <c:otherwise>
             <a href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">&#8592; Volver a la solicitud</a>
             <span style="font-size: 13px;">Imprime o guarda como PDF, firma el documento y súbelo en los detalles de tu solicitud</span>
@@ -101,170 +219,433 @@
     <button onclick="window.print()">Imprimir / Guardar PDF</button>
 </div>
 
-<div class="hoja">
-    <div class="encabezado">
-        <h1>Universidad Tecnológica Emiliano Zapata del Estado de Morelos</h1>
-        <span class="codigo">
-            <c:choose>
-                <c:when test="${tipoFormato == 'fo'}">FO-UTEZ-EST-08</c:when>
-                <c:when test="${tipoFormato == 'oficio'}">Oficio de visita</c:when>
-                <c:when test="${tipoFormato == 'reporte'}">Reporte de visita</c:when>
-                <c:otherwise>Carta responsiva</c:otherwise>
-            </c:choose>
-        </span>
-    </div>
+<c:choose>
+    <%-- ================================================================
+         FO-UTEZ-EST-08 Rev. 08 — Formato de visita académica
+         ================================================================ --%>
+    <c:when test="${tipoFormato == 'fo'}">
+        <div class="hoja">
+            <div class="enc-formato">
+                <img class="logo-estadias" src="${img}/formato-estadias.png" alt="Estadías">
+                <h1>FORMATO DE VISITA ACADÉMICA</h1>
+                <img class="logo-utez" src="${img}/formato-utez.png" alt="UTEZ">
+            </div>
+            <div class="codigo-formato">FO-UTEZ-EST-08<br>Rev. 08</div>
 
-    <c:choose>
-        <%-- ========== FO-UTEZ-EST-08: solicitud de visita ========== --%>
-        <c:when test="${tipoFormato == 'fo'}">
-            <h2 class="titulo-doc">Solicitud de visita académica</h2>
-            <table class="campos">
-                <tr><th>Nombre de la empresa o actividad</th><td>${s.nombreEmpresaActividad}</td></tr>
-                <tr><th>Lugar o dirección</th><td>${empty s.lugarDireccion ? '' : s.lugarDireccion}</td></tr>
-                <tr><th>Teléfonos del contacto</th><td>${empty s.telefonoContacto ? '' : s.telefonoContacto}</td></tr>
-                <tr><th>Correo electrónico del contacto</th><td>${empty s.correoContacto ? '' : s.correoContacto}</td></tr>
-                <tr><th>Fecha de inicio</th><td>${empty s.fechaInicio ? '' : s.fechaInicio}</td></tr>
-                <tr><th>Área solicitante</th><td>${empty s.areaSolicitante ? '' : s.areaSolicitante}</td></tr>
-                <tr><th>Docente responsable de la visita</th><td>${responsable}</td></tr>
-                <tr><th>Celular</th><td>${empty s.celularResponsable ? '' : s.celularResponsable}</td></tr>
-                <tr><th>Docentes acompañantes</th>
-                    <td><c:forEach var="d" items="${s.docentesAcompanantes}" varStatus="st">${d.nombre}<c:if test="${!st.last}">, </c:if></c:forEach></td>
-                </tr>
-                <tr><th>Objetivo de la visita</th><td>${empty s.objetivo ? '' : s.objetivo}</td></tr>
+            <table class="tabla tabla-fecha">
+                <tr><th style="width:35%">Fecha:</th><td>${empty s.fechaCreacion ? '' : s.fechaCreacion}</td></tr>
             </table>
 
-            <%-- Número de estudiantes participantes por división académica --%>
-            <table class="campos">
+            <table class="tabla">
+                <tr><th class="seccion" colspan="4">Datos del lugar a visitar</th></tr>
                 <tr>
-                    <c:forEach var="division" items="${divisiones}">
-                        <th style="width:auto; text-align:center;">${division}</th>
-                    </c:forEach>
-                    <th style="width:auto; text-align:center;">Total de estudiantes</th>
+                    <th style="width:32%">Nombre de la empresa o actividad:</th>
+                    <td colspan="3"><c:out value="${s.nombreEmpresaActividad}"/></td>
                 </tr>
                 <tr>
-                    <c:forEach var="division" items="${divisiones}">
-                        <td style="text-align:center;">${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}</td>
-                    </c:forEach>
-                    <td style="text-align:center; font-weight:bold;">${s.totalPorDivision}</td>
+                    <th>Lugar o dirección:</th>
+                    <td colspan="3"><c:out value="${empty s.lugarDireccion ? '' : s.lugarDireccion}"/></td>
+                </tr>
+                <tr>
+                    <th>Teléfonos del contacto:</th>
+                    <td colspan="3"><c:out value="${empty s.telefonoContacto ? '' : s.telefonoContacto}"/></td>
+                </tr>
+                <tr>
+                    <th>Correo electrónico:</th>
+                    <td colspan="3"><c:out value="${empty s.correoContacto ? '' : s.correoContacto}"/></td>
+                </tr>
+                <%-- La hora y la fecha de término son parte del formato oficial,
+                     pero el sistema no las captura: van en blanco para llenarse
+                     a mano antes de firmar --%>
+                <tr>
+                    <th>Fecha de inicio de la visita:</th>
+                    <td style="width:22%">${empty s.fechaInicio ? '' : s.fechaInicio}</td>
+                    <th style="width:20%">Hora de la visita:</th>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <th>Fecha de término de la visita:</th>
+                    <td colspan="3">&nbsp;</td>
+                </tr>
+                <tr>
+                    <th>Objetivo de la visita:</th>
+                    <td colspan="3" class="alta"><c:out value="${empty s.objetivo ? '' : s.objetivo}"/></td>
                 </tr>
             </table>
 
-            <c:if test="${not empty s.programas}">
-                <table class="campos">
-                    <tr>
-                        <th style="width:auto;">División</th>
-                        <th style="width:auto;">Programa educativo</th>
-                        <th style="width:auto;">Cuatrimestre</th>
-                        <th style="width:auto;">Grupo</th>
-                        <th style="width:auto;">No. estudiantes</th>
-                    </tr>
-                    <c:forEach var="p" items="${s.programas}">
-                        <tr>
-                            <td>${p.divisionMostrable}</td>
-                            <td>${p.programa}</td>
-                            <td>${p.cuatrimestre}</td>
-                            <td>${empty p.grupo ? '' : p.grupo}</td>
-                            <td>${p.noEstudiantes}</td>
-                        </tr>
-                    </c:forEach>
-                    <tr>
-                        <td colspan="4" style="font-weight:bold;">Total de estudiantes</td>
-                        <td style="font-weight:bold;">${s.totalEstudiantes}</td>
-                    </tr>
-                </table>
-            </c:if>
+            <table class="tabla pegada">
+                <tr><th class="seccion" colspan="4">Datos de los participantes de la visita</th></tr>
+                <tr>
+                    <th style="width:32%">Área solicitante:</th>
+                    <td colspan="3"><c:out value="${empty s.areaSolicitante ? '' : s.areaSolicitante}"/></td>
+                </tr>
+                <tr>
+                    <th>Docente responsable de la visita:</th>
+                    <td><c:out value="${responsable}"/></td>
+                    <th style="width:14%">Celular:</th>
+                    <td style="width:18%"><c:out value="${empty s.celularResponsable ? '' : s.celularResponsable}"/></td>
+                </tr>
+                <tr>
+                    <th>Docentes acompañantes:</th>
+                    <td colspan="3">
+                        <c:forEach var="d" items="${s.docentesAcompanantes}" varStatus="st"><c:out value="${d.nombre}"/><c:if test="${!st.last}">, </c:if></c:forEach>
+                    </td>
+                </tr>
+            </table>
 
-            <c:if test="${not empty s.asignaturas}">
-                <p class="parrafo"><strong>Asignaturas que se reforzarán con la visita:</strong>
-                    <c:forEach var="a" items="${s.asignaturas}" varStatus="st">${a}<c:if test="${!st.last}">, </c:if></c:forEach>.
-                </p>
-            </c:if>
+            <table class="tabla">
+                <tr>
+                    <th class="seccion seccion-normal" colspan="5">Número de estudiantes participantes por división académica:</th>
+                </tr>
+                <tr>
+                    <c:forEach var="division" items="${divisiones}">
+                        <th class="centro"><c:out value="${division}"/></th>
+                    </c:forEach>
+                    <th class="centro">Total de estudiantes</th>
+                </tr>
+                <tr>
+                    <c:forEach var="division" items="${divisiones}">
+                        <td class="centro">${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}</td>
+                    </c:forEach>
+                    <td class="centro"><strong>${s.totalPorDivision}</strong></td>
+                </tr>
+            </table>
+
+            <p class="nota-seccion">La siguiente sección es de llenado exclusivo para visita académica:</p>
+
+            <table class="tabla">
+                <tr>
+                    <th style="width:52%">Programa educativo:
+                        <span class="fino">(desglose la participación de estudiantes por programa educativo, cuatrimestre, grado y grupo)</span>
+                    </th>
+                    <th class="centro">Cuatrimestre</th>
+                    <th class="centro">Grupo</th>
+                    <th class="centro">No. de Estudiantes</th>
+                </tr>
+                <c:forEach var="p" items="${s.programas}">
+                    <tr>
+                        <td><c:out value="${p.programa}"/></td>
+                        <td class="centro">${p.cuatrimestre}</td>
+                        <td class="centro"><c:out value="${empty p.grupo ? '' : p.grupo}"/></td>
+                        <td class="centro">${p.noEstudiantes}</td>
+                    </tr>
+                </c:forEach>
+            </table>
+
+            <table class="tabla">
+                <tr>
+                    <th style="width:38%">Asignaturas que se reforzarán con la visita:</th>
+                    <td><c:forEach var="a" items="${s.asignaturas}" varStatus="st"><c:out value="${a}"/><c:if test="${!st.last}">, </c:if></c:forEach></td>
+                </tr>
+            </table>
 
             <div class="firmas">
-                <div class="firma"><div class="linea">${responsable}</div>Docente responsable</div>
-                <div class="firma"><div class="linea">&nbsp;</div>Director(a) de división académica</div>
+                <div class="firma">
+                    <div class="rotulo">Solicita</div>
+                    <div class="nombre"><c:out value="${responsable}"/></div>
+                    <div class="linea">Nombre del docente responsable de la visita</div>
+                </div>
+                <div class="firma">
+                    <div class="rotulo">Autoriza</div>
+                    <%-- Se llena al aprobar; mientras el formato se firma en blanco --%>
+                    <div class="nombre"><c:out value="${empty s.nombreAutoriza ? '' : s.nombreAutoriza}"/></div>
+                    <div class="linea">Nombre y cargo del director de carrera/titular del área</div>
+                </div>
             </div>
-        </c:when>
 
-        <%-- ========== Oficio de visita (se genera al aprobar) ========== --%>
-        <c:when test="${tipoFormato == 'oficio'}">
-            <h2 class="titulo-doc">Oficio de visita académica</h2>
-            <p class="parrafo">A quien corresponda en <strong>${s.nombreEmpresaActividad}</strong>:</p>
+            <div class="pie-institucional">
+                <%-- La leyenda del pie del formato original: al firmar, el docente
+                     se hace responsable del seguro facultativo de sus estudiantes --%>
+                <p class="leyenda-seguro">
+                    El docente responsable de la visita académica declara que todos los estudiantes
+                    participantes cuentan con seguro facultativo activo al momento de la realización de la
+                    actividad. Al firmar el presente documento, el docente asume la responsabilidad de
+                    verificar y asegurar el cumplimiento de este requisito.
+                </p>
+                <img src="${img}/formato-banda.png" alt="">
+            </div>
+        </div>
+    </c:when>
+
+    <%-- ================================================================
+         Oficio de visita — lo redacta el sistema, no es formato controlado
+         ================================================================ --%>
+    <c:when test="${tipoFormato == 'oficio'}">
+        <div class="hoja">
+            <div class="enc-formato">
+                <img class="logo-estadias" src="${img}/formato-estadias.png" alt="Estadías">
+                <h1>OFICIO DE VISITA ACADÉMICA</h1>
+                <img class="logo-utez" src="${img}/formato-utez.png" alt="UTEZ">
+            </div>
+
+            <p class="parrafo" style="margin-top:18px;">Emiliano Zapata, Morelos a ${hoyLetra}.</p>
+            <p class="parrafo">A quien corresponda en <strong><c:out value="${s.nombreEmpresaActividad}"/></strong>:</p>
             <p class="parrafo">
                 Por este medio se hace constar que la Universidad Tecnológica Emiliano Zapata del Estado de
                 Morelos, a través del área de Estadías, autoriza la visita académica de
                 <strong>${s.totalEstudiantes}</strong> estudiante(s) a cargo del (de la) docente
-                <strong>${responsable}</strong>, a realizarse
-                <c:if test="${not empty s.fechaInicio}">el día <strong>${s.fechaInicio}</strong></c:if>
-                en ${empty s.lugarDireccion ? 'sus instalaciones' : s.lugarDireccion}.
+                <strong><c:out value="${responsable}"/></strong>, a realizarse
+                <c:if test="${not empty s.periodoEnLetra}">${s.periodoEnLetra}</c:if>
+                <c:if test="${not empty s.horaVisita}"> a partir de las ${s.horaVisita} hrs.</c:if>
+                en <c:out value="${empty s.lugarDireccion ? 'sus instalaciones' : s.lugarDireccion}"/>.
             </p>
             <c:if test="${not empty s.objetivo}">
-                <p class="parrafo"><strong>Objetivo de la visita:</strong> ${s.objetivo}</p>
+                <p class="parrafo"><strong>Objetivo de la visita:</strong> <c:out value="${s.objetivo}"/></p>
             </c:if>
             <p class="parrafo">
                 Agradecemos de antemano las facilidades otorgadas para la realización de esta actividad,
                 que forma parte de la formación académica de nuestros estudiantes.
             </p>
-            <div class="firmas">
-                <div class="firma"><div class="linea">&nbsp;</div>Área de Estadías - UTEZ</div>
-            </div>
-        </c:when>
 
-        <%-- ========== Reporte de visita (lo genera el docente al terminar) ========== --%>
-        <c:when test="${tipoFormato == 'reporte'}">
-            <h2 class="titulo-doc">Reporte de visita académica</h2>
-            <table class="campos">
-                <tr><th>Nombre de la empresa o actividad</th><td>${s.nombreEmpresaActividad}</td></tr>
-                <tr><th>Lugar o dirección</th><td>${empty s.lugarDireccion ? '' : s.lugarDireccion}</td></tr>
-                <tr><th>Fecha de la visita</th><td>${empty r.fecha ? '' : r.fecha}</td></tr>
-                <tr><th>Docente responsable</th><td>${responsable}</td></tr>
-                <tr><th>Total de estudiantes</th><td>${s.totalEstudiantes}</td></tr>
+            <div class="firmas una">
+                <div class="firma">
+                    <div class="rotulo">&nbsp;</div>
+                    <div class="nombre"><c:out value="${empty s.nombreAutoriza ? '' : s.nombreAutoriza}"/></div>
+                    <div class="linea">Área de Estadías &mdash; UTEZ</div>
+                </div>
+            </div>
+
+            <div class="pie-institucional">
+                <img src="${img}/formato-banda.png" alt="">
+            </div>
+        </div>
+    </c:when>
+
+    <%-- ================================================================
+         Reporte de visita académica
+         ================================================================ --%>
+    <c:when test="${tipoFormato == 'reporte'}">
+        <div class="hoja">
+            <div class="enc-reporte">
+                <h1>REPORTE DE VISITA ACADÉMICA</h1>
+                <div class="logos">
+                    <img src="${img}/formato-estadias.png" alt="Estadías">
+                    <img src="${img}/formato-utez.png" alt="UTEZ">
+                </div>
+            </div>
+
+            <table class="tabla tabla-fecha">
+                <tr><th style="width:35%">Fecha:</th><td>${empty r.fecha ? '' : r.fecha}</td></tr>
             </table>
 
-            <p class="parrafo"><strong>Resultados de la visita:</strong> <c:out value="${r.resultados}"/></p>
-            <c:if test="${not empty r.observaciones}">
-                <p class="parrafo"><strong>Observaciones:</strong> <c:out value="${r.observaciones}"/></p>
-            </c:if>
+            <table class="tabla">
+                <tr><th class="seccion" colspan="4">Datos del lugar visitado</th></tr>
+                <tr>
+                    <th style="width:30%">Nombre de la empresa o actividad:</th>
+                    <td colspan="3"><c:out value="${s.nombreEmpresaActividad}"/></td>
+                </tr>
+                <tr>
+                    <th>Fecha de inicio de la visita / actividad:</th>
+                    <td style="width:18%">${empty s.fechaInicio ? '' : s.fechaInicio}</td>
+                    <th style="width:30%">Fecha de término de la visita / actividad:</th>
+                    <td>${empty s.fechaTermino ? '' : s.fechaTermino}</td>
+                </tr>
+                <tr>
+                    <th>Objetivo de la visita / actividad:</th>
+                    <td colspan="3" class="alta"><c:out value="${empty s.objetivo ? '' : s.objetivo}"/></td>
+                </tr>
+            </table>
 
-            <c:if test="${not empty imagenes}">
-                <p class="parrafo"><strong>Evidencia fotográfica:</strong></p>
+            <table class="tabla pegada">
+                <tr><th class="seccion" colspan="2">Datos de los participantes en la visita / actividad</th></tr>
+                <tr>
+                    <th style="width:30%">División o Área participante:</th>
+                    <td><c:out value="${empty s.areaSolicitante ? '' : s.areaSolicitante}"/></td>
+                </tr>
+                <tr>
+                    <th>Docente (s) responsable (s) de la visita / actividad:</th>
+                    <td><c:out value="${s.docentesEnLetra}"/></td>
+                </tr>
+            </table>
+
+            <table class="tabla">
+                <tr>
+                    <th style="width:52%">Programa educativo:
+                        <span class="fino">(desglose la participación de estudiantes por programa educativo, cuatrimestre, grado y grupo)</span>
+                    </th>
+                    <th class="centro">Cuatrimestre</th>
+                    <th class="centro">Grupo</th>
+                    <th class="centro">No. de Estudiantes</th>
+                </tr>
+                <c:forEach var="p" items="${s.programas}">
+                    <tr>
+                        <td><c:out value="${p.programa}"/></td>
+                        <td class="centro">${p.cuatrimestre}</td>
+                        <td class="centro"><c:out value="${empty p.grupo ? '' : p.grupo}"/></td>
+                        <td class="centro">${p.noEstudiantes}</td>
+                    </tr>
+                </c:forEach>
+                <tr>
+                    <th class="centro" colspan="3">TOTAL DE ESTUDIANTES PARTICIPANTES</th>
+                    <td class="centro"><strong>${s.totalEstudiantes}</strong></td>
+                </tr>
+            </table>
+
+            <table class="tabla">
+                <tr>
+                    <th style="width:38%">Asignaturas que se reforzaron con la visita:</th>
+                    <td><c:forEach var="a" items="${s.asignaturas}" varStatus="st"><c:out value="${a}"/><c:if test="${!st.last}">, </c:if></c:forEach></td>
+                </tr>
+            </table>
+
+            <table class="tabla">
+                <tr><th class="seccion">Resultados</th></tr>
+                <tr><td class="muy-alta"><c:out value="${r.resultados}"/></td></tr>
+            </table>
+
+            <table class="tabla">
+                <tr><th class="seccion">Observaciones / Comentarios</th></tr>
+                <tr><td class="alta"><c:out value="${empty r.observaciones ? '' : r.observaciones}"/></td></tr>
+            </table>
+
+            <div class="firmas una">
+                <div class="firma">
+                    <div class="rotulo">&nbsp;</div>
+                    <div class="nombre"><c:out value="${responsable}"/></div>
+                    <div class="linea">Nombre y firma del docente responsable de la visita</div>
+                </div>
+            </div>
+
+            <div class="pie-institucional">
+                <img src="${img}/formato-banda.png" alt="">
+            </div>
+        </div>
+
+        <%-- La evidencia fotográfica no forma parte del formato oficial: va como
+             anexo en su propia hoja para no alterar el reporte --%>
+        <c:if test="${not empty imagenes}">
+            <div class="hoja salto-pagina">
+                <div class="enc-reporte">
+                    <h1>ANEXO. EVIDENCIA FOTOGRÁFICA</h1>
+                    <div class="logos">
+                        <img src="${img}/formato-utez.png" alt="UTEZ">
+                    </div>
+                </div>
+                <table class="tabla">
+                    <tr>
+                        <th style="width:30%">Visita:</th>
+                        <td><c:out value="${s.nombreEmpresaActividad}"/></td>
+                    </tr>
+                </table>
                 <div class="fotos-reporte">
-                    <c:forEach var="img" items="${imagenes}">
-                        <img src="${pageContext.request.contextPath}/reporte?imagen=${img.idImagen}"
+                    <c:forEach var="foto" items="${imagenes}">
+                        <img src="${pageContext.request.contextPath}/reporte?imagen=${foto.idImagen}"
                              alt="Evidencia de la visita">
                     </c:forEach>
                 </div>
-            </c:if>
-
-            <div class="firmas">
-                <div class="firma"><div class="linea">${responsable}</div>Docente responsable</div>
-                <div class="firma"><div class="linea">&nbsp;</div>Vo.Bo. Área de Estadías - UTEZ</div>
             </div>
-        </c:when>
+        </c:if>
+    </c:when>
 
-        <%-- ========== Carta responsiva (se genera al aprobar) ========== --%>
-        <c:otherwise>
-            <h2 class="titulo-doc">Carta responsiva</h2>
-            <p class="parrafo">
-                El (la) que suscribe, <strong>${responsable}</strong>, docente adscrito(a) al área
-                <strong>${empty s.areaSolicitante ? '________________' : s.areaSolicitante}</strong> de la
-                Universidad Tecnológica Emiliano Zapata del Estado de Morelos, manifiesta que se hace
-                responsable del traslado, comportamiento y seguridad de los
-                <strong>${s.totalEstudiantes}</strong> estudiante(s) que participarán en la visita académica a
-                <strong>${s.nombreEmpresaActividad}</strong>
-                <c:if test="${not empty s.lugarDireccion}">, ubicada en ${s.lugarDireccion},</c:if>
-                <c:if test="${not empty s.fechaInicio}"> a realizarse el día <strong>${s.fechaInicio}</strong></c:if>.
+    <%-- ================================================================
+         Carta responsiva grupal — la firman los estudiantes
+         ================================================================ --%>
+    <c:otherwise>
+        <div class="hoja sin-pie">
+            <h2 class="titulo-carta">CARTA RESPONSIVA VISITAS ACADÉMICAS</h2>
+
+            <p class="lugar-fecha">Emiliano Zapata, Morelos a ${hoyLetra}.</p>
+
+            <p class="destinatario">
+                UNIVERSIDAD TECNOLÓGICA EMILIANO ZAPATA<br>
+                DEL ESTADO DE MORELOS.<br>
+                P R E S E N T E
             </p>
+
             <p class="parrafo">
-                Asimismo, se compromete a vigilar el cumplimiento del reglamento escolar durante toda la
-                actividad y a entregar el reporte de la visita al término de la misma.
+                Por este medio, los suscritos estudiantes del programa educativo de
+                <span class="dato-lleno"><c:out value="${s.programasEnLetra}"/></span> y bajo protesta de
+                decir verdad, confirmamos nuestra participación en la visita a
+                &ldquo;<span class="dato-lleno"><c:out value="${s.nombreEmpresaActividad}"/></span>&rdquo;, a
+                celebrarse <span class="dato-lleno">${s.periodoEnLetra}</span>, en
+                <span class="dato-lleno"><c:out value="${s.lugarDireccion}"/></span>; bajo el programa anexo
+                al presente documento.
             </p>
-            <div class="firmas">
-                <div class="firma"><div class="linea">${responsable}</div>Docente responsable</div>
-                <div class="firma"><div class="linea">&nbsp;</div>Área de Estadías - UTEZ</div>
-            </div>
-        </c:otherwise>
-    </c:choose>
-</div>
+
+            <p class="parrafo">
+                Conocedores que la actividad se documentará como una visita de estudio de la Universidad
+                Tecnológica Emiliano Zapata del Estado de Morelos (UTEZ) y debido al horario del encuentro
+                (<span class="dato-lleno">${empty s.horaVisita ? '' : s.horaVisita}</span> a
+                <%-- El formato captura una sola hora; la de regreso se anota al firmar --%>
+                <span class="hueco">&nbsp;</span> hrs.), declaramos que los traslados y gastos derivados a
+                nuestra participación en el evento antes mencionado los realizaremos con nuestros propios
+                medios y recursos, asimismo que conocemos el alcance del seguro de la empresa que se
+                contrató para el traslado.
+            </p>
+
+            <p class="parrafo">Derivado de lo anterior nos obligamos a:</p>
+            <ul class="compromisos">
+                <li>Respetar las reglas impuestas tanto por la UTEZ, como por los organizadores de la salida.</li>
+                <li>Buscar siempre estar informado de las actividades grupales programadas.</li>
+                <li>Abstenerme de cualquier conducta ilegal o inapropiada que pueda denigrar la buena imagen
+                    de la UTEZ o que sea perjudicial para sus objetivos y;</li>
+                <li>No poner en riesgo mi integridad física ni la de mis compañeros.</li>
+            </ul>
+
+            <p class="parrafo">
+                Estamos de acuerdo en asumir la responsabilidad como ciudadanos y como miembros de la
+                comunidad universitaria, por lo que nos obligamos a realizar las siguientes acciones:
+            </p>
+
+            <p class="parrafo">
+                Adoptar las medidas de seguridad correspondientes de la actividad que desempeñemos en
+                cualquier lugar, tales como uso adecuado de equipo de protección personal, higiene
+                respiratoria, lavado de manos, etc. Así como, seguir los protocolos de prevención emitidos
+                por la Universidad o institución donde esté realizando la actividad de visita de estudio,
+                dentro o fuera del Estado de Morelos.
+            </p>
+
+            <p class="parrafo">
+                Asimismo, manifestamos que la actividad descrita la realizamos bajo nuestra responsabilidad,
+                por lo que deslindamos a la UTEZ y a su personal docente y administrativo de toda
+                responsabilidad en caso de que se presente alguna consecuencia que resulte de la falta de
+                acción, omisión o incumplimiento en la que hayamos incurrido con respecto a los puntos
+                descritos anteriormente, así como del pago de daños y perjuicios y cualquier acción legal, en
+                el entendido que mediante las acciones anteriores la Universidad está protegiendo nuestra
+                integridad y la de los demás miembros de la comunidad universitaria.
+            </p>
+
+            <p class="parrafo">
+                He leído este documento, entiendo completamente sus términos y por medio del mismo eximo y
+                libero de toda responsabilidad a la UTEZ y a terceros, y me hago único y absoluto responsable
+                de mi persona, en los términos del presente, mismo que suscribo libre y voluntariamente.
+            </p>
+
+            <%-- Un renglón por estudiante. El sistema no guarda la lista nominal,
+                 pero sí cuántos van de cada grupo: el grado y grupo se imprime y
+                 el estudiante solo escribe su nombre y firma. --%>
+            <table class="firmantes">
+                <tr>
+                    <th style="width:8%">No.</th>
+                    <th style="width:47%">Nombre</th>
+                    <th style="width:17%">Grado y Grupo</th>
+                    <th style="width:28%">Firma</th>
+                </tr>
+                <c:choose>
+                    <c:when test="${not empty s.programas}">
+                        <c:set var="n" value="0"/>
+                        <c:forEach var="p" items="${s.programas}">
+                            <c:forEach begin="1" end="${p.noEstudiantes}">
+                                <c:set var="n" value="${n + 1}"/>
+                                <tr>
+                                    <td class="centro">${n}</td>
+                                    <td></td>
+                                    <td style="text-align:center;">${p.cuatrimestre}° <c:out value="${p.grupo}"/></td>
+                                    <td></td>
+                                </tr>
+                            </c:forEach>
+                        </c:forEach>
+                    </c:when>
+                    <%-- Solicitudes viejas sin desglose: renglones numerados en blanco --%>
+                    <c:otherwise>
+                        <c:forEach var="n" begin="1" end="${s.totalEstudiantes > 0 ? s.totalEstudiantes : 30}">
+                            <tr><td class="centro">${n}</td><td></td><td></td><td></td></tr>
+                        </c:forEach>
+                    </c:otherwise>
+                </c:choose>
+            </table>
+        </div>
+    </c:otherwise>
+</c:choose>
 </body>
 </html>

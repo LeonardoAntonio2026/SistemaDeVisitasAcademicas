@@ -24,9 +24,19 @@ document.addEventListener("DOMContentLoaded", function () {
             return existentes + archivosNuevos.length;
         }
 
+        // Los avisos de la galería salen en el modal del sistema (js/modales.js),
+        // igual que las confirmaciones del resto del sitio.
+        function avisar(mensaje, titulo) {
+            window.Modales.avisar({
+                titulo: titulo || "No se puede agregar la imagen",
+                mensaje: mensaje,
+                tipo: "aviso"
+            });
+        }
+
         btnAgregar.addEventListener("click", function () {
             if (totalImagenes() >= IMAGENES_REQUERIDAS) {
-                alert("El reporte lleva exactamente " + IMAGENES_REQUERIDAS + " imágenes. Quita una para poder agregar otra.");
+                avisar("El reporte lleva exactamente " + IMAGENES_REQUERIDAS + " imágenes. Quita una para poder agregar otra.");
                 return;
             }
             inputOculto.click();
@@ -39,15 +49,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             if (["image/jpeg", "image/png"].indexOf(file.type) === -1) {
-                alert("Solo se permiten imágenes JPG o PNG.");
+                avisar("Solo se permiten imágenes JPG o PNG.", "Formato no admitido");
                 return;
             }
             if (file.size > MAX_BYTES) {
-                alert("Cada imagen debe pesar máximo 5 MB.");
+                avisar("Cada imagen debe pesar máximo 5 MB.", "La imagen pesa demasiado");
                 return;
             }
             if (totalImagenes() >= IMAGENES_REQUERIDAS) {
-                alert("El reporte lleva exactamente " + IMAGENES_REQUERIDAS + " imágenes.");
+                avisar("El reporte lleva exactamente " + IMAGENES_REQUERIDAS + " imágenes.");
                 return;
             }
             archivosNuevos.push(file);
@@ -108,7 +118,14 @@ document.addEventListener("DOMContentLoaded", function () {
         form.addEventListener("submit", function (e) {
             if (totalImagenes() !== IMAGENES_REQUERIDAS) {
                 e.preventDefault();
-                alert("El reporte debe llevar exactamente " + IMAGENES_REQUERIDAS + " imágenes de la visita.");
+                window.Modales.avisar({
+                    titulo: "Faltan fotografías",
+                    mensaje: "El reporte debe llevar exactamente " + IMAGENES_REQUERIDAS +
+                             " imágenes de la visita.",
+                    tipo: "aviso"
+                }, function () {
+                    btnAgregar.focus();
+                });
                 return;
             }
             // Sincronizamos las nuevas a un input real name="imagenes"
@@ -132,42 +149,9 @@ document.addEventListener("DOMContentLoaded", function () {
         actualizarBoton();
     }
 
-    // ============================================================
-    // Card "Evaluar reporte" (Estadías): el rechazo exige motivo
-    // ============================================================
-    var formEvaluar = document.getElementById("form-evaluar-reporte");
-    if (formEvaluar) {
-        formEvaluar.addEventListener("submit", function (e) {
-            var accion = e.submitter ? e.submitter.value : "";
-            if (accion === "rechazar") {
-                var motivo = document.getElementById("motivo-reporte").value.trim();
-                if (motivo === "") {
-                    alert("Escribe el motivo del rechazo.");
-                    e.preventDefault();
-                    return;
-                }
-                if (!confirm("¿Rechazar este reporte? El docente será notificado.")) {
-                    e.preventDefault();
-                }
-            } else if (accion === "aprobar") {
-                if (!confirm("¿Aprobar este reporte? El docente será notificado y el reporte pasará al histórico.")) {
-                    e.preventDefault();
-                }
-            }
-        });
-    }
-
-    // ============================================================
-    // Confirmación al enviar el reporte a Estadías
-    // ============================================================
-    var formEnviar = document.getElementById("form-enviar-reporte");
-    if (formEnviar) {
-        formEnviar.addEventListener("submit", function (e) {
-            if (!confirm("¿Enviar el reporte al área de Estadías para su revisión?")) {
-                e.preventDefault();
-            }
-        });
-    }
+    // Las confirmaciones de evaluar y de enviar el reporte ya no viven aquí:
+    // van como data-confirmar en reporte-detalle.jsp y las atiende
+    // js/modales.js, el mismo que usan la solicitud y su detalle.
 
     // Al elegir archivo se avisa que falta dar click en Subir (elegir != subir)
     document.querySelectorAll(".zona-carga input[type='file']").forEach(function (input) {

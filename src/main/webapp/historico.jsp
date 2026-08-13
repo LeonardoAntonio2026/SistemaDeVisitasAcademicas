@@ -40,8 +40,8 @@
                     <tbody>
                     <c:forEach var="s" items="${listaHistorico}">
                         <tr>
-                            <td>${s.nombreEmpresaActividad}</td>
-                            <c:if test="${!esDocente}"><td>${s.nombreSolicitante}</td></c:if>
+                            <td><c:out value="${s.nombreEmpresaActividad}"/></td>
+                            <c:if test="${!esDocente}"><td><c:out value="${s.nombreSolicitante}"/></td></c:if>
                             <td>${s.totalEstudiantes}</td>
                             <td>${empty s.fechaInicio ? '—' : s.fechaInicio}</td>
                             <td>

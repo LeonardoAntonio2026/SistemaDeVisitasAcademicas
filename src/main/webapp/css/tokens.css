@@ -30,6 +30,20 @@
     --color-superficie: #ffffff;    /* tarjetas */
     --color-superficie-2: #FAFAFC;  /* zonas y filas suaves */
 
+    /* ---------- Colores de aviso ----------
+       Los cuatro tonos con los que el sistema habla: espera, acción
+       requerida, éxito y rechazo. Los usan por igual las mini cards
+       .instruccion de las páginas y los modales, para que un rechazo
+       se vea rojo en los dos lados. */
+    --aviso-info-fondo: #E3EDF7;
+    --aviso-info-texto: var(--color-azul-hover);
+    --aviso-accion-fondo: #FFF3CD;
+    --aviso-accion-texto: #8A6D0B;
+    --aviso-exito-fondo: #D9F2E3;
+    --aviso-exito-texto: #1E7A46;
+    --aviso-peligro-fondo: #F8D7DA;
+    --aviso-peligro-texto: var(--color-rojo-oscuro);
+
     /* ---------- Bordes ---------- */
     --color-borde: #c7c7cc;         /* inputs, contornos marcados */
     --color-borde-suave: #e5e5ea;   /* separadores de card */
@@ -119,6 +133,7 @@
     background-color: var(--color-rojo);
     color: #ffffff;
 }
+.btn-peligro:hover { background-color: var(--color-rojo-oscuro); }
 
 /* Botón "+ Agregar ..." (agregar grupo / agregar imagen): verde, tier chico */
 .btn-agregar {

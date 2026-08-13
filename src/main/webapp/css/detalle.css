@@ -82,41 +82,43 @@
     margin-top: 4px !important;
 }
 
-/* Variantes: informativa (espera), acción requerida, éxito y rechazo */
+/* Variantes: informativa (espera), acción requerida, éxito y rechazo.
+   Los tonos salen de tokens.css porque los modales pintan sus avisos
+   con estos mismos colores. */
 .instruccion-info {
-    background-color: #E3EDF7;
+    background-color: var(--aviso-info-fondo);
 }
 
 .instruccion-info i,
 .instruccion-info .instruccion-titulo {
-    color: var(--color-azul-hover);
+    color: var(--aviso-info-texto);
 }
 
 .instruccion-accion {
-    background-color: #FFF3CD;
+    background-color: var(--aviso-accion-fondo);
 }
 
 .instruccion-accion i,
 .instruccion-accion .instruccion-titulo {
-    color: #8A6D0B;
+    color: var(--aviso-accion-texto);
 }
 
 .instruccion-exito {
-    background-color: #D9F2E3;
+    background-color: var(--aviso-exito-fondo);
 }
 
 .instruccion-exito i,
 .instruccion-exito .instruccion-titulo {
-    color: #1E7A46;
+    color: var(--aviso-exito-texto);
 }
 
 .instruccion-rechazo {
-    background-color: #F8D7DA;
+    background-color: var(--aviso-peligro-fondo);
 }
 
 .instruccion-rechazo i,
 .instruccion-rechazo .instruccion-titulo {
-    color: var(--color-rojo-oscuro);
+    color: var(--aviso-peligro-texto);
 }
 
 /* ---- Cards de datos (lugar / participantes) ---- */
@@ -246,6 +248,11 @@
     border-radius: var(--radio-btn);
     padding: var(--btn-sm-pad-y) var(--btn-sm-pad-x);
     font-size: var(--fs-sm);
+    /* La clase viste enlaces (Descargar, Ver solicitud) y también botones
+       (Editar, Eliminar de la tabla de usuarios), que sin esto heredarían la
+       tipografía y el cursor por defecto del navegador. */
+    font-family: inherit;
+    cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
     transition: background-color 0.15s;

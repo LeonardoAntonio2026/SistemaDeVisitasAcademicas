@@ -34,7 +34,15 @@
 
 /src/main/resources/
 /.venv/
+
+/docs/
+
+
+*.crx
+*.pem
+
 *.pdf
 *.pptx
-*.md
 *.xlsx
+*.md
+!README.md

@@ -1,10 +1,14 @@
 package com.example.demo.model;
 
+import com.example.demo.utils.FechaTexto;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Solicitud implements Serializable {
 
@@ -33,6 +37,7 @@ public class Solicitud implements Serializable {
     private Integer idReporte;
     private String nombreSolicitante;
     private String correoSolicitante;
+    private String nombreAutoriza;
     private int totalEstudiantes;
     private List<ProgramaEducativo> programas = new ArrayList<>();
     private List<String> asignaturas = new ArrayList<>();
@@ -256,6 +261,15 @@ public class Solicitud implements Serializable {
         this.correoSolicitante = correoSolicitante;
     }
 
+    /** Quien aprobó la solicitud; null mientras Estadías no la haya revisado. */
+    public String getNombreAutoriza() {
+        return nombreAutoriza;
+    }
+
+    public void setNombreAutoriza(String nombreAutoriza) {
+        this.nombreAutoriza = nombreAutoriza;
+    }
+
     public int getTotalEstudiantes() {
         return totalEstudiantes;
     }
@@ -321,5 +335,49 @@ public class Solicitud implements Serializable {
 
     public void setDocentesAcompanantes(List<Usuario> docentesAcompanantes) {
         this.docentesAcompanantes = docentesAcompanantes;
+    }
+
+    // ----- Textos que arman los documentos oficiales -----
+
+    /**
+     * Fecha de la visita con letra ("12 de agosto de 2026"), como se redacta en
+     * la carta responsiva y en el oficio; en yyyy-MM-dd no se puede leer ahí.
+     */
+    public String getFechaInicioEnLetra() {
+        return FechaTexto.largo(fechaInicio);
+    }
+
+    /**
+     * Programas educativos que participan, sin repetir, para el hueco
+     * "estudiantes del programa educativo de ______" de la carta responsiva.
+     * Una visita puede llevar varios grupos del mismo programa.
+     */
+    public String getProgramasEnLetra() {
+        Set<String> nombres = new LinkedHashSet<>();
+        for (ProgramaEducativo p : programas) {
+            if (p.getPrograma() != null && !p.getPrograma().isBlank()) {
+                nombres.add(p.getPrograma());
+            }
+        }
+        return String.join(", ", nombres);
+    }
+
+    /**
+     * Docente responsable y acompañantes en una sola línea; es como el reporte
+     * oficial pide el campo "Docente (s) responsable (s) de la visita".
+     */
+    public String getDocentesEnLetra() {
+        List<String> nombres = new ArrayList<>();
+        String responsable = (docenteResponsable != null && !docenteResponsable.isBlank())
+                ? docenteResponsable : nombreSolicitante;
+        if (responsable != null && !responsable.isBlank()) {
+            nombres.add(responsable);
+        }
+        for (Usuario docente : docentesAcompanantes) {
+            if (docente.getNombre() != null && !nombres.contains(docente.getNombre())) {
+                nombres.add(docente.getNombre());
+            }
+        }
+        return String.join(", ", nombres);
     }
 }

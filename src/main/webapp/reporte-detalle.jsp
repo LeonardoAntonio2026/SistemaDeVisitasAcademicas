@@ -17,7 +17,7 @@
 
     <div class="superior">
         <h2>Reporte de visita</h2>
-        <p>${r.nombreEmpresaActividad}</p>
+        <p><c:out value="${r.nombreEmpresaActividad}"/></p>
     </div>
 
     <%-- ===================== Confirmaciones y errores (PRG) ===================== --%>
@@ -117,7 +117,7 @@
                     <p>La fecha de la visita es el ${r.fecha}</p>
                     <p>
                         <a href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">
-                            Visita de: ${r.nombreSolicitante}
+                            Visita de: <c:out value="${r.nombreSolicitante}"/>
                         </a>
                     </p>
                 </div>
@@ -138,7 +138,7 @@
                 <div>
                     <div class="instruccion-titulo">Reporte pendiente de revisión</div>
                     <p>Revisa los resultados y las evidencias, y aprueba o rechaza el reporte al final de la página.</p>
-                    <p class="instruccion-detalle">Enviado por: ${r.nombreSolicitante}</p>
+                    <p class="instruccion-detalle">Enviado por: <c:out value="${r.nombreSolicitante}"/></p>
                 </div>
             </div>
         </c:when>
@@ -158,12 +158,12 @@
     <div class="detalle-card card-reporte">
         <div class="resumen-top">
             <div>
-                <h3 class="resumen-titulo">${r.nombreEmpresaActividad}</h3>
+                <h3 class="resumen-titulo"><c:out value="${r.nombreEmpresaActividad}"/></h3>
                 <div class="resumen-meta">
-                    <span><i class="bi bi-pin-map"></i>${empty r.lugarDireccion ? 'Sin dirección' : r.lugarDireccion}</span>
+                    <span><i class="bi bi-pin-map"></i><c:out value="${empty r.lugarDireccion ? 'Sin dirección' : r.lugarDireccion}"/></span>
                     <span><i class="bi bi-calendar-event"></i>Visita: ${r.fecha}</span>
                     <c:if test="${!esDueno}">
-                        <span><i class="bi bi-person"></i>${r.nombreSolicitante}</span>
+                        <span><i class="bi bi-person"></i><c:out value="${r.nombreSolicitante}"/></span>
                     </c:if>
                 </div>
             </div>
@@ -307,7 +307,14 @@
                         </button>
                     </div>
                 </form>
-                <form action="${pageContext.request.contextPath}/reporte" method="POST" id="form-enviar-reporte">
+                <%-- El botón que envía este form está al pie de la página
+                     (acciones-form); la confirmación la pinta js/modales.js --%>
+                <form action="${pageContext.request.contextPath}/reporte" method="POST" id="form-enviar-reporte"
+                      data-confirmar="El reporte pasa al área de Estadías para su revisión."
+                      data-confirmar-titulo="Enviar reporte a Estadías"
+                      data-confirmar-detalle="Ya no podrás editar el reporte ni reemplazar el archivo firmado."
+                      data-confirmar-tipo="aviso"
+                      data-confirmar-ok="Sí, enviar">
                     <input type="hidden" name="id" value="${r.idReporte}">
                     <input type="hidden" name="action" value="enviar">
                 </form>
@@ -392,11 +399,24 @@
                             <label class="form-label" for="motivo-reporte">Motivo</label>
                             <textarea name="motivo" id="motivo-reporte" class="form-control" rows="3"
                                       placeholder="Detalles de la decisión"></textarea>
+                            <%-- Mismas confirmaciones que al evaluar la solicitud:
+                                 el rechazo exige motivo y se ve en rojo --%>
                             <div class="acciones-evaluar">
-                                <button type="submit" name="action" value="rechazar" class="btn-rechazar">
+                                <button type="submit" name="action" value="rechazar" class="btn-rechazar"
+                                        data-confirmar="El docente será notificado del rechazo y del motivo que escribiste."
+                                        data-confirmar-titulo="Rechazar reporte"
+                                        data-confirmar-tipo="peligro"
+                                        data-confirmar-ok="Sí, rechazar"
+                                        data-confirmar-requiere="#motivo-reporte"
+                                        data-confirmar-requiere-titulo="Falta el motivo"
+                                        data-confirmar-requiere-mensaje="Escribe el motivo del rechazo: es lo que verá el docente para saber qué corregir.">
                                     <i class="bi bi-x-lg"></i> Rechazar reporte
                                 </button>
-                                <button type="submit" name="action" value="aprobar" class="btn-aprobar">
+                                <button type="submit" name="action" value="aprobar" class="btn-aprobar"
+                                        data-confirmar="El docente será notificado y el reporte pasará al histórico."
+                                        data-confirmar-titulo="Aprobar reporte"
+                                        data-confirmar-tipo="exito"
+                                        data-confirmar-ok="Sí, aprobar">
                                     <i class="bi bi-check-lg"></i> Aprobar reporte
                                 </button>
                             </div>

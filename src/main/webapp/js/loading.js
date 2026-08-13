@@ -35,11 +35,12 @@
 
     // ---- 1) Botón en estado "cargando" al enviar un formulario ----
     // Escuchamos en 'document' (fase de burbuja): así corremos DESPUÉS de
-    // los validadores del formulario y de los confirm() inline, y podemos
-    // saber si el envío se canceló (e.defaultPrevented).
+    // los validadores del formulario y de los modales de confirmación
+    // (js/modales.js escucha en captura), y podemos saber si el envío se
+    // canceló (e.defaultPrevented).
     document.addEventListener("submit", function (e) {
         if (e.defaultPrevented) {
-            return; // una validación o un confirm canceló el envío
+            return; // una validación o una confirmación detuvo el envío
         }
         var btn = e.submitter;
         if (!btn || btn.classList.contains("cargando")) {
@@ -60,7 +61,7 @@
     // ---- 2) Barra de progreso al navegar por enlaces internos ----
     document.addEventListener("click", function (e) {
         if (e.defaultPrevented) {
-            return; // un confirm() del enlace canceló la navegación
+            return; // el modal de confirmación del enlace detuvo la navegación
         }
         var a = e.target.closest("a[href]");
         if (!a) {

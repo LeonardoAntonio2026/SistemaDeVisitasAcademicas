@@ -96,9 +96,9 @@
     <div class="detalle-card" style="margin-top: 1rem;">
         <div class="resumen-top">
             <div>
-                <h3 class="resumen-titulo">${s.nombreEmpresaActividad}</h3>
+                <h3 class="resumen-titulo"><c:out value="${s.nombreEmpresaActividad}"/></h3>
                 <div class="resumen-meta">
-                    <span><i class="bi bi-pin-map"></i>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
+                    <span><i class="bi bi-pin-map"></i><c:out value="${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}"/></span>
                     <c:if test="${not empty s.fechaInicio}">
                         <span><i class="bi bi-calendar-event"></i>${s.fechaInicio}</span>
                     </c:if>
@@ -146,7 +146,7 @@
                     <div>
                         <div class="instruccion-titulo">Solicitud pendiente de revisión</div>
                         <p>Revisa los datos y los archivos de la solicitud, y apruébala o recházala al final de la página.</p>
-                        <p class="instruccion-detalle">Enviada por: ${s.nombreSolicitante}</p>
+                        <p class="instruccion-detalle">Enviada por: <c:out value="${s.nombreSolicitante}"/></p>
                     </div>
                 </div>
             </c:when>
@@ -157,7 +157,7 @@
                         <div class="instruccion-titulo">Solicitud aprobada: falta la carta responsiva</div>
                         <p>Descarga la carta responsiva en la sección <strong>Archivos</strong>, fírmala y súbela. Al subirla, la solicitud se cierra y se genera el reporte de la visita.</p>
                         <c:if test="${not empty s.detallesDecision}">
-                            <p class="instruccion-detalle">Comentarios de Estadías: ${s.detallesDecision}</p>
+                            <p class="instruccion-detalle">Comentarios de Estadías: <c:out value="${s.detallesDecision}"/></p>
                         </c:if>
                     </div>
                 </div>
@@ -167,7 +167,7 @@
                     <i class="bi bi-clock"></i>
                     <div>
                         <div class="instruccion-titulo">Solicitud aprobada: en espera de la carta responsiva</div>
-                        <p>El docente ${s.nombreSolicitante} debe cargar la carta responsiva con las firmas correspondientes.</p>
+                        <p>El docente <c:out value="${s.nombreSolicitante}"/> debe cargar la carta responsiva con las firmas correspondientes.</p>
                     </div>
                 </div>
             </c:when>
@@ -178,7 +178,7 @@
                         <div class="instruccion-titulo">Solicitud rechazada por el área de Estadías</div>
                         <p>
                             <c:choose>
-                                <c:when test="${not empty s.detallesDecision}"><strong>Motivo:</strong> ${s.detallesDecision}</c:when>
+                                <c:when test="${not empty s.detallesDecision}"><strong>Motivo:</strong> <c:out value="${s.detallesDecision}"/></c:when>
                                 <c:otherwise>No se registró un motivo.</c:otherwise>
                             </c:choose>
                         </p>
@@ -241,7 +241,7 @@
                                     <a href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">ir al reporte de esta visita</a>.
                                 </c:when>
                                 <c:otherwise>
-                                    La solicitud quedó cerrada. Falta que el docente ${s.nombreSolicitante} entregue el reporte de la visita.
+                                    La solicitud quedó cerrada. Falta que el docente <c:out value="${s.nombreSolicitante}"/> entregue el reporte de la visita.
                                 </c:otherwise>
                             </c:choose>
                         </p>
@@ -262,19 +262,19 @@
         <div class="datos-grid">
             <div>
                 <div class="dato-label">Nombre de la empresa o actividad</div>
-                <div class="dato-valor">${s.nombreEmpresaActividad}</div>
+                <div class="dato-valor"><c:out value="${s.nombreEmpresaActividad}"/></div>
             </div>
             <div>
                 <div class="dato-label">Lugar o dirección</div>
-                <div class="dato-valor">${empty s.lugarDireccion ? '—' : s.lugarDireccion}</div>
+                <div class="dato-valor"><c:out value="${empty s.lugarDireccion ? '—' : s.lugarDireccion}"/></div>
             </div>
             <div>
                 <div class="dato-label">Teléfonos del contacto</div>
-                <div class="dato-valor">${empty s.telefonoContacto ? '—' : s.telefonoContacto}</div>
+                <div class="dato-valor"><c:out value="${empty s.telefonoContacto ? '—' : s.telefonoContacto}"/></div>
             </div>
             <div>
                 <div class="dato-label">Correo electrónico del contacto</div>
-                <div class="dato-valor">${empty s.correoContacto ? '—' : s.correoContacto}</div>
+                <div class="dato-valor"><c:out value="${empty s.correoContacto ? '—' : s.correoContacto}"/></div>
             </div>
             <div>
                 <div class="dato-label">Fecha de inicio</div>
@@ -282,7 +282,7 @@
             </div>
             <div class="dato-full">
                 <div class="dato-label">Objetivo de la visita</div>
-                <div class="dato-valor">${empty s.objetivo ? '—' : s.objetivo}</div>
+                <div class="dato-valor"><c:out value="${empty s.objetivo ? '—' : s.objetivo}"/></div>
             </div>
         </div>
     </div>
@@ -293,16 +293,16 @@
         <div class="datos-grid">
             <div>
                 <div class="dato-label">Área solicitante</div>
-                <div class="dato-valor">${empty s.areaSolicitante ? '—' : s.areaSolicitante}</div>
+                <div class="dato-valor"><c:out value="${empty s.areaSolicitante ? '—' : s.areaSolicitante}"/></div>
             </div>
             <div>
                 <div class="dato-label">Docente responsable de la visita</div>
                 <%-- Las solicitudes viejas no tienen el campo: se muestra quien la creó --%>
-                <div class="dato-valor">${empty s.docenteResponsable ? s.nombreSolicitante : s.docenteResponsable}</div>
+                <div class="dato-valor"><c:out value="${empty s.docenteResponsable ? s.nombreSolicitante : s.docenteResponsable}"/></div>
             </div>
             <div>
                 <div class="dato-label">Celular del responsable</div>
-                <div class="dato-valor">${empty s.celularResponsable ? '—' : s.celularResponsable}</div>
+                <div class="dato-valor"><c:out value="${empty s.celularResponsable ? '—' : s.celularResponsable}"/></div>
             </div>
         </div>
 
@@ -311,7 +311,7 @@
             <c:when test="${not empty s.docentesAcompanantes}">
                 <div>
                     <c:forEach var="d" items="${s.docentesAcompanantes}">
-                        <span class="chip-asignatura">${d.nombre}</span>
+                        <span class="chip-asignatura"><c:out value="${d.nombre}"/></span>
                     </c:forEach>
                 </div>
             </c:when>
@@ -336,10 +336,10 @@
                     <tbody>
                     <c:forEach var="p" items="${s.programas}">
                         <tr>
-                            <td title="${nombresDivision[p.division]}">${p.divisionMostrable}</td>
-                            <td>${p.programa}</td>
+                            <td title="${fn:escapeXml(nombresDivision[p.division])}"><c:out value="${p.divisionMostrable}"/></td>
+                            <td><c:out value="${p.programa}"/></td>
                             <td>${p.cuatrimestre}°</td>
-                            <td>${empty p.grupo ? '—' : p.grupo}</td>
+                            <td><c:out value="${empty p.grupo ? '—' : p.grupo}"/></td>
                             <td>${p.noEstudiantes}</td>
                         </tr>
                     </c:forEach>
@@ -358,7 +358,7 @@
                     <thead>
                     <tr>
                         <c:forEach var="division" items="${divisiones}">
-                            <th title="${nombresDivision[division]}">${division}</th>
+                            <th title="${fn:escapeXml(nombresDivision[division])}"><c:out value="${division}"/></th>
                         </c:forEach>
                         <th>Total</th>
                     </tr>
@@ -379,7 +379,7 @@
             <div class="dato-label" style="margin-top: 14px;">Asignaturas que se reforzarán</div>
             <div>
                 <c:forEach var="a" items="${s.asignaturas}">
-                    <span class="chip-asignatura">${a}</span>
+                    <span class="chip-asignatura"><c:out value="${a}"/></span>
                 </c:forEach>
             </div>
         </c:if>
@@ -489,7 +489,11 @@
         <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
             <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data"
                   class="form-carga"
-                  onsubmit="return confirm('Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita. ¿Continuar?');">
+                  data-confirmar="Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita."
+                  data-confirmar-titulo="Cerrar la solicitud"
+                  data-confirmar-detalle="Después de esto ya no podrás cambiar los documentos de la solicitud."
+                  data-confirmar-tipo="aviso"
+                  data-confirmar-ok="Sí, subir y cerrar">
                 <input type="hidden" name="action" value="responsiva">
                 <input type="hidden" name="solicitud" value="${s.idSolicitud}">
                 <div class="separador-firmar">Carga de la carta responsiva firmada</div>
@@ -516,28 +520,29 @@
                 <label class="form-label" for="motivo">Motivo</label>
                 <textarea name="motivo" id="motivo" class="form-control" rows="3"
                           placeholder="Detalles de la decisión"></textarea>
+                <%-- Cada botón trae su propia confirmación (js/modales.js):
+                     el rechazo además exige que el motivo esté capturado --%>
                 <div class="acciones-evaluar">
                     <button type="submit" name="action" value="rechazar" class="btn-rechazar"
-                            onclick="return validarRechazo();">
+                            data-confirmar="El docente será notificado del rechazo y del motivo que escribiste."
+                            data-confirmar-titulo="Rechazar solicitud"
+                            data-confirmar-tipo="peligro"
+                            data-confirmar-ok="Sí, rechazar"
+                            data-confirmar-requiere="#motivo"
+                            data-confirmar-requiere-titulo="Falta el motivo"
+                            data-confirmar-requiere-mensaje="Escribe el motivo del rechazo: es lo que verá el docente para saber qué corregir.">
                         <i class="bi bi-x-lg"></i> Rechazar solicitud
                     </button>
                     <button type="submit" name="action" value="aprobar" class="btn-aprobar"
-                            onclick="return confirm('¿Aprobar esta solicitud? El docente será notificado.');">
+                            data-confirmar="El docente será notificado y podrá continuar con la carta responsiva."
+                            data-confirmar-titulo="Aprobar solicitud"
+                            data-confirmar-tipo="exito"
+                            data-confirmar-ok="Sí, aprobar">
                         <i class="bi bi-check-lg"></i> Aprobar solicitud
                     </button>
                 </div>
             </form>
         </div>
-        <script>
-            function validarRechazo() {
-                var motivo = document.getElementById('motivo').value.trim();
-                if (motivo === '') {
-                    alert('Escribe el motivo del rechazo.');
-                    return false;
-                }
-                return confirm('¿Rechazar esta solicitud? El docente será notificado.');
-            }
-        </script>
     </c:if>
 
     <%-- ===================== Barra final: Volver / Editar / Enviar ===================== --%>
@@ -565,7 +570,11 @@
                     <i class="bi bi-pencil"></i> Editar datos
                 </a>
                 <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
-                      onsubmit="return confirm('¿Enviar la solicitud al área de Estadías para su revisión? Ya no podrás editar los datos.');">
+                      data-confirmar="La solicitud pasa al área de Estadías para su revisión."
+                      data-confirmar-titulo="Enviar solicitud a Estadías"
+                      data-confirmar-detalle="Ya no podrás editar los datos ni reemplazar el formato firmado."
+                      data-confirmar-tipo="aviso"
+                      data-confirmar-ok="Sí, enviar">
                     <input type="hidden" name="id" value="${s.idSolicitud}">
                     <input type="hidden" name="action" value="enviar">
                     <button type="submit" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}

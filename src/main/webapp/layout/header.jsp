@@ -10,8 +10,12 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/tokens.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/layout.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/css/modales.css">
         <script defer src="${pageContext.request.contextPath}/js/bootstrap.bundle.min.js"></script>
         <script defer src="${pageContext.request.contextPath}/js/loading.js"></script>
+        <%-- Va en todas las páginas: los avisos y confirmaciones del sistema
+             salen en modal, nunca en los cuadros del navegador --%>
+        <script defer src="${pageContext.request.contextPath}/js/modales.js"></script>
     <script defer>
         document.addEventListener('DOMContentLoaded', function () {
             var toggle = document.getElementById('sidebarToggle');

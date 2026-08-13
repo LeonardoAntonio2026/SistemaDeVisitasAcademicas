@@ -28,6 +28,17 @@ public class DocenteBuscarServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+
+        // Este endpoint devuelve nombres y correos institucionales, así que exige sesión
+        // por su cuenta y no confía solo en FiltroAutenticacion, igual que el resto de
+        // servlets que entregan datos.
+        HttpSession session = request.getSession(false);
+        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        if (idUsuario == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
         response.setContentType("application/json;charset=UTF-8");
 
         String texto = request.getParameter("q");
@@ -35,9 +46,6 @@ public class DocenteBuscarServlet extends HttpServlet {
             response.getWriter().write("[]");
             return;
         }
-
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
 
         List<Usuario> docentes = usuarioDao.buscarDocentes(texto, idUsuario, MAX_SUGERENCIAS);
 

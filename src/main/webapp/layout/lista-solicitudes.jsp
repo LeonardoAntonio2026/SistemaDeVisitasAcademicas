@@ -27,10 +27,10 @@
             <div class="solicitud-card">
                 <div class="solicitud-card-top">
                     <div>
-                        <h5 class="solicitud-empresa">${s.nombreEmpresaActividad}</h5>
+                        <h5 class="solicitud-empresa"><c:out value="${s.nombreEmpresaActividad}"/></h5>
                         <div class="solicitud-ubicacion">
                             <i class="bi bi-pin-map"></i>
-                            <span>${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}</span>
+                            <span><c:out value="${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}"/></span>
                         </div>
                     </div>
                     <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
