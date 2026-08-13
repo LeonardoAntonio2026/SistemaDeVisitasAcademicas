@@ -1,0 +1,94 @@
+body {
+    width: 280px;
+    margin: 0;
+    padding: 14px;
+    font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #23303f;
+    background: #fff;
+}
+
+h1 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: #1b3a6b;
+}
+
+.ayuda {
+    margin: 0 0 12px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.perfil {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 9px 11px;
+    border: 1px solid #ccd3de;
+    border-radius: 7px;
+    background: #f7f9fc;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.perfil:hover {
+    border-color: #1b3a6b;
+    background: #eef3fb;
+}
+
+.perfil strong {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.perfil small {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.perfil .ultimo {
+    color: #1b3a6b;
+    font-weight: 600;
+}
+
+.pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eceff4;
+}
+
+.enlace {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #1b3a6b;
+    font-family: inherit;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.atajo {
+    font-size: 10px;
+    color: #9aa3af;
+}
+
+.estado {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #3f7a41;
+}
+
+.estado:empty {
+    display: none;
+}
+
+.estado.aviso {
+    color: #a15c00;
+}

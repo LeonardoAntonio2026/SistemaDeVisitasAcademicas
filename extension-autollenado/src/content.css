@@ -1,0 +1,131 @@
+/* Panel flotante de la extensión. Las clases van con prefijo sva-af y todas las
+   propiedades van explícitas, porque la página carga Bootstrap y sus estilos
+   globales de button/select alcanzarían a los del panel. */
+
+.sva-af {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 2147483000;
+    font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.sva-af__toggle {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    background: #1b3a6b;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+}
+
+.sva-af__toggle:hover {
+    background: #24508f;
+}
+
+.sva-af__rayo {
+    font-size: 14px;
+}
+
+.sva-af__caja {
+    box-sizing: border-box;
+    width: 280px;
+    padding: 14px;
+    border: 1px solid #d9dee7;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .18);
+    order: -1; /* La caja se abre arriba del botón */
+}
+
+.sva-af__caja[hidden] {
+    display: none;
+}
+
+.sva-af__titulo {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1b3a6b;
+}
+
+.sva-af__select {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #ccd3de;
+    border-radius: 6px;
+    background: #fff;
+    color: #23303f;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.sva-af__desc {
+    margin: 6px 0 12px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.sva-af__acciones {
+    display: flex;
+    gap: 8px;
+}
+
+.sva-af__btn {
+    all: unset;
+    box-sizing: border-box;
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid #ccd3de;
+    border-radius: 6px;
+    background: #f4f6fa;
+    color: #23303f;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+}
+
+.sva-af__btn:hover {
+    background: #e8ecf4;
+}
+
+.sva-af__btn--primario {
+    border-color: #1b3a6b;
+    background: #1b3a6b;
+    color: #fff;
+}
+
+.sva-af__btn--primario:hover {
+    background: #24508f;
+}
+
+.sva-af__estado {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #3f7a41;
+}
+
+.sva-af__estado:empty {
+    display: none;
+}
+
+.sva-af__estado--aviso {
+    color: #a15c00;
+}

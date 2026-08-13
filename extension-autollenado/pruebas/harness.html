@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Harness formulario solicitud</title>
+<style>
+  .autocomplete-lista { display:none } .autocomplete-lista.visible { display:block }
+  .tag-chip { border:1px solid #ccc; padding:2px 6px; margin:2px; display:inline-block }
+</style>
+</head>
+<body>
+<form action="solicitud" method="POST" id="form-solicitud" autocomplete="off">
+  <input type="hidden" name="action" value="create">
+  <input type="text" name="nombreEmpresa" maxlength="150" required value="">
+  <input type="text" name="direccionLugar" maxlength="200" required value="">
+  <input type="tel" name="telefonoContacto" pattern="[0-9]{10}" maxlength="10" required value="">
+  <input type="email" name="correoContacto" maxlength="100" required value="">
+  <input type="date" name="fechaInicio" required min="2026-08-11" value="">
+  <textarea name="objetivoVisita" maxlength="500" required></textarea>
+  <input type="text" name="areaSolicitante" maxlength="100" required value="">
+  <input type="text" name="docenteResponsable" maxlength="150" required value="Docente En Sesion">
+  <input type="tel" name="celularResponsable" pattern="[0-9]{10}" maxlength="10" required value="">
+
+  <div class="tags-input-wrapper" id="acompanantes-wrapper">
+    <input type="text" class="tags-input" id="acompanantes-input" autocomplete="off">
+  </div>
+  <div class="autocomplete-lista" id="acompanantes-sugerencias"></div>
+
+  <div id="programas-container"></div>
+  <div id="programas-msg" style="display:none;"><span id="programas-msg-text"></span></div>
+  <button type="button" id="btn-agregar-grupo">Agregar grupo</button>
+
+  <div id="division-resumen">
+    <div class="division-valores">
+      <span data-division="DACEA">0</span><span data-division="DATEFI">0</span>
+      <span data-division="DATID">0</span><span data-division="DAMI">0</span>
+      <span data-division-total>0</span>
+    </div>
+  </div>
+
+  <div id="catalogo-programas" hidden></div>
+  <div id="programas-iniciales" hidden></div>
+
+  <template id="tpl-programa-row">
+    <div class="programa-row">
+      <div class="programa-campo"><select class="form-control campo-division" required></select></div>
+      <div class="programa-campo"><select class="form-control campo-programa" name="programaEducativo" required>
+        <option value="">Elige primero la división</option></select></div>
+      <div class="programa-campo"><select class="form-control campo-cuatrimestre" name="cuatrimestre" required></select></div>
+      <div class="programa-campo"><select class="form-control campo-grupo" name="grupo" required></select></div>
+      <div class="programa-campo"><input type="number" name="numEstudiantesGrupo" class="form-control campo-estudiantes" min="1" max="999" required></div>
+      <div class="programa-campo"><button type="button" class="btn-delete-row">x</button></div>
+    </div>
+  </template>
+
+  <div class="tags-input-wrapper" id="tags-wrapper">
+    <input type="text" class="tags-input" id="tags-input" maxlength="100">
+  </div>
+  <div id="asignaturas-msg" style="display:none;"><span id="asignaturas-msg-text"></span></div>
+</form>
+
+<script>
+// ---- Catálogo igual que CatalogoAcademico.java ----
+var CATALOGO = {
+  DACEA: ["TSU en Administración área Capital Humano","TSU en Desarrollo de Negocios área Mercadotecnia",
+          "Licenciatura en Innovación de Negocios y Mercadotecnia","Licenciatura en Gestión de Capital Humano"],
+  DATEFI: ["TSU en Terapia Física área Rehabilitación","TSU en Terapia Física área Turismo de Salud y Bienestar",
+           "Licenciatura en Terapia Física"],
+  DATID: ["TSU en Tecnologías de la Información área Desarrollo de Software Multiplataforma",
+          "TSU en Tecnologías de la Información área Infraestructura de Redes Digitales","TSU en Diseño Digital",
+          "TSU en Diseño y Moda Industrial área Producción","Ingeniería en Tecnologías de la Información",
+          "Ingeniería en Diseño Textil y Moda"],
+  DAMI: ["TSU en Procesos Industriales área Manufactura","TSU en Mantenimiento área Industrial",
+         "TSU en Mecatrónica área Automatización","TSU en Nanotecnología área Materiales","Ingeniería Industrial",
+         "Ingeniería en Mecatrónica","Ingeniería en Mantenimiento Industrial","Ingeniería en Nanotecnología",
+         "Licenciatura en Diseño Digital"]
+};
+var cat = document.getElementById("catalogo-programas");
+Object.keys(CATALOGO).forEach(function (div) {
+  CATALOGO[div].forEach(function (p) {
+    var s = document.createElement("span");
+    s.dataset.division = div; s.dataset.programa = p; cat.appendChild(s);
+  });
+});
+var tpl = document.getElementById("tpl-programa-row").content;
+var selDiv = tpl.querySelector(".campo-division");
+selDiv.innerHTML = '<option value="">Elige una división…</option>';
+Object.keys(CATALOGO).forEach(function (d) { selDiv.innerHTML += '<option value="'+d+'">'+d+'</option>'; });
+var selCua = tpl.querySelector(".campo-cuatrimestre");
+selCua.innerHTML = '<option value="">—</option>';
+for (var n = 1; n <= 11; n++) { selCua.innerHTML += '<option value="'+n+'">'+n+'°</option>'; }
+var selGru = tpl.querySelector(".campo-grupo");
+selGru.innerHTML = '<option value="">—</option>';
+"A,B,C,D,E,F,G,H,I,J".split(",").forEach(function (l) { selGru.innerHTML += '<option value="'+l+'">'+l+'</option>'; });
+
+// ---- Stub del endpoint /docentes (solo para la prueba) ----
+var DOCENTES = [
+  {id:11, nombre:"Roberto Nava Ocampo", correo:"roberto.nava@utez.edu.mx"},
+  {id:12, nombre:"Luis Fernando Arizmendi", correo:"luis.arizmendi@utez.edu.mx"},
+  {id:13, nombre:"Ana Peña Ruiz", correo:"ana.pena@utez.edu.mx"}
+];
+window.fetch = function (url) {
+  var q = decodeURIComponent(String(url).split("q=")[1] || "").toLowerCase();
+  var lista = DOCENTES.filter(function (d) {
+    return d.nombre.toLowerCase().indexOf(q) !== -1 || d.correo.toLowerCase().indexOf(q) !== -1;
+  });
+  return new Promise(function (res) {
+    setTimeout(function () { res({ ok: true, json: function () { return Promise.resolve(lista); } }); }, 150);
+  });
+};
+</script>
+<script src="../../src/main/webapp/js/solicitud-form.js"></script>
+<script src="../src/presets.js"></script>
+<script src="../src/autollenado.js"></script>
+</body>
+</html>
