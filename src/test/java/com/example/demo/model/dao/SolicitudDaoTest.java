@@ -64,7 +64,7 @@ s.setCelularResponsable("7779876543");
 return s;
 }
 
-// ==================== CREATE ====================
+//  CREATE
 
 @Test
 @DisplayName("create() guarda la solicitud, hace commit y asigna el id generado")
@@ -123,7 +123,7 @@ assertFalse(resultado);
 verify(conMock).rollback();
 }
 
-// ==================== READ (getAll / getById) ====================
+//  READ (getAll / getById)
 
 @Test
 @DisplayName("getAll() mapea correctamente varias filas del ResultSet")
@@ -218,7 +218,7 @@ Solicitud resultado = solicitudDao.getById(999);
 assertNull(resultado);
 }
 
-// ==================== UPDATE ====================
+// UPDATE
 
 @Test
 @DisplayName("update() modifica la solicitud y hace commit cuando el id existe")
@@ -263,7 +263,7 @@ assertFalse(resultado);
 verify(conMock).rollback();
 }
 
-// ==================== DELETE ====================
+//  DELETE
 
 @Test
 @DisplayName("delete() elimina la solicitud y hace commit cuando el id existe")

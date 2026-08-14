@@ -47,7 +47,7 @@ void tearDown() {
 sqlConnectorMock.close();
 }
 
-// ---------- getNombres() ----------
+//  getNombres()
 
 @Test
 @DisplayName("getNombres devuelve la lista de roles cuando hay filas en la BD")
@@ -93,7 +93,7 @@ assertNotNull(nombres);
 assertTrue(nombres.isEmpty());
 }
 
-// ---------- getIdPorNombre() ----------
+// getIdPorNombre()
 
 @Test
 @DisplayName("getIdPorNombre devuelve el id correcto cuando el rol existe")
