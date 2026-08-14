@@ -204,10 +204,33 @@
         table.firmantes th { background: #EDEBE4; text-align: center; }
         table.firmantes td { height: 8mm; }
         table.firmantes tr { page-break-inside: avoid; }
+        /* El encabezado va en <thead> y con table-header-group para que se
+           repita en TODAS las hojas: si no, la segunda hoja de firmas queda con
+           las columnas sin rotular y el estudiante no sabe qué va en cada una. */
+        table.firmantes thead { display: table-header-group; }
+        /* Y que el encabezado no se quede solo al final de una hoja */
+        table.firmantes thead tr { page-break-after: avoid; }
 
         /* ---------- Anexo de evidencia fotográfica del reporte ---------- */
-        .fotos-reporte { display: flex; flex-wrap: wrap; gap: 4%; margin: 10px 0 0; }
-        .fotos-reporte img { width: 48%; max-height: 75mm; object-fit: cover; border: 1px solid #444; margin-bottom: 8px; }
+        /* Dos fotos por renglón. Ojo con dos detalles que las tiraban a una por
+           renglón: el borde suma al ancho si el box-sizing es el de por defecto
+           (de ahí el border-box), y ancho + hueco no deben empatar en 100%
+           exacto porque el redondeo desborda. La altura es fija y no max-height
+           porque object-fit necesita altura definida para recortar. */
+        .fotos-reporte {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 8px 3%;
+            margin: 10px 0 0;
+        }
+        .fotos-reporte img {
+            box-sizing: border-box;
+            width: 47.5%;
+            height: 62mm;
+            object-fit: cover;
+            border: 1px solid #444;
+        }
 
         @media print {
             .toolbar { display: none; }
@@ -657,34 +680,38 @@
                  pero sí cuántos van de cada grupo: el grado y grupo se imprime y
                  el estudiante solo escribe su nombre y firma. --%>
             <table class="firmantes">
-                <tr>
-                    <th style="width:8%">No.</th>
-                    <th style="width:47%">Nombre</th>
-                    <th style="width:17%">Grado y Grupo</th>
-                    <th style="width:28%">Firma</th>
-                </tr>
-                <c:choose>
-                    <c:when test="${not empty s.programas}">
-                        <c:set var="n" value="0"/>
-                        <c:forEach var="p" items="${s.programas}">
-                            <c:forEach begin="1" end="${p.noEstudiantes}">
-                                <c:set var="n" value="${n + 1}"/>
-                                <tr>
-                                    <td class="centro">${n}</td>
-                                    <td></td>
-                                    <td style="text-align:center;">${p.cuatrimestre}° <c:out value="${p.grupo}"/></td>
-                                    <td></td>
-                                </tr>
+                <thead>
+                    <tr>
+                        <th style="width:8%">No.</th>
+                        <th style="width:47%">Nombre</th>
+                        <th style="width:17%">Grado y Grupo</th>
+                        <th style="width:28%">Firma</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${not empty s.programas}">
+                            <c:set var="n" value="0"/>
+                            <c:forEach var="p" items="${s.programas}">
+                                <c:forEach begin="1" end="${p.noEstudiantes}">
+                                    <c:set var="n" value="${n + 1}"/>
+                                    <tr>
+                                        <td class="centro">${n}</td>
+                                        <td></td>
+                                        <td class="centro">${p.cuatrimestre}° <c:out value="${p.grupo}"/></td>
+                                        <td></td>
+                                    </tr>
+                                </c:forEach>
                             </c:forEach>
-                        </c:forEach>
-                    </c:when>
-                    <%-- Solicitudes viejas sin desglose: renglones numerados en blanco --%>
-                    <c:otherwise>
-                        <c:forEach var="n" begin="1" end="${s.totalEstudiantes > 0 ? s.totalEstudiantes : 30}">
-                            <tr><td class="centro">${n}</td><td></td><td></td><td></td></tr>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
+                        </c:when>
+                        <%-- Solicitudes viejas sin desglose: renglones numerados en blanco --%>
+                        <c:otherwise>
+                            <c:forEach var="n" begin="1" end="${s.totalEstudiantes > 0 ? s.totalEstudiantes : 30}">
+                                <tr><td class="centro">${n}</td><td></td><td></td><td></td></tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
             </table>
         </div>
     </c:otherwise>
