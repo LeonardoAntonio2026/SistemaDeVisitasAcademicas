@@ -9,53 +9,53 @@ import java.io.Serializable;
  * contenido (magic bytes JPG/PNG) al servir la imagen.
  */
 public class ImagenReporte implements Serializable {
-private int idImagen;
-private int idReporte;
-private String contenidoBase64;
-private String fechaCarga;
+    private int idImagen;
+    private int idReporte;
+    private String contenidoBase64;
+    private String fechaCarga;
 
-// Campo de apoyo para la vista (no es columna de IMAGEN)
-private long tamanoBytes;
+    // Campo de apoyo para la vista (no es columna de IMAGEN)
+    private long tamanoBytes;
 
-public ImagenReporte() {}
+    public ImagenReporte() {}
 
-public int getIdImagen() {
-return idImagen;
-}
+    public int getIdImagen() {
+        return idImagen;
+    }
 
-public void setIdImagen(int idImagen) {
-this.idImagen = idImagen;
-}
+    public void setIdImagen(int idImagen) {
+        this.idImagen = idImagen;
+    }
 
-public int getIdReporte() {
-return idReporte;
-}
+    public int getIdReporte() {
+        return idReporte;
+    }
 
-public void setIdReporte(int idReporte) {
-this.idReporte = idReporte;
-}
+    public void setIdReporte(int idReporte) {
+        this.idReporte = idReporte;
+    }
 
-public String getContenidoBase64() {
-return contenidoBase64;
-}
+    public String getContenidoBase64() {
+        return contenidoBase64;
+    }
 
-public void setContenidoBase64(String contenidoBase64) {
-this.contenidoBase64 = contenidoBase64;
-}
+    public void setContenidoBase64(String contenidoBase64) {
+        this.contenidoBase64 = contenidoBase64;
+    }
 
-public String getFechaCarga() {
-return fechaCarga;
-}
+    public String getFechaCarga() {
+        return fechaCarga;
+    }
 
-public void setFechaCarga(String fechaCarga) {
-this.fechaCarga = fechaCarga;
-}
+    public void setFechaCarga(String fechaCarga) {
+        this.fechaCarga = fechaCarga;
+    }
 
-public long getTamanoBytes() {
-return tamanoBytes;
-}
+    public long getTamanoBytes() {
+        return tamanoBytes;
+    }
 
-public void setTamanoBytes(long tamanoBytes) {
-this.tamanoBytes = tamanoBytes;
-}
+    public void setTamanoBytes(long tamanoBytes) {
+        this.tamanoBytes = tamanoBytes;
+    }
 }

@@ -32,6 +32,12 @@
         </c:choose>
     </title>
     <style>
+        /* Carta, con los márgenes del formato oficial. Se declara aquí y no con
+           padding en .hoja porque el padding solo separa el principio y el final
+           del bloque: en un documento de varias hojas las de en medio saldrían
+           pegadas al borde. */
+        @page { size: letter; margin: 12mm 12mm 10mm; }
+
         body {
             font-family: Arial, Helvetica, sans-serif;
             background: #E8E8ED;
@@ -64,9 +70,19 @@
             width: 216mm;
             max-width: 95%;
             margin: 24px auto;
-            padding: 14mm 14mm 8mm;
+            padding: 12mm 12mm 10mm;
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
             box-sizing: border-box;
+        }
+        /* Los documentos que llevan banda institucional se arman como columna
+           flexible para empujarla al pie con margin-top:auto, en vez de fijarla
+           con position:fixed (que la repetía en cada hoja y dejaba que el texto
+           le pasara por debajo). La carta responsiva NO usa esto: su tabla de
+           firmas tiene que poder partirse entre hojas, y el flex estorba. */
+        .hoja.con-pie {
+            display: flex;
+            flex-direction: column;
+            min-height: 252mm;
         }
 
         /* ---------- Encabezados ---------- */
@@ -84,8 +100,8 @@
             text-align: center;
             flex: 1;
         }
-        .enc-formato .logo-estadias { height: 17mm; }
-        .enc-formato .logo-utez { height: 17mm; }
+        .enc-formato .logo-estadias { height: 14mm; }
+        .enc-formato .logo-utez { height: 14mm; }
         .enc-reporte {
             display: flex;
             align-items: center;
@@ -105,15 +121,18 @@
         }
 
         /* ---------- Tablas de los formatos ---------- */
+        /* Las medidas de aquí abajo están ajustadas para que el FO y el reporte
+           quepan en UNA hoja carta con su banda al pie. Si le subes el relleno
+           o la letra, revisa que sigan cabiendo. */
         table.tabla {
             width: 100%;
             border-collapse: collapse;
             font-size: 10.5pt;
-            margin-bottom: 12px;
+            margin-bottom: 9px;
         }
         table.tabla th, table.tabla td {
             border: 1px solid #000;
-            padding: 4px 7px;
+            padding: 3px 6px;
             text-align: left;
             vertical-align: top;
         }
@@ -128,36 +147,46 @@
         .centro { text-align: center; }
         table.tabla .fino { font-weight: 400; font-size: 8.5pt; }
         /* Celdas de texto libre: el formato las imprime altas aunque vayan vacías */
-        table.tabla .alta { height: 16mm; }
-        table.tabla .muy-alta { height: 40mm; }
+        table.tabla .alta { height: 11mm; }
+        table.tabla .muy-alta { height: 26mm; }
         /* Dos tablas seguidas se leen como una sola caja, igual que en el formato */
         table.tabla.pegada { margin-bottom: 0; }
         .tabla-fecha { width: 45%; margin-left: auto; }
-        .nota-seccion { font-size: 10.5pt; font-weight: 700; margin: 14px 0 8px; }
+        .nota-seccion { font-size: 10.5pt; font-weight: 700; margin: 10px 0 6px; }
 
         /* ---------- Firmas ---------- */
         .firmas {
             display: flex;
             justify-content: space-around;
             gap: 30px;
-            margin-top: 26px;
+            margin-top: 10px;
         }
         .firmas.una { justify-content: center; }
-        .firma { flex: 1; max-width: 78mm; text-align: center; font-size: 10pt; }
-        .firma .rotulo { font-weight: 700; margin-bottom: 16mm; }
+        /* Ancho suficiente para que el rótulo de abajo quepa en una línea: a dos
+           líneas el bloque de firmas crecía ~5mm y empujaba la banda a otra hoja */
+        .firma { flex: 1; max-width: 92mm; text-align: center; font-size: 10pt; }
+        /* Hueco para firmar de puño y letra */
+        .firma .rotulo { font-weight: 700; margin-bottom: 6mm; }
         .firma .nombre { font-size: 10pt; min-height: 14px; }
         .firma .linea { border-top: 1px solid #000; margin-top: 2px; padding-top: 4px; }
 
         /* ---------- Pie institucional ---------- */
-        .pie-institucional { margin: 22px -14mm 0; }
+        /* La banda va al ancho del contenido, no sangrada al borde de la hoja:
+           con márgenes negativos se salía del área imprimible y el navegador
+           encogía TODO el documento al 94% para que cupiera. */
+        .pie-institucional { margin: 8px 0 0; }
+        /* Firmas y banda son el cierre del documento y se mueven juntas: si no
+           caben, las dos pasan a la hoja siguiente. Así nunca sale una hoja
+           final con la banda sola, que era lo que se veía como "sobrepuesto". */
+        .hoja.con-pie .cierre { margin-top: auto; }
         .pie-institucional img { width: 100%; display: block; }
         .leyenda-seguro {
-            font-size: 8pt;
+            font-size: 7.5pt;
             font-style: italic;
             color: #8a1b1b;
             text-align: center;
-            line-height: 1.4;
-            margin: 0 14mm 6px;
+            line-height: 1.3;
+            margin: 0 4mm 4px;
         }
 
         /* ---------- Carta responsiva (documento de texto corrido) ---------- */
@@ -183,19 +212,24 @@
         @media print {
             .toolbar { display: none; }
             body { background: #fff; }
+            /* Los márgenes los pone @page: si además los pusiera .hoja se
+               sumarían y el contenido se apretaría de más */
             .hoja {
                 box-shadow: none;
                 margin: 0;
                 width: auto;
                 max-width: none;
-                padding: 8mm 10mm 30mm;
+                padding: 0;
+                page-break-after: always;
             }
-            /* La carta responsiva no lleva banda institucional: no hay que
-               reservarle el espacio de abajo, y su tabla de firmas es larga */
-            .hoja.sin-pie { padding-bottom: 10mm; }
-            /* Fijo abajo para que la banda salga en todas las hojas del documento */
-            .pie-institucional { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; }
-            .leyenda-seguro { margin: 0 8mm 3px; }
+            /* Sin esto el navegador agrega una hoja final en blanco */
+            .hoja:last-child { page-break-after: auto; }
+            /* Alto de la caja de impresión: carta (279mm) menos los márgenes,
+               con un par de milímetros de holgura para que el redondeo del
+               navegador no empuje la banda a una hoja de más */
+            .hoja.con-pie { min-height: 254mm; }
+            /* Nada de esto se ve bien partido a la mitad entre dos hojas */
+            tr, .firmas, .pie-institucional, .cierre { page-break-inside: avoid; }
             .salto-pagina { page-break-before: always; }
         }
     </style>
@@ -224,7 +258,7 @@
          FO-UTEZ-EST-08 Rev. 08 — Formato de visita académica
          ================================================================ --%>
     <c:when test="${tipoFormato == 'fo'}">
-        <div class="hoja">
+        <div class="hoja con-pie">
             <div class="enc-formato">
                 <img class="logo-estadias" src="${img}/formato-estadias.png" alt="Estadías">
                 <h1>FORMATO DE VISITA ACADÉMICA</h1>
@@ -339,30 +373,32 @@
                 </tr>
             </table>
 
-            <div class="firmas">
-                <div class="firma">
-                    <div class="rotulo">Solicita</div>
-                    <div class="nombre"><c:out value="${responsable}"/></div>
-                    <div class="linea">Nombre del docente responsable de la visita</div>
+            <div class="cierre">
+    <div class="firmas">
+                    <div class="firma">
+                        <div class="rotulo">Solicita</div>
+                        <div class="nombre"><c:out value="${responsable}"/></div>
+                        <div class="linea">Nombre del docente responsable de la visita</div>
+                    </div>
+                    <div class="firma">
+                        <div class="rotulo">Autoriza</div>
+                        <%-- Se llena al aprobar; mientras el formato se firma en blanco --%>
+                        <div class="nombre"><c:out value="${empty s.nombreAutoriza ? '' : s.nombreAutoriza}"/></div>
+                        <div class="linea">Nombre y cargo del director de carrera/titular del área</div>
+                    </div>
                 </div>
-                <div class="firma">
-                    <div class="rotulo">Autoriza</div>
-                    <%-- Se llena al aprobar; mientras el formato se firma en blanco --%>
-                    <div class="nombre"><c:out value="${empty s.nombreAutoriza ? '' : s.nombreAutoriza}"/></div>
-                    <div class="linea">Nombre y cargo del director de carrera/titular del área</div>
-                </div>
-            </div>
 
-            <div class="pie-institucional">
-                <%-- La leyenda del pie del formato original: al firmar, el docente
-                     se hace responsable del seguro facultativo de sus estudiantes --%>
-                <p class="leyenda-seguro">
-                    El docente responsable de la visita académica declara que todos los estudiantes
-                    participantes cuentan con seguro facultativo activo al momento de la realización de la
-                    actividad. Al firmar el presente documento, el docente asume la responsabilidad de
-                    verificar y asegurar el cumplimiento de este requisito.
-                </p>
-                <img src="${img}/formato-banda.png" alt="">
+    <div class="pie-institucional">
+                    <%-- La leyenda del pie del formato original: al firmar, el docente
+                         se hace responsable del seguro facultativo de sus estudiantes --%>
+                    <p class="leyenda-seguro">
+                        El docente responsable de la visita académica declara que todos los estudiantes
+                        participantes cuentan con seguro facultativo activo al momento de la realización de la
+                        actividad. Al firmar el presente documento, el docente asume la responsabilidad de
+                        verificar y asegurar el cumplimiento de este requisito.
+                    </p>
+                    <img src="${img}/formato-banda.png" alt="">
+                </div>
             </div>
         </div>
     </c:when>
@@ -371,7 +407,7 @@
          Oficio de visita — lo redacta el sistema, no es formato controlado
          ================================================================ --%>
     <c:when test="${tipoFormato == 'oficio'}">
-        <div class="hoja">
+        <div class="hoja con-pie">
             <div class="enc-formato">
                 <img class="logo-estadias" src="${img}/formato-estadias.png" alt="Estadías">
                 <h1>OFICIO DE VISITA ACADÉMICA</h1>
@@ -385,8 +421,7 @@
                 Morelos, a través del área de Estadías, autoriza la visita académica de
                 <strong>${s.totalEstudiantes}</strong> estudiante(s) a cargo del (de la) docente
                 <strong><c:out value="${responsable}"/></strong>, a realizarse
-                <c:if test="${not empty s.periodoEnLetra}">${s.periodoEnLetra}</c:if>
-                <c:if test="${not empty s.horaVisita}"> a partir de las ${s.horaVisita} hrs.</c:if>
+                <c:if test="${not empty s.fechaInicioEnLetra}">el día <strong>${s.fechaInicioEnLetra}</strong></c:if>
                 en <c:out value="${empty s.lugarDireccion ? 'sus instalaciones' : s.lugarDireccion}"/>.
             </p>
             <c:if test="${not empty s.objetivo}">
@@ -397,16 +432,18 @@
                 que forma parte de la formación académica de nuestros estudiantes.
             </p>
 
-            <div class="firmas una">
-                <div class="firma">
-                    <div class="rotulo">&nbsp;</div>
-                    <div class="nombre"><c:out value="${empty s.nombreAutoriza ? '' : s.nombreAutoriza}"/></div>
-                    <div class="linea">Área de Estadías &mdash; UTEZ</div>
+            <div class="cierre">
+    <div class="firmas una">
+                    <div class="firma">
+                        <div class="rotulo">&nbsp;</div>
+                        <div class="nombre"><c:out value="${empty s.nombreAutoriza ? '' : s.nombreAutoriza}"/></div>
+                        <div class="linea">Área de Estadías &mdash; UTEZ</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="pie-institucional">
-                <img src="${img}/formato-banda.png" alt="">
+    <div class="pie-institucional">
+                    <img src="${img}/formato-banda.png" alt="">
+                </div>
             </div>
         </div>
     </c:when>
@@ -415,7 +452,7 @@
          Reporte de visita académica
          ================================================================ --%>
     <c:when test="${tipoFormato == 'reporte'}">
-        <div class="hoja">
+        <div class="hoja con-pie">
             <div class="enc-reporte">
                 <h1>REPORTE DE VISITA ACADÉMICA</h1>
                 <div class="logos">
@@ -434,11 +471,13 @@
                     <th style="width:30%">Nombre de la empresa o actividad:</th>
                     <td colspan="3"><c:out value="${s.nombreEmpresaActividad}"/></td>
                 </tr>
+                <%-- La fecha de término no se captura en la solicitud: se anota
+                     a mano igual que en el formato oficial --%>
                 <tr>
                     <th>Fecha de inicio de la visita / actividad:</th>
                     <td style="width:18%">${empty s.fechaInicio ? '' : s.fechaInicio}</td>
                     <th style="width:30%">Fecha de término de la visita / actividad:</th>
-                    <td>${empty s.fechaTermino ? '' : s.fechaTermino}</td>
+                    <td>&nbsp;</td>
                 </tr>
                 <tr>
                     <th>Objetivo de la visita / actividad:</th>
@@ -498,16 +537,18 @@
                 <tr><td class="alta"><c:out value="${empty r.observaciones ? '' : r.observaciones}"/></td></tr>
             </table>
 
-            <div class="firmas una">
-                <div class="firma">
-                    <div class="rotulo">&nbsp;</div>
-                    <div class="nombre"><c:out value="${responsable}"/></div>
-                    <div class="linea">Nombre y firma del docente responsable de la visita</div>
+            <div class="cierre">
+    <div class="firmas una">
+                    <div class="firma">
+                        <div class="rotulo">&nbsp;</div>
+                        <div class="nombre"><c:out value="${responsable}"/></div>
+                        <div class="linea">Nombre y firma del docente responsable de la visita</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="pie-institucional">
-                <img src="${img}/formato-banda.png" alt="">
+    <div class="pie-institucional">
+                    <img src="${img}/formato-banda.png" alt="">
+                </div>
             </div>
         </div>
 
@@ -557,7 +598,7 @@
                 <span class="dato-lleno"><c:out value="${s.programasEnLetra}"/></span> y bajo protesta de
                 decir verdad, confirmamos nuestra participación en la visita a
                 &ldquo;<span class="dato-lleno"><c:out value="${s.nombreEmpresaActividad}"/></span>&rdquo;, a
-                celebrarse <span class="dato-lleno">${s.periodoEnLetra}</span>, en
+                celebrarse el día <span class="dato-lleno">${s.fechaInicioEnLetra}</span>, en
                 <span class="dato-lleno"><c:out value="${s.lugarDireccion}"/></span>; bajo el programa anexo
                 al presente documento.
             </p>
@@ -565,8 +606,9 @@
             <p class="parrafo">
                 Conocedores que la actividad se documentará como una visita de estudio de la Universidad
                 Tecnológica Emiliano Zapata del Estado de Morelos (UTEZ) y debido al horario del encuentro
-                (<span class="dato-lleno">${empty s.horaVisita ? '' : s.horaVisita}</span> a
-                <%-- El formato captura una sola hora; la de regreso se anota al firmar --%>
+                <%-- El horario no se captura en la solicitud: se anota a mano
+                     antes de recoger las firmas, como en el formato oficial --%>
+                (<span class="hueco">&nbsp;</span> a
                 <span class="hueco">&nbsp;</span> hrs.), declaramos que los traslados y gastos derivados a
                 nuestra participación en el evento antes mencionado los realizaremos con nuestros propios
                 medios y recursos, asimismo que conocemos el alcance del seguro de la empresa que se
