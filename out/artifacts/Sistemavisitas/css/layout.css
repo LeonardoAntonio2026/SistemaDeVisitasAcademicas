@@ -1,0 +1,96 @@
+body { display: flex; flex-direction: column; min-height: 100vh; background-color: var(--color-fondo); color: var(--color-texto); }
+#wrapper { display: flex; flex: 1; }
+
+#sidebar {
+    width: 220px;
+    min-height: 100%;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    flex-shrink: 0;
+    position: sticky;
+    top: 1rem;
+    height: calc(100vh - 2rem);
+    overflow-y: auto;
+    margin: 1rem 0 1rem 1rem;
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-elevada);
+}
+
+#main-content { flex: 1; min-width: 0; max-width: var(--ancho-contenido); margin-inline: auto; padding: 1.5rem; }
+
+#sidebar .nav-link {
+    color: var(--color-texto);
+    border-radius: var(--radio-input);
+    padding: 0.45rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.1rem 0.4rem;
+    transition: background-color 0.15s ease;
+}
+#sidebar .nav-link:hover { background-color: var(--color-fondo); color: var(--color-texto); }
+#sidebar .nav-link.active {
+    background-color: var(--color-verde);
+    color: #ffffff !important;
+    font-weight: 600;
+}
+#sidebar .nav-link.active i { color: #ffffff; }
+#sidebar .nav-link i { font-size: 1rem; margin-right: 0.25rem; }
+
+/* Nada debe provocar scroll horizontal en la página: el contenido ancho
+   (tablas, desglose) se desplaza dentro de su propio contenedor. */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+.tabla-scroll {
+    overflow-x: auto;
+    margin-top: 6px;
+}
+
+/* La marca del navbar es larga: en pantallas chicas se recorta en vez de
+   empujar el botón de cerrar sesión fuera de la pantalla. */
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    font-size: var(--fs-md);
+}
+.navbar-brand img { flex-shrink: 0; }
+
+@media (max-width: 767.98px) {
+    #sidebar {
+        position: fixed;
+        top: 0.5rem; left: 0.5rem;
+        width: calc(100% - 1rem);
+        max-width: 320px;
+        height: calc(100vh - 1rem);
+        z-index: 1045;
+        transform: translateX(-110%);
+        transition: transform 0.3s ease;
+        border-radius: 0.75rem;
+        padding-top: 60px;
+    }
+    #sidebar.show { transform: translateX(0); }
+    #sidebar-backdrop {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,.4);
+        z-index: 1040;
+    }
+    #sidebar-backdrop.show { display: block; }
+
+    /* El contenido usa todo el ancho disponible: con 1.5rem de padding a
+       cada lado, en un teléfono ya casi no quedaba área útil. */
+    #main-content { padding: 1rem 0.85rem; }
+
+    nav.navbar { margin: 0.65rem 0.65rem 0 !important; }
+}
+
+@media (max-width: 575.98px) {
+    #main-content { padding: 0.85rem 0.65rem; }
+
+    /* En pantallas muy angostas el nombre del sistema y el texto de cerrar
+       sesión no caben en una línea: queda el logo y el icono (con title). */
+    .navbar-brand-texto,
+    .texto-cerrar-sesion { display: none; }
+    nav.navbar .bi-box-arrow-right { margin-right: 0 !important; }
+}

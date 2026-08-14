@@ -1,0 +1,12 @@
+dbgestionvisitas_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g63b2ca01dbbda1_dbgestionvisitas_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+dbgestionvisitas_medium = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g63b2ca01dbbda1_dbgestionvisitas_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+dbgestionvisitas_low = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g63b2ca01dbbda1_dbgestionvisitas_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+dbgestionvisitas_tp = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g63b2ca01dbbda1_dbgestionvisitas_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+dbgestionvisitas_tpurgent = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-phoenix-1.oraclecloud.com))(connect_data=(service_name=g63b2ca01dbbda1_dbgestionvisitas_tpurgent.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+
+

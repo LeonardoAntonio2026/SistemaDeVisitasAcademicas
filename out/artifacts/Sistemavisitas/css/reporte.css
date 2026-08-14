@@ -1,0 +1,104 @@
+/* ============================================================
+   Estilos del detalle del reporte de visita (reporte-detalle.jsp).
+   Complementa a home.css y detalle.css; aquí vive lo que antes
+   estaba inline en el JSP.
+   ============================================================ */
+
+/* Galería de imágenes (formulario y vista de solo lectura) */
+.galeria-previa {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.galeria-item {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: var(--radio-input);
+    overflow: hidden;
+    border: 1px solid var(--color-borde-suave);
+}
+
+/* Variante grande para la vista de solo lectura */
+.galeria-item--lg {
+    width: 160px;
+    height: 160px;
+}
+
+.galeria-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.galeria-item .quitar-imagen {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Enlace del resumen hacia la solicitud */
+.btn-resumen-solicitud {
+    margin-top: 10px;
+    display: inline-flex;
+}
+
+/* Contenedor de acciones en las cards de listado (reportes.jsp) */
+.acciones-card {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Separaciones que antes eran style="" inline */
+.instruccion-reporte {
+    margin-top: 1rem;
+}
+
+.card-reporte {
+    margin-top: 1rem;
+}
+
+.campo-observaciones {
+    margin-top: 12px;
+}
+
+.separador-imagenes {
+    margin-top: 16px;
+}
+
+.btn-agregar-imagen {
+    margin-top: 8px;
+}
+
+/* Pantallas angostas: las miniaturas se reparten el ancho en vez de
+   quedarse en 110px con un hueco enorme a la derecha. */
+@media (max-width: 575.98px) {
+    .galeria-item,
+    .galeria-item--lg {
+        width: calc(50% - 6px);
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+
+    .btn-resumen-solicitud,
+    .acciones-card .btn-ver-detalles {
+        width: 100%;
+        justify-content: center;
+    }
+}
