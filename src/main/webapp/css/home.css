@@ -296,6 +296,148 @@
     .botonnueva { width: 100%; }
 }
 
+/* ============================================================
+   Barra de búsqueda y filtros de las pantallas de listado.
+   Es una barra, no un formulario de captura: todo en un
+   renglón y con controles de un escalón menos (más bajos y de
+   letra más chica), para que pese menos que la tabla que
+   filtra. Los campos se reparten el ancho sobrante y el de
+   texto se lleva el doble: es el que más se usa.
+   ============================================================ */
+.filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 12px;
+    width: 100%;
+    border-radius: var(--radio-card);
+    background-color: var(--color-superficie);
+    box-shadow: var(--sombra-card);
+    margin-top: 1rem;
+    padding: 0.85rem 1.25rem;
+    box-sizing: border-box;
+}
+
+/* Los campos no crecen: el ancho sobrante se lo lleva entero la búsqueda.
+   Repartido entre todos, un select de tres opciones o un par de fechas
+   terminaban midiendo media pantalla sin ganar nada. */
+.filtro-campo {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 150px;
+    min-width: 0;   /* sin esto un campo largo no deja encoger a los demás */
+}
+
+.filtro-campo--busqueda { flex: 1 1 200px; }
+
+/* Las dos fechas son un solo dato (el rango), así que van juntas bajo una
+   sola etiqueta: en columnas separadas ocupaban el doble y se leían como
+   dos filtros que no tienen nada que ver. */
+.filtro-campo--rango { flex: 0 1 230px; }
+
+.rango-fechas {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rango-fechas .form-control {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.rango-fechas .rango-guion { color: var(--color-texto-tenue); }
+
+.filtros .form-label {
+    margin-bottom: 3px;
+    font-size: var(--fs-xs);
+}
+
+/* La altura fija empareja al <select> con los <input type="date">, que de
+   suyo miden distinto: sin esto la barra se ve de tres tamaños. */
+.filtros .form-control {
+    height: 2.1rem;
+    box-sizing: border-box;   /* la altura incluye el padding del campo */
+    padding: 0 0.6rem;
+    font-size: var(--fs-sm);
+}
+
+/* Se alinea con la base de los campos (no con sus etiquetas) y con el
+   margin auto se va al extremo derecho del renglón en el que caiga: cierra
+   la barra, en vez de quedar pegado al último filtro. */
+.filtros .btn-secundario {
+    flex: 0 0 auto;
+    margin-left: auto;
+    height: 2.1rem;
+    padding: 0 1rem;
+    font-size: var(--fs-sm);
+}
+
+.filtros-conteo {
+    color: var(--color-texto-3);
+    font-size: var(--fs-sm);
+    margin: 0.6rem 0 0 0;
+}
+
+/* ---- Paginador de la tabla ---- */
+.paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;   /* el mismo aire que deja .detalle-card abajo */
+}
+
+.pagina-btn {
+    min-width: 2.1rem;
+    height: 2.1rem;
+    padding: 0 0.6rem;
+    border: 1.5px solid var(--color-borde);
+    border-radius: var(--radio-btn);
+    background: var(--color-superficie);
+    color: var(--color-azul);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.pagina-btn:hover:not(:disabled) {
+    background: var(--color-fondo);
+    border-color: var(--color-azul);
+}
+
+/* En los extremos, Anterior/Siguiente se quedan a la vista pero apagados:
+   que desaparezcan mueve los números de lugar justo al pulsarlos. */
+.pagina-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.pagina-btn[aria-current="page"] {
+    background: var(--color-azul);
+    border-color: var(--color-azul);
+    color: #ffffff;
+}
+
+.paginacion-puntos {
+    color: var(--color-texto-tenue);
+    padding: 0 2px;
+}
+
+/* En teléfono cada filtro se queda con su renglón; el rango de fechas
+   conserva sus dos campos lado a lado, que es como se lee */
+@media (max-width: 575.98px) {
+    .filtros { padding: 0.85rem 1.1rem; }
+
+    .filtro-campo,
+    .filtro-campo--busqueda,
+    .filtro-campo--rango { flex: 1 1 100%; }
+
+    .filtros .btn-secundario { width: 100%; }
+}
+
 /* Roles de usuario: mismo badge de estado, paleta de la marca (RF-12) */
 .rol-administrador {
     background-color: #D6E4F0;

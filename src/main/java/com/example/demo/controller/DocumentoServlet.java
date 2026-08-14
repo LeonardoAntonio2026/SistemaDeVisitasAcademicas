@@ -24,6 +24,9 @@ import java.util.Base64;
 /**
  * Archivos del proceso:
  *  - GET  ?id=N               descarga un documento subido (PDF en Base64).
+ *  - GET  ?id=N&inline=1      sirve ese mismo PDF para verlo dentro del visor.
+ *  - GET  ?ver=N              página del visor: muestra el PDF subido sin
+ *    descargarlo, para comprobar que se cargó el archivo correcto.
  *  - GET  ?gen=fo|oficio|responsiva&solicitud=N  vista imprimible del formato
  *    generado a partir de los datos (se imprime o guarda como PDF y se firma).
  *  - GET  ?gen=reporte&reporte=N  vista imprimible del reporte de visita.
@@ -51,6 +54,12 @@ public class DocumentoServlet extends HttpServlet {
             return;
         }
 
+        String ver = request.getParameter("ver");
+        if (ver != null) {
+            abrirVisor(ver, request, response);
+            return;
+        }
+
         int idDocumento;
         try {
             idDocumento = Integer.parseInt(request.getParameter("id"));
@@ -66,25 +75,65 @@ public class DocumentoServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        boolean permitido = false;
-        if (doc.getIdSolicitud() != null) {
-            permitido = solicitudPermitida(request, doc.getIdSolicitud()) != null;
-        } else if (doc.getIdReporte() != null) {
-            permitido = reportePermitido(request, doc.getIdReporte()) != null;
-        }
-        if (!permitido) {
+        if (!documentoPermitido(request, doc)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         byte[] contenido = Base64.getDecoder().decode(doc.getContenidoBase64());
         String nombre = doc.getNombreTipo().replace(' ', '_') + ".pdf";
+        // inline=1 lo pide el visor: así el navegador lo dibuja en la página en
+        // vez de descargarlo (que es lo que hace el botón Descargar)
+        String disposicion = request.getParameter("inline") != null ? "inline" : "attachment";
         response.setContentType("application/pdf");
         response.setContentLengthLong(contenido.length);
-        response.setHeader("Content-Disposition", "attachment; filename=\"" + nombre + "\"");
+        response.setHeader("Content-Disposition", disposicion + "; filename=\"" + nombre + "\"");
         try (OutputStream out = response.getOutputStream()) {
             out.write(contenido);
         }
+    }
+
+    /**
+     * Página aparte para ver un documento subido sin tener que descargarlo:
+     * es la forma de comprobar que el archivo que se cargó es el correcto.
+     * Solo trae los metadatos; el PDF lo pide el visor con ?id=N&inline=1.
+     */
+    private void abrirVisor(String idTexto, HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        int idDocumento;
+        try {
+            idDocumento = Integer.parseInt(idTexto);
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        Documento doc = documentoDao.getMetadataById(idDocumento);
+        if (doc == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        if (!documentoPermitido(request, doc)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        request.setAttribute("documento", doc);
+        request.getRequestDispatcher("visor-documento.jsp").forward(request, response);
+    }
+
+    /**
+     * Un documento se puede ver si se puede ver aquello de lo que cuelga:
+     * la solicitud o el reporte al que pertenece.
+     */
+    private boolean documentoPermitido(HttpServletRequest request, Documento doc) {
+        if (doc.getIdSolicitud() != null) {
+            return solicitudPermitida(request, doc.getIdSolicitud()) != null;
+        }
+        if (doc.getIdReporte() != null) {
+            return reportePermitido(request, doc.getIdReporte()) != null;
+        }
+        return false;
     }
 
     @Override

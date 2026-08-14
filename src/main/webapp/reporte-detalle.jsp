@@ -15,6 +15,12 @@
     <c:set var="r" value="${reporte}"/>
     <c:set var="estado" value="${r.nombreEstado}"/>
 
+    <%-- Volver también aquí arriba: quien entró solo a consultar no tiene por
+         qué recorrer la página entera para encontrar la salida --%>
+    <a href="${pageContext.request.contextPath}/reportes" class="volver-arriba">
+        <i class="bi bi-arrow-left"></i> Volver a reportes
+    </a>
+
     <div class="superior">
         <h2>Reporte de visita</h2>
         <p><c:out value="${r.nombreEmpresaActividad}"/></p>
@@ -214,6 +220,14 @@
                     <input type="file" id="input-imagen-oculto" accept="image/jpeg,image/png" style="display:none;">
                 </form>
             </div>
+
+            <%-- La acción va pegada a la card que la habilita, no al pie de
+                 la página: es lo que sigue justo después de llenar esto --%>
+            <div class="acciones-form acciones-form--derecha acciones-tras-card">
+                <button type="submit" form="form-reporte" class="btn-enviar-solicitud">
+                    <i class="bi bi-file-earmark-text"></i> Generar reporte
+                </button>
+            </div>
         </c:when>
 
         <%-- ============================================================
@@ -263,13 +277,15 @@
                     <div class="archivo-acciones">
                         <a class="btn-descargar" target="_blank"
                            href="${pageContext.request.contextPath}/documento?gen=reporte&reporte=${r.idReporte}">
-                            <i class="bi bi-download"></i> Descargar
+                            <i class="bi bi-eye"></i> Ver y descargar
                         </a>
                     </div>
                 </div>
 
                 <%-- Con el firmado ya cargado se ve el archivo, no un recuadro
-                     de carga vacío que se lee como "todavía falta subir algo" --%>
+                     de carga vacío que se lee como "todavía falta subir algo".
+                     "Ver" lo abre en otra pestaña para comprobar que el PDF
+                     que se subió es el correcto. --%>
                 <c:if test="${not empty documentos}">
                     <div class="separador-archivos">Subidos por ti</div>
                     <c:forEach var="d" items="${documentos}">
@@ -282,6 +298,11 @@
                                 <a class="btn-descargar" download
                                    href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
                                     <i class="bi bi-download"></i> Descargar
+                                </a>
+                                <a class="btn-ver" target="_blank"
+                                   title="Abre el archivo en otra pestaña para revisar que sea el correcto"
+                                   href="${pageContext.request.contextPath}/documento?ver=${d.idDocumento}">
+                                    <i class="bi bi-eye"></i> Ver
                                 </a>
                                 <button type="button" class="btn-recargar" data-abre-carga="carga-reporte-firmado">
                                     <i class="bi bi-arrow-repeat"></i> Volver a cargar
@@ -307,7 +328,7 @@
                         </button>
                     </div>
                 </form>
-                <%-- El botón que envía este form está al pie de la página
+                <%-- El botón que envía este form está justo debajo de la card
                      (acciones-form); la confirmación la pinta js/modales.js --%>
                 <form action="${pageContext.request.contextPath}/reporte" method="POST" id="form-enviar-reporte"
                       data-confirmar="El reporte pasa al área de Estadías para su revisión."
@@ -319,6 +340,15 @@
                     <input type="hidden" name="action" value="enviar">
                 </form>
             </div>
+
+            <%-- Enviar va pegado a la card de firmar/archivos: es lo que sigue
+                 justo después de subir el reporte firmado --%>
+            <div class="acciones-form acciones-form--derecha acciones-tras-card">
+                <button type="submit" form="form-enviar-reporte" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
+                        title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el reporte firmado'}">
+                    <i class="bi bi-send"></i> Enviar reporte a Estadías
+                </button>
+            </div>
         </c:when>
 
         <%-- ============================================================
@@ -328,6 +358,48 @@
              ============================================================ --%>
         <c:otherwise>
             <c:if test="${estado != 'Pendiente'}">
+                <%-- Los archivos van antes que el contenido del reporte, igual
+                     que en el detalle de la solicitud: es lo que se viene a
+                     revisar y no tiene por qué estar hasta el final --%>
+                <div class="detalle-card">
+                    <h6>Archivos</h6>
+                    <div class="separador-archivos">Generado por el sistema</div>
+                    <div class="archivo-row">
+                        <span class="archivo-pill">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span>REPORTE DE VISITA<small>Generado con los datos capturados</small></span>
+                        </span>
+                        <div class="archivo-acciones">
+                            <a class="btn-descargar" target="_blank"
+                               href="${pageContext.request.contextPath}/documento?gen=reporte&reporte=${r.idReporte}">
+                                <i class="bi bi-eye"></i> Ver y descargar
+                            </a>
+                        </div>
+                    </div>
+                    <c:if test="${not empty documentos}">
+                        <div class="separador-archivos">${esDueno ? 'Subidos por ti' : 'Subidos por el docente'}</div>
+                        <c:forEach var="d" items="${documentos}">
+                            <div class="archivo-row">
+                                <span class="archivo-pill archivo-pill--subido">
+                                    <i class="bi bi-file-earmark-check"></i>
+                                    <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
+                                </span>
+                                <div class="archivo-acciones">
+                                    <a class="btn-descargar" download
+                                       href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
+                                        <i class="bi bi-download"></i> Descargar
+                                    </a>
+                                    <a class="btn-ver" target="_blank"
+                                       title="Abre el archivo en otra pestaña para revisarlo sin descargarlo"
+                                       href="${pageContext.request.contextPath}/documento?ver=${d.idDocumento}">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </a>
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </c:if>
+                </div>
+
                 <div class="detalle-card">
                     <h6>Resultados de la visita</h6>
                     <div class="datos-grid">
@@ -355,40 +427,6 @@
                         </div>
                     </div>
                 </c:if>
-
-                <div class="detalle-card">
-                    <h6>Archivos</h6>
-                    <div class="separador-archivos">Generado por el sistema</div>
-                    <div class="archivo-row">
-                        <span class="archivo-pill">
-                            <i class="bi bi-file-earmark-text"></i>
-                            <span>REPORTE DE VISITA<small>Generado con los datos capturados</small></span>
-                        </span>
-                        <div class="archivo-acciones">
-                            <a class="btn-descargar" target="_blank"
-                               href="${pageContext.request.contextPath}/documento?gen=reporte&reporte=${r.idReporte}">
-                                <i class="bi bi-download"></i> Descargar
-                            </a>
-                        </div>
-                    </div>
-                    <c:if test="${not empty documentos}">
-                        <div class="separador-archivos">${esDueno ? 'Subidos por ti' : 'Subidos por el docente'}</div>
-                        <c:forEach var="d" items="${documentos}">
-                            <div class="archivo-row">
-                                <span class="archivo-pill archivo-pill--subido">
-                                    <i class="bi bi-file-earmark-check"></i>
-                                    <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
-                                </span>
-                                <div class="archivo-acciones">
-                                    <a class="btn-descargar" download
-                                       href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
-                                        <i class="bi bi-download"></i> Descargar
-                                    </a>
-                                </div>
-                            </div>
-                        </c:forEach>
-                    </c:if>
-                </div>
 
                 <%-- Card evaluar: solo Estadías/Admin con el reporte enviado --%>
                 <c:if test="${estado == 'Completado' && !esDueno}">
@@ -444,19 +482,6 @@
         <a href="${pageContext.request.contextPath}/reportes" class="btn-volver-detalle">
             <i class="bi bi-arrow-left"></i> Volver a reportes
         </a>
-        <c:choose>
-            <c:when test="${subFase == 'formulario'}">
-                <button type="submit" form="form-reporte" class="btn-enviar-solicitud">
-                    <i class="bi bi-file-earmark-text"></i> Generar reporte
-                </button>
-            </c:when>
-            <c:when test="${subFase == 'firmar'}">
-                <button type="submit" form="form-enviar-reporte" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
-                        title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el reporte firmado'}">
-                    <i class="bi bi-send"></i> Enviar reporte a Estadías
-                </button>
-            </c:when>
-        </c:choose>
     </div>
 
     <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>

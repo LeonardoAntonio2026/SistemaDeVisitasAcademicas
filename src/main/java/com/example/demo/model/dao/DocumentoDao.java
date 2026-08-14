@@ -60,6 +60,32 @@ public class DocumentoDao {
         return null;
     }
 
+    /**
+     * Metadatos de un documento (sin el contenido). Los usa la página del
+     * visor, que solo necesita el nombre, el tamaño y de qué solicitud o
+     * reporte cuelga: el PDF lo pide aparte el visor del navegador.
+     */
+    public Documento getMetadataById(int idDocumento) {
+        String sql = "SELECT d.id_documento, d.id_solicitud, d.id_reporte, d.id_tipo_documento, "
+                + "t.nombre_tipo, TO_CHAR(d.fecha_carga, 'YYYY-MM-DD') AS fecha_carga, "
+                + "LENGTH(d.contenido_base64) AS tam_base64 "
+                + "FROM documento d JOIN tipo_documento t ON t.id_tipo_documento = d.id_tipo_documento "
+                + "WHERE d.id_documento = ?";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idDocumento);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs, false);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /** Metadatos de los documentos de un reporte (mismo criterio que getBySolicitud). */
     public List<Documento> getByReporte(int idReporte) {
         List<Documento> datos = new ArrayList<>();

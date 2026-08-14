@@ -14,7 +14,7 @@ $ErrorActionPreference = "Stop"
 
 $JavaHome  = "C:\Program Files\Java\jdk-21.0.11"
 $TargetDir = Join-Path $PSScriptRoot "target"
-$WarRemote = "/opt/tomcat11/webapps/ROOT.war"
+$WarRemote = "/opt/tomcat10/webapps/ROOT.war"
 $Staging   = "/tmp/deploy-staging.war"
 $Url       = "http://$Server`:8080/"
 
@@ -54,7 +54,7 @@ if ($LASTEXITCODE -ne 0) { throw "Fallo el scp." }
 
 # --- 3. Instalar ------------------------------------------------------------
 Paso 3 "Instalando en webapps/ y esperando el autoDeploy..."
-$remoto = "sudo mv $Staging $WarRemote && sudo chown tomcat:tomcat $WarRemote && echo instalado && sleep 25 && sudo tail -3 /opt/tomcat11/logs/catalina.out"
+$remoto = "sudo mv $Staging $WarRemote && sudo chown tomcat:tomcat $WarRemote && echo instalado && sleep 25 && sudo tail -3 /opt/tomcat10/logs/catalina.out"
 & ssh -i $Key -o StrictHostKeyChecking=accept-new "${User}@${Server}" $remoto
 if ($LASTEXITCODE -ne 0) { throw "Fallo la instalacion en el servidor." }
 
@@ -69,6 +69,6 @@ try {
     }
 } catch {
     Write-Host "`n  No respondio. Revisa el log:" -ForegroundColor Red
-    Write-Host "  ssh -i `"$Key`" $User@$Server 'sudo tail -40 /opt/tomcat11/logs/catalina.out'"
+    Write-Host "  ssh -i `"$Key`" $User@$Server 'sudo tail -40 /opt/tomcat10/logs/catalina.out'"
     exit 1
 }

@@ -260,9 +260,10 @@
 
 .btn-descargar:hover { background-color: var(--color-azul-hover); }
 
-/* Reemplazar un archivo es la acción secundaria: va en contorno para que no
-   compita con Descargar y para que el recuadro de carga no tenga que estar
-   siempre a la vista. */
+/* Ver el archivo y reemplazarlo son las acciones secundarias de cada fila:
+   van en contorno para que no compitan con Descargar (y para que el recuadro
+   de carga no tenga que estar siempre a la vista). */
+.btn-ver,
 .btn-recargar {
     display: inline-flex;
     align-items: center;
@@ -279,6 +280,15 @@
     transition: background-color 0.15s, border-color 0.15s;
 }
 
+/* .btn-ver viste enlaces (abre el visor en otra pestaña), que sin esto
+   heredarían el subrayado y el color de enlace del navegador */
+.btn-ver {
+    color: var(--color-azul) !important;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.btn-ver:hover,
 .btn-recargar:hover {
     background-color: var(--color-fondo);
     border-color: var(--color-azul);
@@ -432,11 +442,35 @@
 
 .btn-aprobar:hover { background-color: var(--color-azul-hover); }
 
-.acciones-derecha {
-    display: flex;
+/* Barra de acciones que cuelga de una card (Enviar solicitud debajo de
+   Archivos, Generar/Enviar reporte debajo de su card) en vez de ir al pie de
+   la página. Se pega a la card de arriba y guarda con la de abajo la misma
+   separación que hay entre cards, para que se lea como parte de esa card. */
+.acciones-tras-card {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* Volver también al principio de la página: quien solo entró a consultar la
+   solicitud tenía que recorrerla entera para encontrar el botón del pie.
+   Va como enlace y no como botón para no competir con las acciones reales. */
+.volver-arriba {
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--color-azul) !important;
+    font-size: var(--fs-base);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radio-btn);
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    margin-left: -12px;
+    transition: background-color 0.15s;
+}
+
+.volver-arriba:hover {
+    background-color: var(--color-superficie);
 }
 
 /* Botones de la barra final: Volver es secundario, Enviar es el primario (azul) */
@@ -524,13 +558,9 @@
     /* Volver / Editar / Enviar en columna: en una fila se salían */
     .acciones-form { flex-direction: column; align-items: stretch; }
 
-    .acciones-derecha { flex-direction: column; align-items: stretch; }
-
     .acciones-form .btn-volver-detalle,
     .acciones-form .btn-editar-datos,
-    .acciones-form .btn-enviar-solicitud,
-    .acciones-derecha form,
-    .acciones-derecha .btn-enviar-solicitud {
+    .acciones-form .btn-enviar-solicitud {
         width: 100%;
         justify-content: center;
     }

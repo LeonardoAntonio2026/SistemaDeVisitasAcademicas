@@ -7,6 +7,7 @@
 
 <main id="main-content">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/form.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
     <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
@@ -24,7 +25,56 @@
             </div>
         </c:when>
         <c:otherwise>
-            <div class="detalle-card" style="margin-top: 1rem;">
+            <%-- Los filtros van fuera de la tarjeta de la tabla: cuando una
+                 búsqueda no encuentra nada, la tabla se oculta y la barra
+                 tiene que seguir ahí para poder corregir o limpiar. --%>
+            <div class="filtros" role="search">
+                <div class="filtro-campo filtro-campo--busqueda">
+                    <label class="form-label" for="filtro-texto">Buscar</label>
+                    <input id="filtro-texto" class="form-control" type="search" autocomplete="off"
+                           placeholder="${esDocente ? 'Empresa o actividad' : 'Empresa, actividad o docente'}">
+                </div>
+
+                <%-- Las opciones de estos dos selects las llena
+                     filtros-historico.js con lo que de verdad hay en la tabla:
+                     ofrecer un estado del que no existe ninguna solicitud solo
+                     lleva a búsquedas vacías. --%>
+                <div class="filtro-campo">
+                    <label class="form-label" for="filtro-estado">Estado</label>
+                    <select id="filtro-estado" class="form-control">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+
+                <c:if test="${!esDocente}">
+                    <div class="filtro-campo">
+                        <label class="form-label" for="filtro-docente">Docente</label>
+                        <select id="filtro-docente" class="form-control">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                </c:if>
+
+                <%-- Las dos fechas comparten etiqueta porque son un solo dato:
+                     el rango en el que cayó la visita. Cada campo lleva su
+                     aria-label para que se distingan al leerlos en voz alta. --%>
+                <div class="filtro-campo filtro-campo--rango">
+                    <label class="form-label" for="filtro-desde">Fecha de visita</label>
+                    <div class="rango-fechas">
+                        <input id="filtro-desde" class="form-control" type="date" aria-label="Visita desde">
+                        <span class="rango-guion" aria-hidden="true">–</span>
+                        <input id="filtro-hasta" class="form-control" type="date" aria-label="Visita hasta">
+                    </div>
+                </div>
+
+                <button type="button" id="filtro-limpiar" class="btn-base btn-secundario">
+                    <i class="bi bi-x-lg"></i> Limpiar
+                </button>
+            </div>
+
+            <p id="filtro-conteo" class="filtros-conteo" aria-live="polite"></p>
+
+            <div id="card-historico" class="detalle-card" style="margin-top: 0.5rem;">
                 <div class="tabla-scroll">
                 <table class="tabla-programas">
                     <thead>
@@ -37,9 +87,16 @@
                         <th>Acciones</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="filas-historico">
+                    <%-- Cada fila lleva pegado lo que se filtra: el texto en el
+                         que se busca, el estado tal como se lee en el badge, el
+                         docente y la fecha en yyyy-MM-dd (así se compara con lo
+                         que devuelve un <input type="date">). --%>
                     <c:forEach var="s" items="${listaHistorico}">
-                        <tr>
+                        <tr data-busqueda="<c:out value="${s.nombreEmpresaActividad} ${s.nombreSolicitante}"/>"
+                            data-estado="<c:out value="${s.estadoLegible}"/>"
+                            data-docente="<c:out value="${s.nombreSolicitante}"/>"
+                            data-fecha="<c:out value="${s.fechaInicio}"/>">
                             <td><c:out value="${s.nombreEmpresaActividad}"/></td>
                             <c:if test="${!esDocente}"><td><c:out value="${s.nombreSolicitante}"/></td></c:if>
                             <td>${s.totalEstudiantes}</td>
@@ -63,6 +120,19 @@
                 </table>
                 </div>
             </div>
+
+            <%-- Los botones de página los pone filtros-historico.js: cuántos
+                 son depende de cuántas solicitudes queden tras filtrar. --%>
+            <nav id="paginacion" class="paginacion" aria-label="Páginas del histórico" hidden></nav>
+
+            <%-- Convive con la tabla igual que en gestión de usuarios: se
+                 alterna cuál de los dos está oculto, sin recargar. --%>
+            <div id="sin-resultados" class="solicitud-vacia" hidden>
+                <h5>Ninguna solicitud coincide con la búsqueda</h5>
+                <p>Prueba con otras palabras o quita alguno de los filtros</p>
+            </div>
+
+            <script src="${pageContext.request.contextPath}/js/filtros-historico.js" defer></script>
         </c:otherwise>
     </c:choose>
 </main>

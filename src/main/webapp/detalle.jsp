@@ -25,6 +25,27 @@
     <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
     <c:set var="estado" value="${s.nombreEstado}"/>
 
+    <%-- El botón dice a dónde lleva: "Volver" a secas se entendía como
+         "regresar al paso anterior" y aquí sale de la solicitud. Una
+         solicitud terminada ya no aparece en Solicitudes: se vuelve al
+         Histórico, que es donde quedó. --%>
+    <c:choose>
+        <c:when test="${esTerminada}">
+            <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
+            <c:set var="volverTexto" value="Volver al histórico"/>
+        </c:when>
+        <c:otherwise>
+            <c:set var="volverUrl" value="${pageContext.request.contextPath}/solicitud"/>
+            <c:set var="volverTexto" value="Volver a solicitudes"/>
+        </c:otherwise>
+    </c:choose>
+
+    <%-- Volver también aquí arriba: quien entró solo a consultar no tiene por
+         qué recorrer la página entera para encontrar la salida --%>
+    <a href="${volverUrl}" class="volver-arriba">
+        <i class="bi bi-arrow-left"></i> ${volverTexto}
+    </a>
+
     <div class="superior">
         <h2>Detalles de la visita</h2>
         <p>
@@ -118,7 +139,7 @@
                     <i class="bi bi-send"></i>
                     <div>
                         <div class="instruccion-titulo">Formato firmado cargado: falta enviar la solicitud</div>
-                        <p>El FO-UTEZ-EST-08 firmado ya está en el sistema. Verifica que los datos sean correctos y presiona <strong>Enviar solicitud a Estadías</strong> al final de la página. Mientras la solicitud no se envíe, los datos todavía se pueden editar.</p>
+                        <p>El FO-UTEZ-EST-08 firmado ya está en el sistema. Verifica que los datos sean correctos y presiona <strong>Enviar solicitud a Estadías</strong>, debajo de la sección <strong>Archivos</strong>. Mientras la solicitud no se envíe, los datos todavía se pueden editar.</p>
                     </div>
                 </div>
             </c:when>
@@ -256,6 +277,170 @@
         <%@ include file="layout/stepper.jsp" %>
     </div>
 
+    <%-- ===================== Card archivos =====================
+         Va pegada a la card de instrucciones porque casi todo lo que ahí se
+         pide ("descarga el formato", "sube la carta responsiva") se hace
+         aquí: si esta card queda hasta el final hay que recorrer los datos
+         de la solicitud para encontrar aquello de lo que habla el aviso. --%>
+    <div class="detalle-card">
+        <h6>Archivos</h6>
+
+        <%-- Documentos que genera el sistema con los datos de la solicitud.
+             El FO se muestra siempre: aunque ya esté firmado y subido, si el
+             docente quiere rehacer la firma tiene que poder bajarlo otra vez.
+             Estos abren su vista imprimible, de ahí se guardan como PDF. --%>
+        <div class="separador-archivos">Generados por el sistema</div>
+        <div class="archivo-row">
+            <span class="archivo-pill">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span>FO-UTEZ-EST-08<small>Formato de la solicitud</small></span>
+            </span>
+            <div class="archivo-acciones">
+                <a class="btn-descargar" target="_blank"
+                   href="${pageContext.request.contextPath}/documento?gen=fo&solicitud=${s.idSolicitud}">
+                    <i class="bi bi-eye"></i> Ver y descargar
+                </a>
+            </div>
+        </div>
+
+        <%-- Documentos generados al aprobar (RF-07) --%>
+        <c:if test="${estado == 'Aprobada' || estado == 'Completada'}">
+            <div class="archivo-row">
+                <span class="archivo-pill">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>OFICIO DE VISITA<small>Autorización para el lugar de la visita</small></span>
+                </span>
+                <div class="archivo-acciones">
+                    <a class="btn-descargar" target="_blank"
+                       href="${pageContext.request.contextPath}/documento?gen=oficio&solicitud=${s.idSolicitud}">
+                        <i class="bi bi-eye"></i> Ver y descargar
+                    </a>
+                </div>
+            </div>
+        </c:if>
+
+        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
+            <div class="archivo-row">
+                <span class="archivo-pill">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    <span>CARTA RESPONSIVA<small>Requiere firma del docente responsable</small></span>
+                </span>
+                <div class="archivo-acciones">
+                    <a class="btn-descargar" target="_blank"
+                       href="${pageContext.request.contextPath}/documento?gen=responsiva&solicitud=${s.idSolicitud}">
+                        <i class="bi bi-eye"></i> Ver y descargar
+                    </a>
+                </div>
+            </div>
+        </c:if>
+
+        <%-- Archivos subidos por el docente. "Ver" los abre en una pestaña
+             aparte: es la forma de comprobar que el PDF que se subió es el
+             correcto sin bajarlo y abrirlo a mano. El FO firmado es el único
+             que se puede reemplazar (y solo antes de enviar): por eso su fila
+             lleva "Volver a cargar", que es lo que abre la zona de carga. --%>
+        <c:if test="${not empty documentos}">
+            <div class="separador-archivos">${esDocente && esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
+            <c:forEach var="d" items="${documentos}">
+                <div class="archivo-row">
+                    <span class="archivo-pill archivo-pill--subido">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
+                    </span>
+                    <div class="archivo-acciones">
+                        <a class="btn-descargar" download
+                           href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
+                            <i class="bi bi-download"></i> Descargar
+                        </a>
+                        <a class="btn-ver" target="_blank"
+                           title="Abre el archivo en otra pestaña para revisar que sea el correcto"
+                           href="${pageContext.request.contextPath}/documento?ver=${d.idDocumento}">
+                            <i class="bi bi-eye"></i> Ver
+                        </a>
+                        <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
+                            <button type="button" class="btn-recargar" data-abre-carga="carga-fo-firmado">
+                                <i class="bi bi-arrow-repeat"></i> Volver a cargar
+                            </button>
+                        </c:if>
+                    </div>
+                </div>
+            </c:forEach>
+        </c:if>
+
+        <%-- Zonas de carga: solo el docente dueño y solo en los 2 momentos del
+             proceso en los que toca subir algo. Si el archivo ya está cargado
+             la zona nace oculta (se ve el archivo, no un recuadro vacío que
+             hace pensar que todavía falta subir algo). --%>
+        <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
+            <form id="carga-fo-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
+                  enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
+                <input type="hidden" name="action" value="firmado">
+                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
+                <div class="separador-firmar">${existeFirmado ? 'Reemplazar el formato firmado' : 'Carga del formato firmado'}</div>
+                <div class="zona-carga">
+                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
+                    <p>${existeFirmado ? 'Selecciona el nuevo PDF; reemplazará al archivo actual' : 'Sube el formato FO-UTEZ-EST-08 firmado'}</p>
+                    <small>Máximo 10 MB · solo PDF</small>
+                    <input type="file" name="archivo" class="form-control" accept="application/pdf" required>
+                    <div class="aviso-seleccion">Archivo seleccionado, pero aún no se sube: da click en <strong>${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}</strong>.</div>
+                    <button type="submit" class="btn-subir">
+                        <i class="bi bi-upload"></i> ${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}
+                    </button>
+                </div>
+            </form>
+        </c:if>
+
+        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
+            <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data"
+                  class="form-carga"
+                  data-confirmar="Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita."
+                  data-confirmar-titulo="Cerrar la solicitud"
+                  data-confirmar-detalle="Después de esto ya no podrás cambiar los documentos de la solicitud."
+                  data-confirmar-tipo="aviso"
+                  data-confirmar-ok="Sí, subir y cerrar">
+                <input type="hidden" name="action" value="responsiva">
+                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
+                <div class="separador-firmar">Carga de la carta responsiva firmada</div>
+                <div class="zona-carga">
+                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
+                    <p>Sube la CARTA RESPONSIVA firmada</p>
+                    <small>Máximo 10 MB · solo PDF</small>
+                    <input type="file" name="archivo" class="form-control" accept="application/pdf" required>
+                    <div class="aviso-seleccion">Archivo seleccionado, pero aún no se sube: da click en <strong>Subir archivo</strong>.</div>
+                    <button type="submit" class="btn-subir">
+                        <i class="bi bi-upload"></i> Subir archivo
+                    </button>
+                </div>
+            </form>
+        </c:if>
+    </div>
+
+    <%-- ===================== Acciones del docente: Editar / Enviar =====================
+         Van pegadas a la card de Archivos y no al pie de la página: enviar es
+         lo que sigue justo después de subir el formato firmado, y ahí abajo
+         obligaba a recorrer los datos de la solicitud para llegar al botón. --%>
+    <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
+        <div class="acciones-form acciones-form--derecha acciones-tras-card">
+            <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"
+               class="btn-editar-datos" title="Corregir los datos antes de enviar">
+                <i class="bi bi-pencil"></i> Editar datos
+            </a>
+            <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
+                  data-confirmar="La solicitud pasa al área de Estadías para su revisión."
+                  data-confirmar-titulo="Enviar solicitud a Estadías"
+                  data-confirmar-detalle="Ya no podrás editar los datos ni reemplazar el formato firmado."
+                  data-confirmar-tipo="aviso"
+                  data-confirmar-ok="Sí, enviar">
+                <input type="hidden" name="id" value="${s.idSolicitud}">
+                <input type="hidden" name="action" value="enviar">
+                <button type="submit" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
+                        title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el formato firmado'}">
+                    <i class="bi bi-send"></i> Enviar solicitud a Estadías
+                </button>
+            </form>
+        </div>
+    </c:if>
+
     <%-- ===================== Card datos del lugar ===================== --%>
     <div class="detalle-card">
         <h6>Datos del lugar a visitar</h6>
@@ -385,132 +570,6 @@
         </c:if>
     </div>
 
-    <%-- ===================== Card archivos ===================== --%>
-    <div class="detalle-card">
-        <h6>Archivos</h6>
-
-        <%-- Documentos que genera el sistema con los datos de la solicitud.
-             El FO se muestra siempre: aunque ya esté firmado y subido, si el
-             docente quiere rehacer la firma tiene que poder bajarlo otra vez. --%>
-        <div class="separador-archivos">Generados por el sistema</div>
-        <div class="archivo-row">
-            <span class="archivo-pill">
-                <i class="bi bi-file-earmark-pdf"></i>
-                <span>FO-UTEZ-EST-08<small>Formato de la solicitud</small></span>
-            </span>
-            <div class="archivo-acciones">
-                <a class="btn-descargar" target="_blank"
-                   href="${pageContext.request.contextPath}/documento?gen=fo&solicitud=${s.idSolicitud}">
-                    <i class="bi bi-download"></i> Descargar
-                </a>
-            </div>
-        </div>
-
-        <%-- Documentos generados al aprobar (RF-07) --%>
-        <c:if test="${estado == 'Aprobada' || estado == 'Completada'}">
-            <div class="archivo-row">
-                <span class="archivo-pill">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                    <span>OFICIO DE VISITA<small>Autorización para el lugar de la visita</small></span>
-                </span>
-                <div class="archivo-acciones">
-                    <a class="btn-descargar" target="_blank"
-                       href="${pageContext.request.contextPath}/documento?gen=oficio&solicitud=${s.idSolicitud}">
-                        <i class="bi bi-download"></i> Descargar
-                    </a>
-                </div>
-            </div>
-        </c:if>
-
-        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
-            <div class="archivo-row">
-                <span class="archivo-pill">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                    <span>CARTA RESPONSIVA<small>Requiere firma del docente responsable</small></span>
-                </span>
-                <div class="archivo-acciones">
-                    <a class="btn-descargar" target="_blank"
-                       href="${pageContext.request.contextPath}/documento?gen=responsiva&solicitud=${s.idSolicitud}">
-                        <i class="bi bi-download"></i> Descargar
-                    </a>
-                </div>
-            </div>
-        </c:if>
-
-        <%-- Archivos subidos por el docente. El FO firmado es el único que se
-             puede reemplazar (y solo antes de enviar): por eso su fila lleva
-             "Volver a cargar", que es lo que abre la zona de carga. --%>
-        <c:if test="${not empty documentos}">
-            <div class="separador-archivos">${esDocente && esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
-            <c:forEach var="d" items="${documentos}">
-                <div class="archivo-row">
-                    <span class="archivo-pill archivo-pill--subido">
-                        <i class="bi bi-file-earmark-check"></i>
-                        <span>${fn:toUpperCase(d.nombreTipo)}<small>${d.tamanoLegible} · ${d.fechaCarga}</small></span>
-                    </span>
-                    <div class="archivo-acciones">
-                        <a class="btn-descargar" download
-                           href="${pageContext.request.contextPath}/documento?id=${d.idDocumento}">
-                            <i class="bi bi-download"></i> Descargar
-                        </a>
-                        <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
-                            <button type="button" class="btn-recargar" data-abre-carga="carga-fo-firmado">
-                                <i class="bi bi-arrow-repeat"></i> Volver a cargar
-                            </button>
-                        </c:if>
-                    </div>
-                </div>
-            </c:forEach>
-        </c:if>
-
-        <%-- Zonas de carga: solo el docente dueño y solo en los 2 momentos del
-             proceso en los que toca subir algo. Si el archivo ya está cargado
-             la zona nace oculta (se ve el archivo, no un recuadro vacío que
-             hace pensar que todavía falta subir algo). --%>
-        <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
-            <form id="carga-fo-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
-                  enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
-                <input type="hidden" name="action" value="firmado">
-                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
-                <div class="separador-firmar">${existeFirmado ? 'Reemplazar el formato firmado' : 'Carga del formato firmado'}</div>
-                <div class="zona-carga">
-                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
-                    <p>${existeFirmado ? 'Selecciona el nuevo PDF; reemplazará al archivo actual' : 'Sube el formato FO-UTEZ-EST-08 firmado'}</p>
-                    <small>Máximo 10 MB · solo PDF</small>
-                    <input type="file" name="archivo" class="form-control" accept="application/pdf" required>
-                    <div class="aviso-seleccion">Archivo seleccionado, pero aún no se sube: da click en <strong>${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}</strong>.</div>
-                    <button type="submit" class="btn-subir">
-                        <i class="bi bi-upload"></i> ${existeFirmado ? 'Reemplazar archivo' : 'Subir archivo'}
-                    </button>
-                </div>
-            </form>
-        </c:if>
-
-        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
-            <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data"
-                  class="form-carga"
-                  data-confirmar="Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita."
-                  data-confirmar-titulo="Cerrar la solicitud"
-                  data-confirmar-detalle="Después de esto ya no podrás cambiar los documentos de la solicitud."
-                  data-confirmar-tipo="aviso"
-                  data-confirmar-ok="Sí, subir y cerrar">
-                <input type="hidden" name="action" value="responsiva">
-                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
-                <div class="separador-firmar">Carga de la carta responsiva firmada</div>
-                <div class="zona-carga">
-                    <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
-                    <p>Sube la CARTA RESPONSIVA firmada</p>
-                    <small>Máximo 10 MB · solo PDF</small>
-                    <input type="file" name="archivo" class="form-control" accept="application/pdf" required>
-                    <div class="aviso-seleccion">Archivo seleccionado, pero aún no se sube: da click en <strong>Subir archivo</strong>.</div>
-                    <button type="submit" class="btn-subir">
-                        <i class="bi bi-upload"></i> Subir archivo
-                    </button>
-                </div>
-            </form>
-        </c:if>
-    </div>
-
     <%-- ===================== Card evaluar solicitud (solo coordinador y En revisión) ===================== --%>
     <c:if test="${!esDocente && estado == 'En revisión'}">
         <div class="detalle-card">
@@ -545,45 +604,11 @@
         </div>
     </c:if>
 
-    <%-- ===================== Barra final: Volver / Editar / Enviar ===================== --%>
+    <%-- ===================== Barra final: Volver ===================== --%>
     <div class="acciones-form">
-        <%-- El botón dice a dónde lleva: "Volver" a secas se entendía como
-             "regresar al paso anterior" y aquí sale de la solicitud. Una
-             solicitud terminada ya no aparece en Solicitudes: se vuelve al
-             Histórico, que es donde quedó. --%>
-        <c:choose>
-            <c:when test="${esTerminada}">
-                <a href="${pageContext.request.contextPath}/historico" class="btn-volver-detalle">
-                    <i class="bi bi-arrow-left"></i> Volver al histórico
-                </a>
-            </c:when>
-            <c:otherwise>
-                <a href="${pageContext.request.contextPath}/solicitud" class="btn-volver-detalle">
-                    <i class="bi bi-arrow-left"></i> Volver a solicitudes
-                </a>
-            </c:otherwise>
-        </c:choose>
-        <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
-            <div class="acciones-derecha">
-                <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"
-                   class="btn-editar-datos" title="Corregir los datos antes de enviar">
-                    <i class="bi bi-pencil"></i> Editar datos
-                </a>
-                <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
-                      data-confirmar="La solicitud pasa al área de Estadías para su revisión."
-                      data-confirmar-titulo="Enviar solicitud a Estadías"
-                      data-confirmar-detalle="Ya no podrás editar los datos ni reemplazar el formato firmado."
-                      data-confirmar-tipo="aviso"
-                      data-confirmar-ok="Sí, enviar">
-                    <input type="hidden" name="id" value="${s.idSolicitud}">
-                    <input type="hidden" name="action" value="enviar">
-                    <button type="submit" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
-                            title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el formato firmado'}">
-                        <i class="bi bi-send"></i> Enviar solicitud a Estadías
-                    </button>
-                </form>
-            </div>
-        </c:if>
+        <a href="${volverUrl}" class="btn-volver-detalle">
+            <i class="bi bi-arrow-left"></i> ${volverTexto}
+        </a>
     </div>
 
     <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>
