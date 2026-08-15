@@ -11,8 +11,6 @@ import java.util.Map;
  * Es la fuente única de verdad del desglose de la solicitud: el docente ya no
  * escribe a mano el nombre del programa ni cuadra los totales por división, los
  * elige de una lista y la división se deduce del programa.
- *
- *
  */
 public final class CatalogoAcademico {
 

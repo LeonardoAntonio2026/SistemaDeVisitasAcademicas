@@ -2,10 +2,14 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Detalles de la visita"); %>
-<%-- Una solicitud terminada (rechazada o completada) ya no vive en Solicitudes
-     sino en el Histórico: el menú y el botón de volver apuntan allá --%>
+<c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
+<%-- Una solicitud terminada ya no vive en Solicitudes sino en el Histórico: el
+     menú y el botón de volver apuntan allá. Una rechazada está terminada para
+     Estadías, pero no para el docente: él la puede corregir y le sigue
+     apareciendo en su bandeja, así que para él la salida es Solicitudes. --%>
 <c:set var="esTerminada" scope="request"
-       value="${solicitud.nombreEstado == 'Rechazada' || solicitud.nombreEstado == 'Completada'}"/>
+       value="${solicitud.nombreEstado == 'Completada'
+                || (solicitud.nombreEstado == 'Rechazada' && !esDocente)}"/>
 <c:set var="activeNav" scope="request" value="${esTerminada ? 'historico' : 'solicitudes'}"/>
 <% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
 <% request.setAttribute("nombresDivision", com.example.demo.model.CatalogoAcademico.getNombres()); %>
@@ -21,7 +25,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
     <c:set var="s" value="${solicitud}"/>
-    <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
+    <%-- esDocente ya viene definido arriba: lo necesita esTerminada --%>
     <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
     <c:set var="estado" value="${s.nombreEstado}"/>
 
@@ -72,6 +76,17 @@
             <div>
                 <div class="instruccion-titulo">Datos actualizados</div>
                 <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: descárgalo, fírmalo y súbelo.</p>
+            </div>
+        </div>
+    </c:if>
+    <%-- Corregir una solicitud rechazada la regresa a Pendiente: el aviso lo
+         dice, porque el cambio de estado es lo que más sorprende al docente --%>
+    <c:if test="${not empty param.corregida}">
+        <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
+            <i class="bi bi-check-circle"></i>
+            <div>
+                <div class="instruccion-titulo">Solicitud corregida</div>
+                <p>La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Descarga el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</p>
             </div>
         </div>
     </c:if>
@@ -204,7 +219,7 @@
                             </c:choose>
                         </p>
                         <c:if test="${esDocente}">
-                            <p class="instruccion-detalle">Una solicitud rechazada ya no se puede editar. Si la visita continúa, registra una nueva solicitud considerando el motivo.</p>
+                            <p>Corrige lo señalado con <strong>Editar datos</strong>, firma nuevamente el formato FO-UTEZ-EST-08 y vuelve a enviar la solicitud a revisión.</p>
                         </c:if>
                     </div>
                 </div>
@@ -438,6 +453,20 @@
                     <i class="bi bi-send"></i> Enviar solicitud a Estadías
                 </button>
             </form>
+        </div>
+    </c:if>
+
+    <%-- Card corregir: el docente dueño de una solicitud rechazada. Es la misma
+         idea que "Corregir reporte" en el detalle del reporte: editar los datos
+         la regresa a Pendiente y el trámite se reanuda desde firmar el FO. --%>
+    <c:if test="${esDocente && esPropia && estado == 'Rechazada'}">
+        <div class="detalle-card">
+            <h6>Corregir solicitud</h6>
+            <p>Edita los datos conforme a lo que señaló Estadías y vuelve a enviarla. Al guardar los cambios la solicitud queda otra vez <strong>Pendiente</strong>, así que hay que firmar y subir de nuevo el formato FO-UTEZ-EST-08.</p>
+            <a class="btn-editar-datos"
+               href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}">
+                <i class="bi bi-pencil"></i> Editar datos
+            </a>
         </div>
     </c:if>
 

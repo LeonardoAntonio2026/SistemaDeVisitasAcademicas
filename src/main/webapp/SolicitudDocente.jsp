@@ -41,10 +41,20 @@
             <h4 class="page-title text-title-request mb-0">${editando ? 'Editar solicitud' : 'Nueva Solicitud'}</h4>
         </div>
 
+        <%-- Se edita en dos momentos y el aviso no es el mismo: antes de enviar
+             (sigue Pendiente) o después de que Estadías la rechazó, donde
+             guardar además la reabre --%>
         <c:if test="${editando}">
             <div class="alert alert-warning d-flex align-items-start gap-2" style="font-size: 14px;">
                 <i class="bi bi-exclamation-triangle"></i>
-                <div>Estás editando una solicitud que aún no se envía. Al guardar, el formato FO-UTEZ-EST-08 se genera con los datos nuevos, así que deberás descargarlo, firmarlo y subirlo otra vez.</div>
+                <c:choose>
+                    <c:when test="${s.nombreEstado == 'Rechazada'}">
+                        <div>Estás corrigiendo una solicitud rechazada. Al guardar volverá a quedar Pendiente y el formato FO-UTEZ-EST-08 se genera con los datos nuevos, así que deberás descargarlo, firmarlo, subirlo y enviarla otra vez a Estadías.</div>
+                    </c:when>
+                    <c:otherwise>
+                        <div>Estás editando una solicitud que aún no se envía. Al guardar, el formato FO-UTEZ-EST-08 se genera con los datos nuevos, así que deberás descargarlo, firmarlo y subirlo otra vez.</div>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </c:if>
 

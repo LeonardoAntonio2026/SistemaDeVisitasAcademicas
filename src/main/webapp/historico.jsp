@@ -12,16 +12,20 @@
 
     <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
 
+    <%-- El docente no ve aquí sus rechazadas: las puede corregir, así que le
+         siguen apareciendo en Solicitudes y no se repiten en el histórico --%>
     <div class="superior">
         <h2>Histórico</h2>
-        <p>Solicitudes terminadas: completadas y rechazadas</p>
+        <p>${esDocente ? 'Solicitudes terminadas: las visitas que ya se completaron'
+                       : 'Solicitudes terminadas: completadas y rechazadas'}</p>
     </div>
 
     <c:choose>
         <c:when test="${empty listaHistorico}">
             <div class="solicitud-vacia">
                 <h5>Aún no hay solicitudes terminadas</h5>
-                <p>Cuando una solicitud se complete o se rechace aparecerá aquí</p>
+                <p>${esDocente ? 'Cuando una solicitud se complete aparecerá aquí'
+                               : 'Cuando una solicitud se complete o se rechace aparecerá aquí'}</p>
             </div>
         </c:when>
         <c:otherwise>

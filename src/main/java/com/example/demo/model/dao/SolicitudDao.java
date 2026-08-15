@@ -176,13 +176,17 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Solicitudes activas de un docente (las Completadas y Rechazadas se van
-     * al histórico y ya no aparecen en el inicio — RN-05).
+     * Solicitudes activas de un docente (las Completadas se van al histórico y
+     * ya no aparecen en el inicio — RN-05).
+     *
+     * Las Rechazadas SÍ siguen aquí: el docente las puede corregir y reenviar,
+     * igual que un reporte rechazado, así que para él no están terminadas. Si
+     * se fueran al histórico tendría que ir a buscarlas allá para corregirlas.
      */
     public List<Solicitud> getActivasBySolicitante(int idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
         String sql = SELECT_BASE + " WHERE s.id_usuario_solicitante = ? "
-                + "AND e.nombre_estado NOT IN ('Completada', 'Rechazada') "
+                + "AND e.nombre_estado <> 'Completada' "
                 + "ORDER BY s.fecha_creacion DESC";
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -214,12 +218,18 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Histórico: solicitudes terminadas (Completadas y Rechazadas).
-     * Si idUsuario es null se traen las de todos los docentes.
+     * Histórico: solicitudes terminadas. Si idUsuario es null se traen las de
+     * todos los docentes (así lo pide Estadías desde HistorialServlet).
+     *
+     * Qué cuenta como "terminada" depende de quién pregunta: para Estadías una
+     * Rechazada ya está cerrada, pero para el docente dueño no, porque la puede
+     * corregir; a él le sigue apareciendo en su bandeja y por eso no se repite
+     * aquí.
      */
     public List<Solicitud> getHistorico(Integer idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
-        String sql = SELECT_BASE + " WHERE e.nombre_estado IN ('Completada', 'Rechazada') "
+        String estados = idUsuario != null ? "('Completada')" : "('Completada', 'Rechazada')";
+        String sql = SELECT_BASE + " WHERE e.nombre_estado IN " + estados + " "
                 + (idUsuario != null ? "AND s.id_usuario_solicitante = ? " : "")
                 + "ORDER BY s.fecha_creacion DESC";
         try (Connection con = SQLConnector.getConnection();
@@ -315,14 +325,22 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
 
     /**
      * Actualiza la solicitud completa (datos + desglose por programa +
-     * asignaturas) mientras siga Pendiente. Los hijos se reemplazan en la
-     * misma transacción para que queden igual que como se capturaron.
+     * asignaturas). Los hijos se reemplazan en la misma transacción para que
+     * queden igual que como se capturaron.
+     *
+     * Siempre deja el estado en Pendiente, igual que ReporteDao.guardarFormulario:
+     * si venía Rechazada, corregirla la "reabre" y el docente tiene que volver a
+     * firmar el FO y enviarla. Con ella se borra la decisión anterior, porque
+     * quien la rechazó ya no autoriza nada y su nombre saldría en la firma
+     * "Autoriza" del formato impreso.
      */
     @Override
     public boolean update(Solicitud entidad) {
         String sqlSolicitud = "UPDATE solicitud SET nombre_empresa_actividad = ?, lugar_direccion = ?, "
                 + "telefono_contacto = ?, correo_contacto = ?, fecha_inicio = ?, objetivo = ?, "
-                + "area_solicitante = ?, docente_responsable = ?, celular_responsable = ? "
+                + "area_solicitante = ?, docente_responsable = ?, celular_responsable = ?, "
+                + "id_estado = (SELECT id_estado FROM estado_solicitud WHERE nombre_estado = 'Pendiente'), "
+                + "detalles_decision = NULL, id_usuario_autoriza = NULL "
                 + "WHERE id_solicitud = ?";
 
         Connection con = null;

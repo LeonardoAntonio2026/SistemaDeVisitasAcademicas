@@ -5,9 +5,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import com.example.demo.model.Solicitud;
 import com.example.demo.model.dao.SolicitudDao;
+import com.example.demo.utils.SesionUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,9 +20,7 @@ public class IndexSv extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
-        String rol = (session != null) ? (String) session.getAttribute("rol") : null;
+        Integer idUsuario = SesionUtils.idUsuario(req);
 
         // En el inicio solo van las ACTIVAS (las terminadas viven en el histórico, RN-05).
         // El docente ve las suyas; Estadías ve las enviadas por los docentes
@@ -30,7 +28,7 @@ public class IndexSv extends HttpServlet {
         List<Solicitud> solicitudes;
         if (idUsuario == null) {
             solicitudes = new ArrayList<>();
-        } else if (rol != null && !"Docente".equalsIgnoreCase(rol)) {
+        } else if (SesionUtils.esRevisor(req)) {
             solicitudes = solicitudDao.getActivasParaRevision();
         } else {
             solicitudes = solicitudDao.getActivasBySolicitante(idUsuario);

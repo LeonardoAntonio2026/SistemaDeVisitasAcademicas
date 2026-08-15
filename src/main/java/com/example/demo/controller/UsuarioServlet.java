@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.RolDao;
 import com.example.demo.model.dao.UsuarioDao;
+import com.example.demo.utils.SesionUtils;
 import com.example.demo.utils.Validador;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
@@ -10,7 +11,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,8 +32,6 @@ import java.util.List;
 @WebServlet(name = "UsuarioServlet", value = "/usuarios")
 public class UsuarioServlet extends HttpServlet {
 
-    private static final String ROL_ADMIN = "Administrador";
-
     private final UsuarioDao usuarioDao = new UsuarioDao();
     private final RolDao rolDao = new RolDao();
     private final Gson gson = new Gson();
@@ -44,7 +42,7 @@ public class UsuarioServlet extends HttpServlet {
 
         // Gestión de usuarios es solo del Administrador: a los demás se les dice
         // por qué no pueden entrar, en vez de rebotarlos al inicio sin explicación
-        if (!esAdministrador(request)) {
+        if (!SesionUtils.esAdministrador(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -70,7 +68,7 @@ public class UsuarioServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        if (!esAdministrador(request)) {
+        if (!SesionUtils.esAdministrador(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -95,7 +93,7 @@ public class UsuarioServlet extends HttpServlet {
         }
 
         if ("confirmar".equals(action)) {
-            if (id.equals(idEnSesion(request))) {
+            if (id.equals(SesionUtils.idUsuario(request))) {
                 return Respuesta.error("No puedes eliminar tu propia cuenta.");
             }
             // El borrado es irreversible, así que primero se le enseña al
@@ -182,7 +180,7 @@ public class UsuarioServlet extends HttpServlet {
             return Respuesta.error("El rol seleccionado no es válido.");
         }
         // Si se quitara a sí mismo el rol de admin se quedaría fuera del panel
-        if (id.equals(idEnSesion(request)) && idRol != usuario.getIdRol()) {
+        if (id.equals(SesionUtils.idUsuario(request)) && idRol != usuario.getIdRol()) {
             return Respuesta.error("No puedes cambiar tu propio rol: perderías el acceso a este panel.");
         }
         // El correo es la credencial de acceso: no puede chocar con otra cuenta
@@ -206,7 +204,7 @@ public class UsuarioServlet extends HttpServlet {
         if (id == null) {
             return Respuesta.error("Ese usuario ya no existe.");
         }
-        if (id.equals(idEnSesion(request))) {
+        if (id.equals(SesionUtils.idUsuario(request))) {
             return Respuesta.error("No puedes eliminar tu propia cuenta.");
         }
 
@@ -279,17 +277,6 @@ public class UsuarioServlet extends HttpServlet {
     }
 
     // ==================== Utilidades ====================
-
-    private boolean esAdministrador(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        String rol = (session != null) ? (String) session.getAttribute("rol") : null;
-        return ROL_ADMIN.equalsIgnoreCase(rol);
-    }
-
-    private Integer idEnSesion(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        return (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
-    }
 
     private Integer parseId(String valor) {
         try {

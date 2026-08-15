@@ -5,9 +5,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import com.example.demo.model.Reporte;
 import com.example.demo.model.dao.ReporteDao;
+import com.example.demo.utils.SesionUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,14 +26,12 @@ public class ReporteServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
-        String rol = (session != null) ? (String) session.getAttribute("rol") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
 
         List<Reporte> reportes;
         if (idUsuario == null) {
             reportes = new ArrayList<>();
-        } else if (rol != null && !"Docente".equalsIgnoreCase(rol)) {
+        } else if (SesionUtils.esRevisor(request)) {
             reportes = reporteDao.getAll();
         } else {
             reportes = reporteDao.getBySolicitante(idUsuario);

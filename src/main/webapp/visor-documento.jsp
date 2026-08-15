@@ -28,7 +28,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${fn:toUpperCase(d.nombreTipo)} - Ver documento</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap-icons.min.css">
     <style>
         /* La página ocupa la ventana completa y el PDF se lleva todo lo que
            sobra: un visor con scroll propio dentro de otro scroll es de lo

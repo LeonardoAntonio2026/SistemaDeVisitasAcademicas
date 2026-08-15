@@ -6,7 +6,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import com.example.demo.model.ImagenReporte;
 import com.example.demo.model.Reporte;
@@ -14,6 +13,7 @@ import com.example.demo.model.dao.DocumentoDao;
 import com.example.demo.model.dao.ImagenReporteDao;
 import com.example.demo.model.dao.ReporteDao;
 import com.example.demo.utils.EmailSender;
+import com.example.demo.utils.SesionUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,8 +66,7 @@ public class ReporteDetalleServlet extends HttpServlet {
         }
         int idReporte = reporte.getIdReporte();
 
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (Integer) session.getAttribute("idUsuario");
+        Integer idUsuario = SesionUtils.idUsuario(request);
         boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
 
         request.setAttribute("reporte", reporte);
@@ -116,10 +115,8 @@ public class ReporteDetalleServlet extends HttpServlet {
         }
         int idReporte = reporte.getIdReporte();
 
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (Integer) session.getAttribute("idUsuario");
-        String rol = (String) session.getAttribute("rol");
-        boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
+        Integer idUsuario = SesionUtils.idUsuario(request);
+        boolean esDocente = SesionUtils.esDocente(request);
         boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
         String estado = reporte.getNombreEstado();
         String action = request.getParameter("action");
@@ -334,8 +331,7 @@ public class ReporteDetalleServlet extends HttpServlet {
      */
     private Reporte cargarReportePermitido(HttpServletRequest request, HttpServletResponse response)
     throws IOException {
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
@@ -363,14 +359,11 @@ public class ReporteDetalleServlet extends HttpServlet {
 
     /** Regla de acceso de solo lectura: docente dueño, o Estadías/Admin (cualquiera). */
     private boolean puedeVer(HttpServletRequest request, Reporte reporte) {
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return false;
         }
-        String rol = (String) session.getAttribute("rol");
-        boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
-        if (esDocente) {
+        if (SesionUtils.esDocente(request)) {
             return reporte.getIdUsuarioSolicitante() == idUsuario;
         }
         return true;

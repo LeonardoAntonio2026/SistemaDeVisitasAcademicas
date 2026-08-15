@@ -5,12 +5,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import com.example.demo.model.Solicitud;
 import com.example.demo.model.dao.DocumentoDao;
 import com.example.demo.model.dao.ReporteDao;
 import com.example.demo.model.dao.SolicitudDao;
 import com.example.demo.utils.EmailSender;
+import com.example.demo.utils.SesionUtils;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -60,9 +60,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
             return; // el helper ya mandó la página de error que corresponde
         }
 
-        HttpSession session = request.getSession(false);
-        String rol = (String) session.getAttribute("rol");
-        boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
+        boolean esDocente = SesionUtils.esDocente(request);
         String action = request.getParameter("action");
         int id = solicitud.getIdSolicitud();
 
@@ -99,7 +97,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
             } else if (esRechazo && (motivo == null || motivo.isBlank())) {
                 error = "sinmotivo";
             } else {
-                Integer idAutoriza = (Integer) session.getAttribute("idUsuario");
+                Integer idAutoriza = SesionUtils.idUsuario(request);
                 String nuevoEstado = esRechazo ? "Rechazada" : "Aprobada";
                 boolean ok = solicitudDao.decidir(id, nuevoEstado,
                         motivo != null ? motivo.trim() : null, idAutoriza);
@@ -126,8 +124,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
      */
     private Solicitud cargarSolicitudPermitida(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
@@ -147,9 +144,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
             return null;
         }
 
-        String rol = (String) session.getAttribute("rol");
-        boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
-        boolean permitida = esDocente
+        boolean permitida = SesionUtils.esDocente(request)
                 ? solicitud.getIdUsuarioSolicitante() == idUsuario
                 // Coordinador/Admin: las Pendientes aún no se envían, no le aparecen
                 : !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado());

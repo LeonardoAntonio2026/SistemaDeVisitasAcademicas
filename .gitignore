@@ -19,7 +19,7 @@
 /conf/Catalina/localhost/
 /conf/tomcat-users.xml
 /.claude/
-
+/.hermes/
 # Compiled class files
 *.class
 
@@ -41,8 +41,11 @@
 *.crx
 *.pem
 
+# Entregables y documentacion pesada: se comparten aparte, no por el repo
 *.pdf
 *.pptx
 *.xlsx
+
+
 *.md
 !README.md

@@ -6,7 +6,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import com.example.demo.model.Documento;
 import com.example.demo.model.Reporte;
@@ -15,6 +14,7 @@ import com.example.demo.model.dao.DocumentoDao;
 import com.example.demo.model.dao.ImagenReporteDao;
 import com.example.demo.model.dao.ReporteDao;
 import com.example.demo.model.dao.SolicitudDao;
+import com.example.demo.utils.SesionUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -156,8 +156,7 @@ public class DocumentoServlet extends HttpServlet {
             return;
         }
 
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         Solicitud solicitud = solicitudDao.getById(idSolicitud);
 
         if (solicitud == null) {
@@ -225,8 +224,7 @@ public class DocumentoServlet extends HttpServlet {
             return;
         }
 
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         Reporte reporte = reporteDao.getById(idReporte);
 
         if (reporte == null) {
@@ -354,8 +352,7 @@ public class DocumentoServlet extends HttpServlet {
      * ReporteDetalleServlet: docente dueño, o Estadías/Admin (cualquiera).
      */
     private Reporte reportePermitido(HttpServletRequest request, int idReporte) {
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return null;
         }
@@ -363,9 +360,7 @@ public class DocumentoServlet extends HttpServlet {
         if (reporte == null) {
             return null;
         }
-        String rol = (String) session.getAttribute("rol");
-        boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
-        if (esDocente) {
+        if (SesionUtils.esDocente(request)) {
             return reporte.getIdUsuarioSolicitante() == idUsuario ? reporte : null;
         }
         return reporte;
@@ -373,8 +368,7 @@ public class DocumentoServlet extends HttpServlet {
 
     /** Mismas reglas de acceso que la página de detalles. */
     private Solicitud solicitudPermitida(HttpServletRequest request, int idSolicitud) {
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return null;
         }
@@ -382,9 +376,7 @@ public class DocumentoServlet extends HttpServlet {
         if (solicitud == null) {
             return null;
         }
-        String rol = (String) session.getAttribute("rol");
-        boolean esDocente = rol == null || "Docente".equalsIgnoreCase(rol);
-        if (esDocente) {
+        if (SesionUtils.esDocente(request)) {
             return solicitud.getIdUsuarioSolicitante() == idUsuario ? solicitud : null;
         }
         return "Pendiente".equalsIgnoreCase(solicitud.getNombreEstado()) ? null : solicitud;

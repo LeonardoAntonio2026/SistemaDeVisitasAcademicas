@@ -63,12 +63,15 @@ public class ReporteDao {
     }
 
     /**
-     * Bandeja de reportes: los Aprobados ya no aparecen aquí (solo quedan
-     * accesibles desde el Histórico) para no acumular reportes terminados.
+     * Bandeja de reportes de Estadías: solo los que le toca atender. Quedan
+     * fuera los Aprobados (ya terminaron) y los Rechazados, que están en manos
+     * del docente hasta que los corrija y los vuelva a enviar; los dos siguen
+     * accesibles desde el Histórico y desde el detalle de la solicitud.
      */
     public List<Reporte> getAll() {
         List<Reporte> datos = new ArrayList<>();
-        String sql = SELECT_BASE + " WHERE e.nombre_estado <> 'Aprobado' ORDER BY r.fecha_creacion DESC";
+        String sql = SELECT_BASE + " WHERE e.nombre_estado NOT IN ('Aprobado', 'Rechazado') "
+        + "ORDER BY r.fecha_creacion DESC";
         try (Connection con = SQLConnector.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

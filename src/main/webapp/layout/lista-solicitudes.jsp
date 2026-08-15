@@ -58,8 +58,12 @@
                             </div>
                         </c:if>
                     </div>
+                    <%-- Una rechazada solo le aparece al docente dueño, y lo que
+                         le toca hacer con ella es corregirla: el botón lo dice --%>
                     <a class="btn-ver-detalles" style="text-decoration: none;"
-                       href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver detalles</a>
+                       href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">
+                        ${esDocente && s.nombreEstado == 'Rechazada' ? 'Corregir solicitud' : 'Ver detalles'}
+                    </a>
                 </div>
             </div>
         </c:forEach>

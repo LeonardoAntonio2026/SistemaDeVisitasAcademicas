@@ -2,12 +2,12 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.UsuarioDao;
+import com.example.demo.utils.SesionUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,8 +32,7 @@ public class DocenteBuscarServlet extends HttpServlet {
         // Este endpoint devuelve nombres y correos institucionales, así que exige sesión
         // por su cuenta y no confía solo en FiltroAutenticacion, igual que el resto de
         // servlets que entregan datos.
-        HttpSession session = request.getSession(false);
-        Integer idUsuario = (session != null) ? (Integer) session.getAttribute("idUsuario") : null;
+        Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
