@@ -1,24 +1,5 @@
 package com.example.demo.model.dao;
 
-package com.example.demo.model.dao;
-
-import com.example.demo.model.Usuario;
-import com.example.demo.utils.SQLConnector;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;package com.example.demo.model.dao;
-
 import com.example.demo.model.Usuario;
 import com.example.demo.utils.SQLConnector;
 import org.junit.jupiter.api.AfterEach;
@@ -220,3 +201,4 @@ class UsuarioDaoTest {
         assertEquals(1, historial.reportes());
         assertTrue(historial.destruyeDatos(), "Debería retornar true porque 3 solicitudes + 1 reporte > 0");
     }
+}
