@@ -230,7 +230,7 @@
     background-color: var(--color-azul);
 }
 
-/* Botonera de cada archivo: Descargar y, si aplica, Volver a cargar */
+/* Botonera de cada archivo: Descargar y, si aplica, Reemplazar */
 .archivo-acciones {
     display: flex;
     align-items: center;

@@ -101,15 +101,26 @@ public class Reporte implements Serializable {
      * enviado se llama "Completado", que el docente lee como "ya terminé"
      * cuando en realidad apenas va a revisión; y "Pendiente" no dice quién
      * tiene la pelota. Aquí se traducen a lo que de verdad está pasando.
+     *
+     * Todos empiezan con "Reporte": así el badge dice de qué habla (antes un
+     * reporte "En revisión" se veía idéntico a una solicitud "En revisión") y
+     * el texto es el MISMO que usa Solicitud.getEstadoLegible() para la misma
+     * visita en el Histórico.
      */
     public String getEstadoLegible() {
         if ("Pendiente".equalsIgnoreCase(nombreEstado)) {
-            return "Por completar";
+            return "Reporte por completar";
         }
         if ("Completado".equalsIgnoreCase(nombreEstado)) {
-            return "En revisión";
+            return "Reporte en revisión";
         }
-        return nombreEstado; // Aprobado / Rechazado se leen bien
+        if ("Aprobado".equalsIgnoreCase(nombreEstado)) {
+            return "Reporte aprobado";
+        }
+        if ("Rechazado".equalsIgnoreCase(nombreEstado)) {
+            return "Reporte rechazado";
+        }
+        return nombreEstado;
     }
 
     /** Sufijo de la clase CSS del badge (.estado-…) que corresponde al estado visible. */

@@ -6,18 +6,13 @@
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-<h1>Datos de prueba</h1>
-<p class="ayuda" id="ayuda">Elige un perfil para llenar la Nueva Solicitud.</p>
-
 <div id="perfiles"></div>
 
-<div class="pie" id="pie" hidden>
-    <button type="button" id="btn-limpiar" class="enlace">Limpiar formulario</button>
-    <span class="atajo">Alt+Shift+L repite el último</span>
-</div>
+<button type="button" id="btn-limpiar" class="limpiar">Limpiar formulario</button>
 
-<p class="estado" id="estado"></p>
+<p class="aviso" id="aviso" hidden>Abre Nueva Solicitud y vuelve a intentarlo.</p>
 
+<script src="../src/presets.js"></script>
 <script src="popup.js"></script>
 </body>
 </html>

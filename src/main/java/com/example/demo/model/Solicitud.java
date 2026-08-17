@@ -202,6 +202,11 @@ public class Solicitud implements Serializable {
      *  - "Completada" suena a "ya acabé", pero la solicitud se cierra al subir
      *    la carta responsiva y todavía falta todo el reporte de la visita.
      * Por eso el estado visible de una solicitud cerrada depende del reporte.
+     *
+     * Regla del vocabulario: todo estado que hable del reporte empieza con la
+     * palabra "Reporte" y usa el MISMO texto que Reporte.getEstadoLegible(),
+     * para que la misma visita no se llame distinto en Reportes y en el
+     * Histórico. "Finalizada" queda para el único caso en que ya no falta nada.
      */
     public String getEstadoLegible() {
         if ("Pendiente".equalsIgnoreCase(nombreEstado)) {
@@ -219,7 +224,7 @@ public class Solicitud implements Serializable {
         if ("Completado".equalsIgnoreCase(estadoReporte)) {
             return "Reporte en revisión";
         }
-        return "Falta el reporte";
+        return "Reporte por completar";
     }
 
     /** Sufijo de la clase CSS del badge (.estado-…) que corresponde al estado visible. */
@@ -232,7 +237,7 @@ public class Solicitud implements Serializable {
             case "Finalizada":          return "finalizada";
             case "Reporte rechazado":   return "reporte-rechazado";
             case "Reporte en revisión": return "en-revision"; // mismo amarillo que "En revisión"
-            default:                    return "reporte-pendiente";
+            default:                    return "reporte-pendiente"; // "Reporte por completar"
         }
     }
 

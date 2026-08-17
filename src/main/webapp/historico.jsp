@@ -1,5 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Mismo guardado que en index.jsp: entrar directo al JSP (sin el servlet)
+     deja la lista en null y la página mentiría "Aún no hay solicitudes" --%>
+<c:if test="${listaHistorico == null}">
+    <c:redirect url="/historico"/>
+</c:if>
 <% request.setAttribute("pageTitle", "Histórico"); %>
 <% request.setAttribute("activeNav", "historico"); %>
 <%@ include file="layout/header.jsp" %>
@@ -14,16 +19,19 @@
 
     <%-- El docente no ve aquí sus rechazadas: las puede corregir, así que le
          siguen apareciendo en Solicitudes y no se repiten en el histórico --%>
+    <%-- No todo lo de aquí está terminado: una solicitud cerrada puede seguir
+         esperando su reporte. El subtítulo lo dice, en vez de prometer que
+         "ya se completó todo" y contradecirse con los badges de abajo. --%>
     <div class="superior">
         <h2>Histórico</h2>
-        <p>${esDocente ? 'Solicitudes terminadas: las visitas que ya se completaron'
-                       : 'Solicitudes terminadas: completadas y rechazadas'}</p>
+        <p>${esDocente ? 'Solicitudes cerradas: el estado indica cómo va el reporte de cada visita'
+                       : 'Solicitudes cerradas (con su reporte en curso) y rechazadas'}</p>
     </div>
 
     <c:choose>
         <c:when test="${empty listaHistorico}">
             <div class="solicitud-vacia">
-                <h5>Aún no hay solicitudes terminadas</h5>
+                <h5>Aún no hay solicitudes cerradas</h5>
                 <p>${esDocente ? 'Cuando una solicitud se complete aparecerá aquí'
                                : 'Cuando una solicitud se complete o se rechace aparecerá aquí'}</p>
             </div>
@@ -111,11 +119,26 @@
                                 <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
                             </td>
                             <td style="white-space: nowrap;">
-                                <a class="btn-descargar" style="margin-right: 6px;"
+                                <%-- Consultar va en contorno; solo cuando al docente le toca
+                                     hacer algo con el reporte el botón se vuelve sólido y lo
+                                     dice ("Completar"/"Corregir"), igual que en Reportes. --%>
+                                <a class="btn-descargar btn-contorno" style="margin-right: 6px;"
                                    href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver solicitud</a>
                                 <c:if test="${s.nombreEstado == 'Completada' && s.idReporte != null}">
-                                    <a class="btn-descargar btn-verde"
-                                       href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Ver reporte</a>
+                                    <c:choose>
+                                        <c:when test="${esDocente && s.estadoReporte == 'Pendiente'}">
+                                            <a class="btn-descargar"
+                                               href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Completar reporte</a>
+                                        </c:when>
+                                        <c:when test="${esDocente && s.estadoReporte == 'Rechazado'}">
+                                            <a class="btn-descargar"
+                                               href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Corregir reporte</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a class="btn-descargar btn-contorno"
+                                               href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Ver reporte</a>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </c:if>
                             </td>
                         </tr>

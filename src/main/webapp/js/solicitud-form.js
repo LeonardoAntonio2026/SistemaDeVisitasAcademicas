@@ -527,3 +527,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
+// La rueda del ratón sobre un campo numérico enfocado le cambia el valor (el
+// número de estudiantes) sin que el usuario se dé cuenta mientras baja por el
+// formulario. Se cancela el cambio y se quita el foco para que la página
+// vuelva a desplazarse normal. Va delegado al documento porque las filas de
+// grupos se agregan dinámicamente.
+document.addEventListener("wheel", function (e) {
+    var campo = document.activeElement;
+    if (campo && campo.type === "number" && campo === e.target) {
+        e.preventDefault();
+        campo.blur();
+    }
+}, { passive: false });

@@ -251,6 +251,33 @@
     background-color: var(--color-rojo-oscuro) !important;
 }
 
+/* Modificador de contorno para acciones de consulta (Ver solicitud, Ver
+   reporte, Ir a la solicitud). Mismo patrón que .btn-verde: aplica sobre
+   .btn-ver-detalles y .btn-descargar. La regla es una sola: sólido = la
+   acción que toca hacer; contorno = solo consultar.
+
+   Los selectores compuestos NO son adorno: .btn-descargar (detalle.css) fija
+   `color: #ffffff !important` para ganarle al color de enlace del navegador.
+   Con un `.btn-contorno` suelto empatan en importancia y en especificidad, y
+   como detalle.css se carga después, ganaba el blanco: fondo blanco con letra
+   blanca. Al nombrar las dos clases juntas sube la especificidad y este
+   bloque gana sin depender del orden de las hojas. */
+.btn-contorno,
+.btn-descargar.btn-contorno,
+.btn-ver-detalles.btn-contorno {
+    background-color: var(--color-superficie) !important;
+    color: var(--color-azul) !important;
+    border: 1.5px solid var(--color-borde) !important;
+    font-weight: 600;
+}
+
+.btn-contorno:hover,
+.btn-descargar.btn-contorno:hover,
+.btn-ver-detalles.btn-contorno:hover {
+    background-color: var(--color-fondo) !important;
+    border-color: var(--color-azul) !important;
+}
+
 /* ============================================================
    Pantallas angostas: las tarjetas dejan de intentar meter todo
    en una línea. Antes el badge se encimaba con el título y los

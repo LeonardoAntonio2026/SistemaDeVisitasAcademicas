@@ -1,5 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Mismo guardado que en index.jsp: entrar directo al JSP (sin el servlet)
+     deja la lista en null y la página mentiría "No hay solicitudes" --%>
+<c:if test="${listaSolicitudes == null}">
+    <c:redirect url="/solicitud"/>
+</c:if>
 <% request.setAttribute("pageTitle", "Solicitudes"); %>
 <% request.setAttribute("activeNav", "solicitudes"); %>
 <%@ include file="layout/header.jsp" %>

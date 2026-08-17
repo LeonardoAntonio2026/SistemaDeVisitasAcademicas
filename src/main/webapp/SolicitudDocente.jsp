@@ -105,7 +105,9 @@
 
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Fecha de inicio</label>
+                    <%-- "de la visita", no "de inicio": es la misma fecha que las
+                         tarjetas y el histórico llaman "Visita" --%>
+                    <label class="form-label">Fecha de la visita</label>
                     <input type="date" name="fechaInicio" class="form-control" value="${s.fechaInicio}" required
                            min="${hoy}" title="La visita no puede agendarse en una fecha pasada">
                 </div>

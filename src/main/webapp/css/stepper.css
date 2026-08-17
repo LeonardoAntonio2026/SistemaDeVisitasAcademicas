@@ -57,10 +57,15 @@
     font-weight: 600;
 }
 
-/* Paso en curso: punto verde con aro */
+/* Paso en curso: punto hueco con borde verde. Antes iba relleno igual que
+   los completados, y en una solicitud "Sin enviar" el punto de "Envío a
+   Estadías" en verde se leía como "ya se envió": verde relleno = hecho,
+   hueco = aquí vas. */
 .step.current .step-dot {
-    background-color: var(--color-verde);
-    box-shadow: 0 0 0 4px rgba(42, 122, 90, 0.25);
+    background-color: var(--color-superficie);
+    border: 3px solid var(--color-verde);
+    box-sizing: border-box;
+    box-shadow: 0 0 0 4px rgba(42, 122, 90, 0.18);
 }
 
 .step.current::before {

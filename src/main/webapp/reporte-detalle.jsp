@@ -32,7 +32,7 @@
             <i class="bi bi-check-circle"></i>
             <div>
                 <div class="instruccion-titulo">Reporte generado</div>
-                <p>Descarga el formato del reporte, fírmalo y súbelo para poder enviarlo a Estadías.</p>
+                <p>Abre el formato del reporte, guárdalo como PDF, fírmalo y súbelo para poder enviarlo a Estadías.</p>
             </div>
         </div>
     </c:if>
@@ -175,7 +175,9 @@
             </div>
             <span class="badge-estado estado-${r.claseEstado}">${r.estadoLegible}</span>
         </div>
-        <a class="btn-descargar btn-verde btn-resumen-solicitud"
+        <%-- Consulta, no acción: va en contorno para no competir con lo que
+             sí toca hacer en esta página --%>
+        <a class="btn-descargar btn-contorno btn-resumen-solicitud"
            href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">
             <i class="bi bi-arrow-right"></i> Ir a la solicitud
         </a>
@@ -220,14 +222,9 @@
                     <input type="file" id="input-imagen-oculto" accept="image/jpeg,image/png" style="display:none;">
                 </form>
             </div>
-
-            <%-- La acción va pegada a la card que la habilita, no al pie de
-                 la página: es lo que sigue justo después de llenar esto --%>
-            <div class="acciones-form acciones-form--derecha acciones-tras-card">
-                <button type="submit" form="form-reporte" class="btn-enviar-solicitud">
-                    <i class="bi bi-file-earmark-text"></i> Generar reporte
-                </button>
-            </div>
+            <%-- El botón "Generar reporte" está en la barra final de la página:
+                 esta card es la última, así que ahí queda igual de pegado a
+                 ella y además alineado con el "Volver" --%>
         </c:when>
 
         <%-- ============================================================
@@ -277,7 +274,7 @@
                     <div class="archivo-acciones">
                         <a class="btn-descargar" target="_blank"
                            href="${pageContext.request.contextPath}/documento?gen=reporte&reporte=${r.idReporte}">
-                            <i class="bi bi-eye"></i> Ver y descargar
+                            <i class="bi bi-box-arrow-up-right"></i> Abrir formato
                         </a>
                     </div>
                 </div>
@@ -304,8 +301,11 @@
                                    href="${pageContext.request.contextPath}/documento?ver=${d.idDocumento}">
                                     <i class="bi bi-eye"></i> Ver
                                 </a>
+                                <%-- "Reemplazar", no "Volver a cargar": convivía con
+                                     "Volver a reportes" y los dos "Volver" hacían
+                                     cosas de categorías distintas --%>
                                 <button type="button" class="btn-recargar" data-abre-carga="carga-reporte-firmado">
-                                    <i class="bi bi-arrow-repeat"></i> Volver a cargar
+                                    <i class="bi bi-arrow-repeat"></i> Reemplazar
                                 </button>
                             </div>
                         </div>
@@ -328,8 +328,8 @@
                         </button>
                     </div>
                 </form>
-                <%-- El botón que envía este form está justo debajo de la card
-                     (acciones-form); la confirmación la pinta js/modales.js --%>
+                <%-- El botón que envía este form está en la barra final de la
+                     página; la confirmación la pinta js/modales.js --%>
                 <form action="${pageContext.request.contextPath}/reporte" method="POST" id="form-enviar-reporte"
                       data-confirmar="El reporte pasa al área de Estadías para su revisión."
                       data-confirmar-titulo="Enviar reporte a Estadías"
@@ -339,15 +339,6 @@
                     <input type="hidden" name="id" value="${r.idReporte}">
                     <input type="hidden" name="action" value="enviar">
                 </form>
-            </div>
-
-            <%-- Enviar va pegado a la card de firmar/archivos: es lo que sigue
-                 justo después de subir el reporte firmado --%>
-            <div class="acciones-form acciones-form--derecha acciones-tras-card">
-                <button type="submit" form="form-enviar-reporte" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
-                        title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el reporte firmado'}">
-                    <i class="bi bi-send"></i> Enviar reporte a Estadías
-                </button>
             </div>
         </c:when>
 
@@ -372,7 +363,7 @@
                         <div class="archivo-acciones">
                             <a class="btn-descargar" target="_blank"
                                href="${pageContext.request.contextPath}/documento?gen=reporte&reporte=${r.idReporte}">
-                                <i class="bi bi-eye"></i> Ver y descargar
+                                <i class="bi bi-box-arrow-up-right"></i> Abrir formato
                             </a>
                         </div>
                     </div>
@@ -478,10 +469,28 @@
         </c:otherwise>
     </c:choose>
 
+    <%-- ===================== Barra final: Volver / acción principal =====================
+         Los dos van en la misma fila (Volver a la izquierda, la acción a la
+         derecha). Antes la acción colgaba de su card en una barra aparte y,
+         como esa card es la última de la página, quedaban dos renglones de
+         botones pegados y alineados a lados opuestos. --%>
     <div class="acciones-form">
         <a href="${pageContext.request.contextPath}/reportes" class="btn-volver-detalle">
             <i class="bi bi-arrow-left"></i> Volver a reportes
         </a>
+        <c:choose>
+            <c:when test="${subFase == 'formulario'}">
+                <button type="submit" form="form-reporte" class="btn-enviar-solicitud">
+                    <i class="bi bi-file-earmark-text"></i> Generar reporte
+                </button>
+            </c:when>
+            <c:when test="${subFase == 'firmar'}">
+                <button type="submit" form="form-enviar-reporte" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
+                        title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el reporte firmado'}">
+                    <i class="bi bi-send"></i> Enviar reporte a Estadías
+                </button>
+            </c:when>
+        </c:choose>
     </div>
 
     <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>

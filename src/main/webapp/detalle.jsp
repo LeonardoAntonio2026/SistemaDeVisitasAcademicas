@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<% request.setAttribute("pageTitle", "Detalles de la visita"); %>
+<% request.setAttribute("pageTitle", "Detalle de la solicitud"); %>
 <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
 <%-- Una solicitud terminada ya no vive en Solicitudes sino en el Histórico: el
      menú y el botón de volver apuntan allá. Una rechazada está terminada para
@@ -50,8 +50,10 @@
         <i class="bi bi-arrow-left"></i> ${volverTexto}
     </a>
 
+    <%-- "Detalle de la solicitud", no "de la visita": la página vive bajo la
+         sección Solicitudes y lo que muestra es la solicitud --%>
     <div class="superior">
-        <h2>Detalles de la visita</h2>
+        <h2>Detalle de la solicitud</h2>
         <p>
             <c:choose>
                 <c:when test="${!esDocente && estado == 'En revisión'}">Evalúa la solicitud enviada por el docente</c:when>
@@ -75,7 +77,7 @@
             <i class="bi bi-check-circle"></i>
             <div>
                 <div class="instruccion-titulo">Datos actualizados</div>
-                <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: descárgalo, fírmalo y súbelo.</p>
+                <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: ábrelo, fírmalo y súbelo.</p>
             </div>
         </div>
     </c:if>
@@ -86,7 +88,7 @@
             <i class="bi bi-check-circle"></i>
             <div>
                 <div class="instruccion-titulo">Solicitud corregida</div>
-                <p>La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Descarga el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</p>
+                <p>La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Abre el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</p>
             </div>
         </div>
     </c:if>
@@ -136,7 +138,7 @@
                 <div class="resumen-meta">
                     <span><i class="bi bi-pin-map"></i><c:out value="${empty s.lugarDireccion ? 'Sin dirección' : s.lugarDireccion}"/></span>
                     <c:if test="${not empty s.fechaInicio}">
-                        <span><i class="bi bi-calendar-event"></i>${s.fechaInicio}</span>
+                        <span><i class="bi bi-calendar-event"></i>Visita: ${s.fechaInicio}</span>
                     </c:if>
                     <span><i class="bi bi-clock-history"></i>Solicitada el ${s.fechaCreacion}</span>
                 </div>
@@ -163,7 +165,7 @@
                     <i class="bi bi-exclamation-circle"></i>
                     <div>
                         <div class="instruccion-titulo">Sube el formato FO-UTEZ-EST-08 firmado</div>
-                        <p>Descarga el formato FO-UTEZ-EST-08 en la sección <strong>Archivos</strong>, fírmalo y súbelo. El botón <strong>Enviar solicitud a Estadías</strong> se habilita hasta que el formato esté cargado. Los datos se pueden editar mientras la solicitud no se envíe.</p>
+                        <p>Abre el formato FO-UTEZ-EST-08 en la sección <strong>Archivos</strong>, guárdalo como PDF, fírmalo y súbelo. El botón <strong>Enviar solicitud a Estadías</strong> se habilita hasta que el formato esté cargado. Los datos se pueden editar mientras la solicitud no se envíe.</p>
                     </div>
                 </div>
             </c:when>
@@ -191,7 +193,7 @@
                     <i class="bi bi-file-earmark-arrow-up"></i>
                     <div>
                         <div class="instruccion-titulo">Solicitud aprobada: falta la carta responsiva</div>
-                        <p>Descarga la carta responsiva en la sección <strong>Archivos</strong>, fírmala y súbela. Al subirla, la solicitud se cierra y se genera el reporte de la visita.</p>
+                        <p>Abre la carta responsiva en la sección <strong>Archivos</strong>, guárdala como PDF, fírmala y súbela. Al subirla, la solicitud se cierra y se genera el reporte de la visita.</p>
                         <c:if test="${not empty s.detallesDecision}">
                             <p class="instruccion-detalle">Comentarios de Estadías: <c:out value="${s.detallesDecision}"/></p>
                         </c:if>
@@ -313,7 +315,7 @@
             <div class="archivo-acciones">
                 <a class="btn-descargar" target="_blank"
                    href="${pageContext.request.contextPath}/documento?gen=fo&solicitud=${s.idSolicitud}">
-                    <i class="bi bi-eye"></i> Ver y descargar
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir formato
                 </a>
             </div>
         </div>
@@ -328,7 +330,7 @@
                 <div class="archivo-acciones">
                     <a class="btn-descargar" target="_blank"
                        href="${pageContext.request.contextPath}/documento?gen=oficio&solicitud=${s.idSolicitud}">
-                        <i class="bi bi-eye"></i> Ver y descargar
+                        <i class="bi bi-box-arrow-up-right"></i> Abrir formato
                     </a>
                 </div>
             </div>
@@ -343,7 +345,7 @@
                 <div class="archivo-acciones">
                     <a class="btn-descargar" target="_blank"
                        href="${pageContext.request.contextPath}/documento?gen=responsiva&solicitud=${s.idSolicitud}">
-                        <i class="bi bi-eye"></i> Ver y descargar
+                        <i class="bi bi-box-arrow-up-right"></i> Abrir formato
                     </a>
                 </div>
             </div>
@@ -353,7 +355,7 @@
              aparte: es la forma de comprobar que el PDF que se subió es el
              correcto sin bajarlo y abrirlo a mano. El FO firmado es el único
              que se puede reemplazar (y solo antes de enviar): por eso su fila
-             lleva "Volver a cargar", que es lo que abre la zona de carga. --%>
+             lleva "Reemplazar", que es lo que abre la zona de carga. --%>
         <c:if test="${not empty documentos}">
             <div class="separador-archivos">${esDocente && esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
             <c:forEach var="d" items="${documentos}">
@@ -373,8 +375,11 @@
                             <i class="bi bi-eye"></i> Ver
                         </a>
                         <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
+                            <%-- "Reemplazar", no "Volver a cargar": convivía con
+                                 "Volver a solicitudes" y los dos "Volver" hacían
+                                 cosas de categorías distintas --%>
                             <button type="button" class="btn-recargar" data-abre-carga="carga-fo-firmado">
-                                <i class="bi bi-arrow-repeat"></i> Volver a cargar
+                                <i class="bi bi-arrow-repeat"></i> Reemplazar
                             </button>
                         </c:if>
                     </div>
@@ -491,7 +496,7 @@
                 <div class="dato-valor"><c:out value="${empty s.correoContacto ? '—' : s.correoContacto}"/></div>
             </div>
             <div>
-                <div class="dato-label">Fecha de inicio</div>
+                <div class="dato-label">Fecha de la visita</div>
                 <div class="dato-valor">${empty s.fechaInicio ? '—' : s.fechaInicio}</div>
             </div>
             <div class="dato-full">

@@ -3,10 +3,6 @@
   "name": "Autollenado · Visitas Académicas UTEZ",
   "version": "1.0.0",
   "description": "Llena el formulario de Nueva Solicitud con datos de prueba precargados.",
-  "permissions": ["storage"],
-  "background": {
-    "service_worker": "src/background.js"
-  },
   "content_scripts": [
     {
       "matches": [
@@ -16,18 +12,11 @@
         "https://127.0.0.1/*"
       ],
       "js": ["src/presets.js", "src/autollenado.js", "src/content.js"],
-      "css": ["src/content.css"],
       "run_at": "document_idle"
     }
   ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "Autollenar solicitud"
-  },
-  "commands": {
-    "autollenar": {
-      "suggested_key": { "default": "Alt+Shift+L" },
-      "description": "Autollenar con el último perfil usado"
-    }
   }
 }

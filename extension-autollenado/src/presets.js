@@ -21,7 +21,7 @@
  * acompanantes: no son nombres fijos, es el texto que se escribe en el buscador
  * de docentes. El sistema busca por nombre o por correo, así que "@utez.edu.mx"
  * sirve para tomar al primer docente registrado, sea cual sea. Si la búsqueda no
- * devuelve nada, el perfil se llena igual y el panel lo avisa.
+ * devuelve nada, el perfil se llena igual y ese acompañante se queda fuera.
  */
 var SVA_PRESETS = [
     {

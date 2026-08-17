@@ -1,5 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- La raíz "/" sirve este JSP directo (welcome-file), sin pasar por IndexSv:
+     la lista llega en null y la página mentía "No hay solicitudes por ahora".
+     Si nadie cargó la lista, se pasa por el servlet, que sí la trae. --%>
+<c:if test="${listaSolicitudes == null}">
+    <c:redirect url="/indexSv"/>
+</c:if>
 <% request.setAttribute("pageTitle", "Inicio"); %>
 <% request.setAttribute("activeNav", "inicio"); %>
 <%@ include file="layout/header.jsp" %>

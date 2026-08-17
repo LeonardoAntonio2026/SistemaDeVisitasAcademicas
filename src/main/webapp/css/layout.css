@@ -37,8 +37,14 @@ body { display: flex; flex-direction: column; min-height: 100vh; background-colo
 #sidebar .nav-link i { font-size: 1rem; margin-right: 0.25rem; }
 
 /* Nada debe provocar scroll horizontal en la página: el contenido ancho
-   (tablas, desglose) se desplaza dentro de su propio contenedor. */
-html, body { max-width: 100%; overflow-x: hidden; }
+   (tablas, desglose) se desplaza dentro de su propio contenedor.
+
+   Va "clip" y no "hidden" a propósito: con "hidden" el navegador convierte
+   el overflow vertical en "auto", el body pasa a ser un contenedor de
+   scroll y el `position: sticky` del sidebar deja de funcionar (se queda
+   pegado a un contenedor que nunca se desplaza). "clip" recorta igual pero
+   no crea contenedor de scroll, así que el sidebar sí sigue a la página. */
+html, body { max-width: 100%; overflow-x: clip; }
 
 .tabla-scroll {
     overflow-x: auto;

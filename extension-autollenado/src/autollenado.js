@@ -35,12 +35,6 @@
         return !!formulario();
     }
 
-    function esperar(ms) {
-        return new Promise(function (resolve) {
-            setTimeout(resolve, ms);
-        });
-    }
-
     function disparar(elemento, tipo) {
         elemento.dispatchEvent(new Event(tipo, { bubbles: true }));
     }
@@ -110,7 +104,7 @@
      * Llena una fila en el mismo orden que lo haría el docente: la división
      * primero, porque de ella dependen los programas educativos que se ofrecen.
      */
-    function llenarFila(fila, grupo, avisos) {
+    function llenarFila(fila, grupo) {
         var division = fila.querySelector(".campo-division");
         var programa = fila.querySelector(".campo-programa");
         var cuatrimestre = fila.querySelector(".campo-cuatrimestre");
@@ -118,23 +112,18 @@
         var estudiantes = fila.querySelector(".campo-estudiantes");
 
         if (!opcionDe(division, grupo.division)) {
-            avisos.push("La división " + grupo.division + " no está en el catálogo.");
             return;
         }
         escribir(division, grupo.division);
 
         if (!opcionDe(programa, grupo.programa)) {
-            avisos.push('El programa "' + grupo.programa + '" no está en ' + grupo.division + ".");
             return;
         }
         escribir(programa, grupo.programa);
         escribir(cuatrimestre, String(grupo.cuatrimestre));
 
         var opcionGrupo = opcionDe(letra, grupo.grupo);
-        if (!opcionGrupo || opcionGrupo.disabled) {
-            avisos.push("El grupo " + grupo.cuatrimestre + "° " + grupo.grupo
-                + " ya estaba capturado en ese programa.");
-        } else {
+        if (opcionGrupo && !opcionGrupo.disabled) {
             escribir(letra, grupo.grupo);
         }
         escribir(estudiantes, String(grupo.estudiantes));
@@ -207,7 +196,7 @@
      * Busca un docente y toma la primera sugerencia. Los ya elegidos no vuelven
      * a salir en la lista, así que repetir el mismo texto agrega a otro docente.
      */
-    async function agregarAcompanante(texto, avisos) {
+    async function agregarAcompanante(texto) {
         var entrada = document.getElementById("acompanantes-input");
         var lista = document.getElementById("acompanantes-sugerencias");
         if (!entrada || !lista) {
@@ -224,7 +213,6 @@
 
         var item = await esperarSugerencia(lista);
         if (!item) {
-            avisos.push('Ningún docente registrado coincide con "' + texto + '".');
             entrada.value = "";
             entrada.blur();
             return;
@@ -236,10 +224,6 @@
 
     /** Deja el formulario como recién abierto: sin chips y con una sola fila vacía. */
     function limpiar() {
-        if (!hayFormulario()) {
-            return { ok: false, avisos: ["No estás en el formulario de solicitud."] };
-        }
-
         CAMPOS_TEXTO.forEach(function (nombre) {
             escribir(campo(nombre), "");
         });
@@ -256,17 +240,10 @@
                 quitarFila(fila);
             }
         });
-
-        return { ok: true, avisos: [] };
     }
 
     /** Llena todo el formulario con un perfil de presets.js. */
     async function llenar(perfil) {
-        if (!hayFormulario()) {
-            return { ok: false, avisos: ["No estás en el formulario de solicitud."] };
-        }
-        var avisos = [];
-
         CAMPOS_TEXTO.forEach(function (nombre) {
             var valor = perfil.campos[nombre];
             if (valor === undefined || valor === null) {
@@ -274,7 +251,6 @@
             }
             var elemento = campo(nombre);
             if (!elemento) {
-                avisos.push("No se encontró el campo " + nombre + ".");
                 return;
             }
             if (SOLO_SI_ESTA_VACIO.indexOf(nombre) !== -1 && elemento.value.trim()) {
@@ -289,11 +265,9 @@
         var existentes = filas();
         (perfil.grupos || []).forEach(function (grupo, indice) {
             var fila = existentes[indice] || agregarFila();
-            if (!fila) {
-                avisos.push("No se pudo agregar la fila del grupo " + (indice + 1) + ".");
-                return;
+            if (fila) {
+                llenarFila(fila, grupo);
             }
-            llenarFila(fila, grupo, avisos);
         });
         filas().slice((perfil.grupos || []).length).forEach(quitarFila);
 
@@ -302,16 +276,13 @@
 
         quitarChips("acompanantes-wrapper");
         for (var i = 0; i < (perfil.acompanantes || []).length; i++) {
-            await agregarAcompanante(perfil.acompanantes[i], avisos);
+            await agregarAcompanante(perfil.acompanantes[i]);
         }
-
-        return { ok: true, avisos: avisos };
     }
 
     globalThis.SVAAutollenado = {
         hayFormulario: hayFormulario,
         llenar: llenar,
-        limpiar: limpiar,
-        esperar: esperar
+        limpiar: limpiar
     };
 })();

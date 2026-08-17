@@ -7,7 +7,7 @@
    2) Cuando el archivo ya está en el sistema la zona de carga
       nace oculta —si no, el recuadro punteado se lee como
       "todavía te falta subir algo"— y se abre con el botón
-      "Volver a cargar" que está junto al de descargar.
+      "Reemplazar" que está junto al de descargar.
    ============================================================ */
 (function () {
     "use strict";
@@ -23,7 +23,7 @@
         });
     });
 
-    // ---- 2) "Volver a cargar": revela la zona de carga escondida ----
+    // ---- 2) "Reemplazar": revela la zona de carga escondida ----
     document.querySelectorAll("[data-abre-carga]").forEach(function (boton) {
         boton.addEventListener("click", function () {
             var zona = document.getElementById(boton.dataset.abreCarga);

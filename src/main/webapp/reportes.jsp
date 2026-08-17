@@ -1,5 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Mismo guardado que en index.jsp: entrar directo al JSP (sin el servlet)
+     deja la lista en null y la página mentiría "No hay reportes" --%>
+<c:if test="${listaReportes == null}">
+    <c:redirect url="/reportes"/>
+</c:if>
 <% request.setAttribute("pageTitle", "Reportes"); %>
 <% request.setAttribute("activeNav", "reportes"); %>
 <%@ include file="layout/header.jsp" %>
@@ -71,7 +76,10 @@
                             </div>
                         </div>
                         <div class="acciones-card">
-                            <a class="btn-ver-detalles btn-verde" style="text-decoration: none;"
+                            <%-- Ir a la solicitud es consulta: va en contorno para no
+                                 competir con la acción del reporte, que es a lo que
+                                 se viene a esta página --%>
+                            <a class="btn-ver-detalles btn-contorno" style="text-decoration: none;"
                                href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">
                                 <i class="bi bi-arrow-right"></i> Ir a la solicitud
                             </a>
