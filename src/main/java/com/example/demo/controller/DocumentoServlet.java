@@ -349,7 +349,7 @@ public class DocumentoServlet extends HttpServlet {
 
     /**
      * Regla de acceso a los archivos del reporte, igual que en
-     * ReporteDetalleServlet: docente dueño, o Estadías/Admin (cualquiera).
+     * ReporteDetalleServlet: el dueño, o el revisor (cualquiera).
      */
     private Reporte reportePermitido(HttpServletRequest request, int idReporte) {
         Integer idUsuario = SesionUtils.idUsuario(request);
@@ -360,10 +360,10 @@ public class DocumentoServlet extends HttpServlet {
         if (reporte == null) {
             return null;
         }
-        if (SesionUtils.esDocente(request)) {
-            return reporte.getIdUsuarioSolicitante() == idUsuario ? reporte : null;
+        if (reporte.getIdUsuarioSolicitante() == idUsuario.intValue()) {
+            return reporte;
         }
-        return reporte;
+        return SesionUtils.esRevisor(request) ? reporte : null;
     }
 
     /** Mismas reglas de acceso que la página de detalles. */
@@ -376,8 +376,15 @@ public class DocumentoServlet extends HttpServlet {
         if (solicitud == null) {
             return null;
         }
-        if (SesionUtils.esDocente(request)) {
-            return solicitud.getIdUsuarioSolicitante() == idUsuario ? solicitud : null;
+        // El dueño siempre (el Administrador también levanta solicitudes), y el
+        // Administrador además cualquiera: necesita abrir el formato de la que
+        // le está corrigiendo al docente, aunque siga Pendiente
+        if (solicitud.getIdUsuarioSolicitante() == idUsuario.intValue()
+                || SesionUtils.esAdministrador(request)) {
+            return solicitud;
+        }
+        if (!SesionUtils.esRevisor(request)) {
+            return null;
         }
         return "Pendiente".equalsIgnoreCase(solicitud.getNombreEstado()) ? null : solicitud;
     }

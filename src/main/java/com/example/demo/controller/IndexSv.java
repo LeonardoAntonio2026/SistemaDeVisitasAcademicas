@@ -24,12 +24,14 @@ public class IndexSv extends HttpServlet {
 
         // En el inicio solo van las ACTIVAS (las terminadas viven en el histórico, RN-05).
         // El docente ve las suyas; Estadías ve las enviadas por los docentes
-        // (las Pendientes aún no se envían, por eso no le aparecen)
+        // (las Pendientes aún no se envían, por eso no le aparecen). El
+        // Administrador revisa y además solicita: ve las dos cosas.
         List<Solicitud> solicitudes;
         if (idUsuario == null) {
             solicitudes = new ArrayList<>();
         } else if (SesionUtils.esRevisor(req)) {
-            solicitudes = solicitudDao.getActivasParaRevision();
+            solicitudes = solicitudDao.getActivasParaRevision(
+                    SesionUtils.puedeSolicitar(req) ? idUsuario : null);
         } else {
             solicitudes = solicitudDao.getActivasBySolicitante(idUsuario);
         }

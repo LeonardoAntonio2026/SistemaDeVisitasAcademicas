@@ -53,6 +53,20 @@ public final class SesionUtils {
         return !esDocente(request);
     }
 
+    /**
+     * Quién puede levantar sus propias solicitudes y reportes: el Docente y
+     * también el Administrador, que además de revisar da clases y sale de
+     * visita como cualquiera.
+     *
+     * Ojo: el Administrador es lo único que cae de los dos lados, esRevisor()
+     * y puedeSolicitar(). Por eso, en lo que toca a UNA solicitud concreta, el
+     * permiso no se decide por el rol sino por si es suya: el dueño hace lo del
+     * docente (subir, enviar, corregir) y el revisor evalúa las de los demás.
+     */
+    public static boolean puedeSolicitar(HttpServletRequest request) {
+        return esDocente(request) || esAdministrador(request);
+    }
+
     /** Solo el Administrador; la gestión de usuarios (RF-12) no la abre nadie más. */
     public static boolean esAdministrador(HttpServletRequest request) {
         return ROL_ADMIN.equalsIgnoreCase(rol(request));

@@ -68,27 +68,41 @@ public class ReporteDetalleServlet extends HttpServlet {
 
         Integer idUsuario = SesionUtils.idUsuario(request);
         boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
+        boolean puedeEditar = puedeEditar(request, esDueno);
 
         request.setAttribute("reporte", reporte);
         request.setAttribute("esDueno", esDueno);
+        request.setAttribute("puedeEditar", puedeEditar);
         request.setAttribute("imagenes", imagenReporteDao.getByReporte(idReporte));
         request.setAttribute("documentos", documentoDao.getByReporte(idReporte));
         request.setAttribute("existeFirmado",
         documentoDao.existeTipoEnReporte(idReporte, TIPO_REPORTE_FIRMADO));
-        request.setAttribute("subFase", calcularSubFase(request, reporte, esDueno));
+        request.setAttribute("subFase", calcularSubFase(request, reporte, esDueno, puedeEditar));
         request.getRequestDispatcher("reporte-detalle.jsp").forward(request, response);
+    }
+
+    /**
+     * Quién puede llenar o corregir el formulario del reporte: el dueño y el
+     * Administrador, que también le corrige los suyos a los demás.
+     *
+     * Firmar, subir el PDF y enviar NO entran aquí: eso lo hace el dueño, que
+     * es quien firma el papel.
+     */
+    private boolean puedeEditar(HttpServletRequest request, boolean esDueno) {
+        return esDueno || SesionUtils.esAdministrador(request);
     }
 
     /**
      * Sub-fase del docente dentro del estado Pendiente (y la edición de un
      * Rechazado). El estado en BD no cambia hasta generar/enviar:
      *  - "formulario": captura o corrección (Pendiente sin resultados, o
-     *    ?editar=1 del dueño en Pendiente/Rechazado).
+     *    ?editar=1 en Pendiente/Rechazado).
      *  - "firmar": ya generó; descarga el formato, sube el firmado y envía.
-     *  - null: no aplica (otros estados o quien mira no es el dueño).
+     *  - null: no aplica (otros estados, o quien mira no lo puede tocar).
      */
-    private String calcularSubFase(HttpServletRequest request, Reporte reporte, boolean esDueno) {
-        if (!esDueno) {
+    private String calcularSubFase(HttpServletRequest request, Reporte reporte,
+    boolean esDueno, boolean puedeEditar) {
+        if (!puedeEditar) {
             return null;
         }
         String estado = reporte.getNombreEstado();
@@ -96,7 +110,11 @@ public class ReporteDetalleServlet extends HttpServlet {
         boolean editar = "1".equals(request.getParameter("editar"));
 
         if ("Pendiente".equalsIgnoreCase(estado)) {
-            return (!tieneResultados || editar) ? "formulario" : "firmar";
+            if (!tieneResultados || editar) {
+                return "formulario";
+            }
+            // "firmar" es del dueño: al Administrador le toca corregir, no firmar
+            return esDueno ? "firmar" : null;
         }
         if ("Rechazado".equalsIgnoreCase(estado) && editar) {
             return "formulario";
@@ -116,7 +134,6 @@ public class ReporteDetalleServlet extends HttpServlet {
         int idReporte = reporte.getIdReporte();
 
         Integer idUsuario = SesionUtils.idUsuario(request);
-        boolean esDocente = SesionUtils.esDocente(request);
         boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
         String estado = reporte.getNombreEstado();
         String action = request.getParameter("action");
@@ -126,8 +143,9 @@ public class ReporteDetalleServlet extends HttpServlet {
         String error = null;
 
         if ("generar".equals(action)) {
-            // El dueño llena/corrige el formulario: desde Pendiente o Rechazado
-            if (!esDueno) {
+            // Llenar/corregir el formulario: el dueño o el Administrador, y
+            // desde Pendiente o Rechazado
+            if (!puedeEditar(request, esDueno)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -157,7 +175,7 @@ public class ReporteDetalleServlet extends HttpServlet {
             }
         } else if ("aprobar".equals(action) || "rechazar".equals(action)) {
             // Solo Estadías/Admin evalúa, y solo un reporte enviado (Completado)
-            if (esDocente) {
+            if (!SesionUtils.esRevisor(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -357,16 +375,17 @@ public class ReporteDetalleServlet extends HttpServlet {
         return reporte;
     }
 
-    /** Regla de acceso de solo lectura: docente dueño, o Estadías/Admin (cualquiera). */
+    /** Regla de acceso de solo lectura: el dueño, o Estadías/Admin (cualquiera). */
     private boolean puedeVer(HttpServletRequest request, Reporte reporte) {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return false;
         }
-        if (SesionUtils.esDocente(request)) {
-            return reporte.getIdUsuarioSolicitante() == idUsuario;
+        // Primero el dueño: el Administrador también tiene reportes propios
+        if (reporte.getIdUsuarioSolicitante() == idUsuario.intValue()) {
+            return true;
         }
-        return true;
+        return SesionUtils.esRevisor(request);
     }
 
     /** Correo automático al docente cuando su reporte es aprobado o rechazado. */

@@ -207,9 +207,40 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * Solicitudes activas para el coordinador de Estadías: las que ya fueron
      * enviadas y siguen en proceso. Las Pendientes no aparecen porque el
      * docente aún no las envía (RN-02).
+     *
+     * idPropias solo llega con valor cuando quien revisa también levanta
+     * solicitudes (el Administrador): a las enviadas por los demás se le suman
+     * las suyas, que siguen Pendientes y si no no le saldrían en ningún lado.
+     * Con null se comporta igual que antes.
      */
-    public List<Solicitud> getActivasParaRevision() {
-        return getPorEstados(true, "En revisión", "Aprobada");
+    public List<Solicitud> getActivasParaRevision(Integer idPropias) {
+        if (idPropias == null) {
+            return getPorEstados(true, "En revisión", "Aprobada");
+        }
+
+        List<Solicitud> datos = new ArrayList<>();
+        String sql = SELECT_BASE
+                + " WHERE e.nombre_estado IN (?, ?)"
+                // Las propias son las mismas que vería como docente: todas
+                // menos las Completadas, que ya viven en el histórico
+                + " OR (s.id_usuario_solicitante = ? AND e.nombre_estado <> ?)"
+                + " ORDER BY s.fecha_creacion DESC";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, "En revisión");
+            ps.setString(2, "Aprobada");
+            ps.setInt(3, idPropias);
+            ps.setString(4, "Completada");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return datos;
     }
 
     /** Todas las solicitudes ya enviadas (para la página Solicitudes del coordinador). */

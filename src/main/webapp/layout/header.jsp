@@ -1,4 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Rol de la sesión, leído en un solo lugar (es el SesionUtils de las vistas).
+     Antes cada página repetía la comparación con los nombres de los roles.
+
+     El Administrador cae de los dos lados a propósito: revisa las solicitudes
+     de los demás Y levanta las suyas. Por eso, para decidir qué se ve de UNA
+     solicitud, estas banderas no bastan: manda si es propia (esPropia). --%>
+<c:set var="esRevisor" scope="request"
+       value="${sessionScope.rol == 'Estadias' || sessionScope.rol == 'Administrador'}"/>
+<c:set var="esAdministrador" scope="request" value="${sessionScope.rol == 'Administrador'}"/>
+<c:set var="puedeSolicitar" scope="request" value="${!esRevisor || esAdministrador}"/>
 <!DOCTYPE html>
 <html lang="es">
 <head>
