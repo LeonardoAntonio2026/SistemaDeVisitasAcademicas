@@ -110,12 +110,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Descarta los grupos ya capturados para el mismo programa y cuatrimestre:
-    // así no se puede agregar dos veces el 5° A de la misma carrera.
+    // Descarta los grupos ya capturados para el mismo programa y cuatrimestre,
+    // para no agregar dos veces el 5° A de la misma carrera
     function descartarGruposUsados() {
-        // Quién tiene tomado cada grupo. Si al cambiar de programa o de
-        // cuatrimestre una fila choca con otra, la que pierde el grupo es la
-        // que llegó después: la primera se queda con lo que ya tenía.
+        // Quién tiene tomado cada grupo. Si dos filas chocan, la que pierde el
+        // grupo es la que llegó después
         var tomados = {};
         filas().forEach(function (fila) {
             var c = campos(fila);
@@ -528,11 +527,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-// La rueda del ratón sobre un campo numérico enfocado le cambia el valor (el
-// número de estudiantes) sin que el usuario se dé cuenta mientras baja por el
-// formulario. Se cancela el cambio y se quita el foco para que la página
-// vuelva a desplazarse normal. Va delegado al documento porque las filas de
-// grupos se agregan dinámicamente.
+// La rueda del ratón sobre un campo numérico enfocado le cambia el valor al
+// bajar por el formulario: se cancela y se quita el foco. Va delegado al
+// documento porque las filas de grupos se agregan dinámicamente.
 document.addEventListener("wheel", function (e) {
     var campo = document.activeElement;
     if (campo && campo.type === "number" && campo === e.target) {

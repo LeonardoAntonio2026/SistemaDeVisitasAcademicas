@@ -1,12 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<%-- Visor de un documento subido. Se abre en una pestaña aparte desde el
-     botón "Ver" de la card de Archivos: sirve para comprobar que el archivo
-     que se cargó es el correcto sin tener que descargarlo y abrirlo a mano.
-
-     La misma barra azul que documento-impreso.jsp, para que ver un formato
-     generado y ver un archivo subido se sientan como la misma cosa. --%>
+<%-- Visor de un documento subido. Se abre en una pestaña aparte desde el botón
+     "Ver" de la card de Archivos, para revisarlo sin descargarlo. Lleva la
+     misma barra azul que documento-impreso.jsp. --%>
 <c:set var="d" value="${documento}"/>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Un documento cuelga de una solicitud O de un reporte: el botón de volver

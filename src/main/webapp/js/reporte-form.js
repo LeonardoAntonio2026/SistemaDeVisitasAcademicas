@@ -149,10 +149,6 @@ document.addEventListener("DOMContentLoaded", function () {
         actualizarBoton();
     }
 
-    // Las confirmaciones de evaluar y de enviar el reporte ya no viven aquí:
-    // van como data-confirmar en reporte-detalle.jsp y las atiende
-    // js/modales.js, el mismo que usan la solicitud y su detalle.
-
     // Al elegir archivo se avisa que falta dar click en Subir (elegir != subir)
     document.querySelectorAll(".zona-carga input[type='file']").forEach(function (input) {
         input.addEventListener("change", function () {

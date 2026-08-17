@@ -3,8 +3,8 @@
 <%
     request.setAttribute("pageTitle", "Iniciar Sesión");
 
-    // LoginServlet y RegisterServlet llegan por forward con el texto ya armado en
-    // un atributo; el restablecimiento llega por redirect, así que trae código en la URL.
+    // LoginServlet llega por forward con el texto ya armado en un atributo; el
+    // restablecimiento llega por redirect, así que trae código en la URL.
     if ("restablecida".equals(request.getParameter("mensaje")) && request.getAttribute("mensaje") == null) {
         request.setAttribute("mensaje", "Tu contraseña se actualizó. Ya puedes iniciar sesión.");
     }

@@ -179,9 +179,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * Solicitudes activas de un docente (las Completadas se van al histórico y
      * ya no aparecen en el inicio — RN-05).
      *
-     * Las Rechazadas SÍ siguen aquí: el docente las puede corregir y reenviar,
-     * igual que un reporte rechazado, así que para él no están terminadas. Si
-     * se fueran al histórico tendría que ir a buscarlas allá para corregirlas.
+     * Las Rechazadas siguen aquí: el docente las puede corregir y reenviar, así
+     * que para él no están terminadas.
      */
     public List<Solicitud> getActivasBySolicitante(int idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
@@ -221,10 +220,9 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * Histórico: solicitudes terminadas. Si idUsuario es null se traen las de
      * todos los docentes (así lo pide Estadías desde HistorialServlet).
      *
-     * Qué cuenta como "terminada" depende de quién pregunta: para Estadías una
-     * Rechazada ya está cerrada, pero para el docente dueño no, porque la puede
-     * corregir; a él le sigue apareciendo en su bandeja y por eso no se repite
-     * aquí.
+     * Qué cuenta como terminada depende de quién pregunta: para Estadías una
+     * Rechazada ya está cerrada; para el docente dueño no, porque la puede
+     * corregir y le sigue apareciendo en su bandeja.
      */
     public List<Solicitud> getHistorico(Integer idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
@@ -251,10 +249,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
 
     /**
      * Solicitudes cuyo estado está dentro de la lista, o fuera de ella si
-     * incluir es false. Los nombres de estado viajan como parámetros (?) en
-     * vez de pegarse al texto de la consulta, que es como se cuela una
-     * inyección de SQL. Lo único que se concatena son los signos de
-     * interrogación, uno por cada estado recibido.
+     * incluir es false. Los nombres de estado viajan como parámetros; lo único
+     * que se concatena son los signos de interrogación, uno por estado.
      */
     private List<Solicitud> getPorEstados(boolean incluir, String... estados) {
         List<Solicitud> datos = new ArrayList<>();
@@ -329,10 +325,9 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * queden igual que como se capturaron.
      *
      * Siempre deja el estado en Pendiente, igual que ReporteDao.guardarFormulario:
-     * si venía Rechazada, corregirla la "reabre" y el docente tiene que volver a
-     * firmar el FO y enviarla. Con ella se borra la decisión anterior, porque
-     * quien la rechazó ya no autoriza nada y su nombre saldría en la firma
-     * "Autoriza" del formato impreso.
+     * si venía Rechazada, corregirla la reabre y hay que firmar el FO otra vez.
+     * También se borra la decisión anterior, o el nombre de quien la rechazó
+     * saldría en la firma "Autoriza" del formato impreso.
      */
     @Override
     public boolean update(Solicitud entidad) {

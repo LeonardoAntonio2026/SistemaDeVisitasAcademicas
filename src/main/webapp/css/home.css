@@ -229,9 +229,8 @@
     cursor: not-allowed;
 }
 
-/* Modificador de acento (verde de marca) para botones secundarios que
-   antes iban en gris y parecían deshabilitados. Aplica sobre
-   .btn-ver-detalles y .btn-descargar. */
+/* Modificador de acento (verde de marca) para botones secundarios. Aplica
+   sobre .btn-ver-detalles y .btn-descargar. */
 .btn-verde {
     background-color: var(--color-verde) !important;
 }
@@ -252,16 +251,12 @@
 }
 
 /* Modificador de contorno para acciones de consulta (Ver solicitud, Ver
-   reporte, Ir a la solicitud). Mismo patrón que .btn-verde: aplica sobre
-   .btn-ver-detalles y .btn-descargar. La regla es una sola: sólido = la
-   acción que toca hacer; contorno = solo consultar.
+   reporte, Ir a la solicitud). La regla es una sola: sólido = la acción que
+   toca hacer; contorno = solo consultar.
 
-   Los selectores compuestos NO son adorno: .btn-descargar (detalle.css) fija
-   `color: #ffffff !important` para ganarle al color de enlace del navegador.
-   Con un `.btn-contorno` suelto empatan en importancia y en especificidad, y
-   como detalle.css se carga después, ganaba el blanco: fondo blanco con letra
-   blanca. Al nombrar las dos clases juntas sube la especificidad y este
-   bloque gana sin depender del orden de las hojas. */
+   Los selectores compuestos hacen falta: .btn-descargar (detalle.css) fija
+   `color: #ffffff !important` y con un `.btn-contorno` suelto empatan en
+   especificidad, así que ganaba la hoja que se carga después. */
 .btn-contorno,
 .btn-descargar.btn-contorno,
 .btn-ver-detalles.btn-contorno {
@@ -279,9 +274,8 @@
 }
 
 /* ============================================================
-   Pantallas angostas: las tarjetas dejan de intentar meter todo
-   en una línea. Antes el badge se encimaba con el título y los
-   botones se salían de la tarjeta.
+   Pantallas angostas: las tarjetas dejan de meter todo en una
+   línea, que encimaba el badge con el título.
    ============================================================ */
 @media (max-width: 575.98px) {
     .superior {
@@ -326,10 +320,8 @@
 /* ============================================================
    Barra de búsqueda y filtros de las pantallas de listado.
    Es una barra, no un formulario de captura: todo en un
-   renglón y con controles de un escalón menos (más bajos y de
-   letra más chica), para que pese menos que la tabla que
-   filtra. Los campos se reparten el ancho sobrante y el de
-   texto se lleva el doble: es el que más se usa.
+   renglón y con controles de un escalón menos, para que pese
+   menos que la tabla que filtra.
    ============================================================ */
 .filtros {
     display: flex;
@@ -345,9 +337,8 @@
     box-sizing: border-box;
 }
 
-/* Los campos no crecen: el ancho sobrante se lo lleva entero la búsqueda.
-   Repartido entre todos, un select de tres opciones o un par de fechas
-   terminaban midiendo media pantalla sin ganar nada. */
+/* Los campos no crecen: el ancho sobrante se lo lleva entero la búsqueda, que
+   es el filtro que más se usa. */
 .filtro-campo {
     display: flex;
     flex-direction: column;
@@ -358,8 +349,7 @@
 .filtro-campo--busqueda { flex: 1 1 200px; }
 
 /* Las dos fechas son un solo dato (el rango), así que van juntas bajo una
-   sola etiqueta: en columnas separadas ocupaban el doble y se leían como
-   dos filtros que no tienen nada que ver. */
+   sola etiqueta. */
 .filtro-campo--rango { flex: 0 1 230px; }
 
 .rango-fechas {
@@ -389,9 +379,8 @@
     font-size: var(--fs-sm);
 }
 
-/* Se alinea con la base de los campos (no con sus etiquetas) y con el
-   margin auto se va al extremo derecho del renglón en el que caiga: cierra
-   la barra, en vez de quedar pegado al último filtro. */
+/* Se alinea con la base de los campos, no con sus etiquetas, y el margin auto
+   lo manda al extremo derecho del renglón en el que caiga. */
 .filtros .btn-secundario {
     flex: 0 0 auto;
     margin-left: auto;

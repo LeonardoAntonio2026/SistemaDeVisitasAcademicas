@@ -195,18 +195,15 @@ public class Solicitud implements Serializable {
     }
 
     /**
-     * Estado tal como se le muestra al usuario. El nombre que guarda la base de
-     * datos describe la fila, no el trámite, y se malinterpreta:
-     *  - "Pendiente" suena a que ya se envió y está esperando, cuando en
-     *    realidad todavía no sale del escritorio del docente.
-     *  - "Completada" suena a "ya acabé", pero la solicitud se cierra al subir
-     *    la carta responsiva y todavía falta todo el reporte de la visita.
-     * Por eso el estado visible de una solicitud cerrada depende del reporte.
+     * Estado tal como se le muestra al usuario. El nombre que guarda la base
+     * describe la fila, no el trámite: "Pendiente" es una solicitud que el
+     * docente todavía no envía, y "Completada" solo significa que ya subió la
+     * carta responsiva, con el reporte de la visita aún por hacer. Por eso el
+     * estado visible de una solicitud cerrada depende del reporte.
      *
-     * Regla del vocabulario: todo estado que hable del reporte empieza con la
-     * palabra "Reporte" y usa el MISMO texto que Reporte.getEstadoLegible(),
-     * para que la misma visita no se llame distinto en Reportes y en el
-     * Histórico. "Finalizada" queda para el único caso en que ya no falta nada.
+     * Todo estado que hable del reporte empieza con la palabra "Reporte" y usa
+     * el mismo texto que Reporte.getEstadoLegible(), para que la misma visita
+     * no se llame distinto en Reportes y en el Histórico.
      */
     public String getEstadoLegible() {
         if ("Pendiente".equalsIgnoreCase(nombreEstado)) {
@@ -309,9 +306,8 @@ public class Solicitud implements Serializable {
 
     /**
      * Rehace el desglose por división sumando los grupos capturados. El docente
-     * ya no captura estas cifras: elige el programa educativo de cada grupo y la
+     * no captura estas cifras: elige el programa educativo de cada grupo y la
      * división sale del catálogo, así que los dos totales nunca se desfasan.
-     * Se guarda en ESTUDIANTES_DIVISION igual que antes.
      */
     public void recalcularEstudiantesPorDivision() {
         Map<String, Integer> mapa = divisionesEnCero();

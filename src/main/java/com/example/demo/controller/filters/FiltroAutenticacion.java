@@ -30,14 +30,13 @@ public class FiltroAutenticacion extends HttpFilter {
         // 1. ¿El usuario ya inició sesión? (guardamos el atributo "usuario" al hacer login)
         boolean loggedIn = (session != null && session.getAttribute("usuario") != null);
 
-        // 2. Rutas públicas: login y registro.
+        // 2. Rutas públicas: solo el login. Las cuentas las da de alta el
+        // Administrador desde la gestión de usuarios, no hay registro público.
         // Comparación exacta, no endsWith(): endsWith aceptaba cualquier ruta que
         // terminara en "login.jsp".
         boolean loginRequest =
                 path.equals("/login.jsp") ||
-                        path.equals("/login") ||
-                        path.equals("/registro.jsp") ||
-                        path.equals("/register");
+                        path.equals("/login");
 
         // 2b. Recuperación de contraseña (RF-02): públicas TAMBIÉN con sesión abierta.
         // El enlace llega por correo y es normal abrirlo desde el navegador donde ya
@@ -61,7 +60,7 @@ public class FiltroAutenticacion extends HttpFilter {
                 path.startsWith("/fonts/");
 
         if (loggedIn) {
-            // CON sesión: si intenta ir al login/registro, lo mandamos al inicio.
+            // CON sesión: si intenta ir al login, lo mandamos al inicio.
             // Al SERVLET (/indexSv), no al JSP: el JSP solo no carga las
             // solicitudes y se veía "No tienes ninguna solicitud" en falso.
             if (loginRequest) {
@@ -70,7 +69,7 @@ public class FiltroAutenticacion extends HttpFilter {
                 chain.doFilter(request, response);
             }
         } else {
-            // SIN sesión: solo dejamos pasar login/registro, recuperación y recursos públicos
+            // SIN sesión: solo dejamos pasar el login, la recuperación y los recursos públicos
             if (loginRequest || recuperacionRequest || isResource) {
                 chain.doFilter(request, response);
             } else {

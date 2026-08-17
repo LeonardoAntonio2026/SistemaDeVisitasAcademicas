@@ -82,8 +82,8 @@ public class DocumentoServlet extends HttpServlet {
 
         byte[] contenido = Base64.getDecoder().decode(doc.getContenidoBase64());
         String nombre = doc.getNombreTipo().replace(' ', '_') + ".pdf";
-        // inline=1 lo pide el visor: así el navegador lo dibuja en la página en
-        // vez de descargarlo (que es lo que hace el botón Descargar)
+        // inline=1 lo pide el visor: el navegador lo dibuja en la página en vez
+        // de descargarlo
         String disposicion = request.getParameter("inline") != null ? "inline" : "attachment";
         response.setContentType("application/pdf");
         response.setContentLengthLong(contenido.length);
@@ -94,9 +94,8 @@ public class DocumentoServlet extends HttpServlet {
     }
 
     /**
-     * Página aparte para ver un documento subido sin tener que descargarlo:
-     * es la forma de comprobar que el archivo que se cargó es el correcto.
-     * Solo trae los metadatos; el PDF lo pide el visor con ?id=N&inline=1.
+     * Página aparte para ver un documento subido sin descargarlo. Solo trae los
+     * metadatos; el PDF lo pide el visor con ?id=N&inline=1.
      */
     private void abrirVisor(String idTexto, HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

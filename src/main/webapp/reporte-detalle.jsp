@@ -279,10 +279,8 @@
                     </div>
                 </div>
 
-                <%-- Con el firmado ya cargado se ve el archivo, no un recuadro
-                     de carga vacío que se lee como "todavía falta subir algo".
-                     "Ver" lo abre en otra pestaña para comprobar que el PDF
-                     que se subió es el correcto. --%>
+                <%-- Con el firmado ya cargado se ve el archivo, no la zona de
+                     carga vacía. "Ver" lo abre en otra pestaña. --%>
                 <c:if test="${not empty documentos}">
                     <div class="separador-archivos">Subidos por ti</div>
                     <c:forEach var="d" items="${documentos}">
@@ -470,10 +468,8 @@
     </c:choose>
 
     <%-- ===================== Barra final: Volver / acción principal =====================
-         Los dos van en la misma fila (Volver a la izquierda, la acción a la
-         derecha). Antes la acción colgaba de su card en una barra aparte y,
-         como esa card es la última de la página, quedaban dos renglones de
-         botones pegados y alineados a lados opuestos. --%>
+         Los dos van en la misma fila: Volver a la izquierda, la acción a la
+         derecha. --%>
     <div class="acciones-form">
         <a href="${pageContext.request.contextPath}/reportes" class="btn-volver-detalle">
             <i class="bi bi-arrow-left"></i> Volver a reportes

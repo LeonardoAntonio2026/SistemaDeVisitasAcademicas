@@ -1,11 +1,9 @@
 // Panel de gestión de usuarios (RF-12).
 //
-// El JSP pinta la lista una sola vez, al entrar. De ahí en adelante todo pasa
-// por aquí: los formularios se envían con fetch al servlet, que responde JSON
-// {ok, mensaje, usuario, baja}, y con esa respuesta se actualiza la tabla y se
-// muestra el aviso. La página nunca se recarga.
-//
-// La validación de verdad la hace el servlet; lo de aquí es solo la pantalla.
+// El JSP pinta la lista una sola vez, al entrar. De ahí en adelante los
+// formularios se envían con fetch al servlet, que responde JSON
+// {ok, mensaje, usuario, baja}, y con eso se actualiza la tabla sin recargar.
+// La validación de verdad la hace el servlet.
 document.addEventListener("DOMContentLoaded", function () {
     var ERROR_RED = "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.";
 
@@ -56,8 +54,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Los errores de la edición se quedan dentro del modal: si se cerrara,
-    // el administrador perdería lo que ya había escrito
+    // Los errores de la edición se quedan dentro del modal: cerrarlo perdería
+    // lo que ya se había escrito
     function avisarEnModal(mensaje) {
         avisoEditar.innerHTML = "";
         avisoEditar.appendChild(miniCard(mensaje, false));
@@ -99,8 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var recargando = false;
 
     // Si la sesión caducó, FiltroAutenticacion manda al login y lo que llega ya
-    // no es JSON. Solo en ese caso se recarga, para acabar en la pantalla de
-    // login; cualquier otro fallo se avisa, no se esconde tras una recarga.
+    // no es JSON: solo en ese caso se recarga, los demás fallos se avisan
     function leerJson(respuesta) {
         if (respuesta.redirected) {
             recargando = true;

@@ -3,10 +3,9 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Detalle de la solicitud"); %>
 <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
-<%-- Una solicitud terminada ya no vive en Solicitudes sino en el Histórico: el
-     menú y el botón de volver apuntan allá. Una rechazada está terminada para
-     Estadías, pero no para el docente: él la puede corregir y le sigue
-     apareciendo en su bandeja, así que para él la salida es Solicitudes. --%>
+<%-- Una solicitud terminada vive en el Histórico, y hacia allá apuntan el menú
+     y el botón de volver. Una rechazada está terminada para Estadías, pero no
+     para el docente, que todavía la puede corregir. --%>
 <c:set var="esTerminada" scope="request"
        value="${solicitud.nombreEstado == 'Completada'
                 || (solicitud.nombreEstado == 'Rechazada' && !esDocente)}"/>
@@ -29,10 +28,7 @@
     <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
     <c:set var="estado" value="${s.nombreEstado}"/>
 
-    <%-- El botón dice a dónde lleva: "Volver" a secas se entendía como
-         "regresar al paso anterior" y aquí sale de la solicitud. Una
-         solicitud terminada ya no aparece en Solicitudes: se vuelve al
-         Histórico, que es donde quedó. --%>
+    <%-- El botón dice a dónde lleva, no solo "Volver" --%>
     <c:choose>
         <c:when test="${esTerminada}">
             <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
@@ -44,14 +40,11 @@
         </c:otherwise>
     </c:choose>
 
-    <%-- Volver también aquí arriba: quien entró solo a consultar no tiene por
-         qué recorrer la página entera para encontrar la salida --%>
+    <%-- Volver también aquí arriba, para no recorrer la página entera --%>
     <a href="${volverUrl}" class="volver-arriba">
         <i class="bi bi-arrow-left"></i> ${volverTexto}
     </a>
 
-    <%-- "Detalle de la solicitud", no "de la visita": la página vive bajo la
-         sección Solicitudes y lo que muestra es la solicitud --%>
     <div class="superior">
         <h2>Detalle de la solicitud</h2>
         <p>
@@ -146,9 +139,8 @@
             <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
         </div>
 
-        <%-- Mini card de instrucciones: qué falta y a quién le toca. Cuando algo
-             fue rechazado manda el rechazo, nunca el "sube tal archivo": es lo
-             primero que el docente tiene que leer, y con el motivo a la vista. --%>
+        <%-- Mini card de instrucciones: qué falta y a quién le toca. Si algo fue
+             rechazado manda el rechazo con su motivo, no el "sube tal archivo". --%>
         <c:set var="estadoReporte" value="${s.estadoReporte}"/>
         <c:choose>
             <c:when test="${estado == 'Pendiente' && esDocente && existeFirmado}">
@@ -296,16 +288,13 @@
 
     <%-- ===================== Card archivos =====================
          Va pegada a la card de instrucciones porque casi todo lo que ahí se
-         pide ("descarga el formato", "sube la carta responsiva") se hace
-         aquí: si esta card queda hasta el final hay que recorrer los datos
-         de la solicitud para encontrar aquello de lo que habla el aviso. --%>
+         pide ("descarga el formato", "sube la carta responsiva") se hace aquí. --%>
     <div class="detalle-card">
         <h6>Archivos</h6>
 
-        <%-- Documentos que genera el sistema con los datos de la solicitud.
-             El FO se muestra siempre: aunque ya esté firmado y subido, si el
-             docente quiere rehacer la firma tiene que poder bajarlo otra vez.
-             Estos abren su vista imprimible, de ahí se guardan como PDF. --%>
+        <%-- Documentos que genera el sistema con los datos de la solicitud;
+             abren su vista imprimible y de ahí se guardan como PDF. El FO se
+             muestra siempre, por si hay que rehacer la firma. --%>
         <div class="separador-archivos">Generados por el sistema</div>
         <div class="archivo-row">
             <span class="archivo-pill">
@@ -351,11 +340,9 @@
             </div>
         </c:if>
 
-        <%-- Archivos subidos por el docente. "Ver" los abre en una pestaña
-             aparte: es la forma de comprobar que el PDF que se subió es el
-             correcto sin bajarlo y abrirlo a mano. El FO firmado es el único
-             que se puede reemplazar (y solo antes de enviar): por eso su fila
-             lleva "Reemplazar", que es lo que abre la zona de carga. --%>
+        <%-- Archivos subidos por el docente. "Ver" los abre en otra pestaña,
+             sin bajarlos. El FO firmado es el único que se puede reemplazar, y
+             solo antes de enviar. --%>
         <c:if test="${not empty documentos}">
             <div class="separador-archivos">${esDocente && esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
             <c:forEach var="d" items="${documentos}">
@@ -375,9 +362,6 @@
                             <i class="bi bi-eye"></i> Ver
                         </a>
                         <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
-                            <%-- "Reemplazar", no "Volver a cargar": convivía con
-                                 "Volver a solicitudes" y los dos "Volver" hacían
-                                 cosas de categorías distintas --%>
                             <button type="button" class="btn-recargar" data-abre-carga="carga-fo-firmado">
                                 <i class="bi bi-arrow-repeat"></i> Reemplazar
                             </button>
@@ -389,8 +373,7 @@
 
         <%-- Zonas de carga: solo el docente dueño y solo en los 2 momentos del
              proceso en los que toca subir algo. Si el archivo ya está cargado
-             la zona nace oculta (se ve el archivo, no un recuadro vacío que
-             hace pensar que todavía falta subir algo). --%>
+             la zona nace oculta. --%>
         <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
             <form id="carga-fo-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
                   enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
@@ -436,9 +419,8 @@
     </div>
 
     <%-- ===================== Acciones del docente: Editar / Enviar =====================
-         Van pegadas a la card de Archivos y no al pie de la página: enviar es
-         lo que sigue justo después de subir el formato firmado, y ahí abajo
-         obligaba a recorrer los datos de la solicitud para llegar al botón. --%>
+         Van pegadas a la card de Archivos porque enviar es lo que sigue justo
+         después de subir el formato firmado. --%>
     <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
         <div class="acciones-form acciones-form--derecha acciones-tras-card">
             <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"
@@ -461,9 +443,8 @@
         </div>
     </c:if>
 
-    <%-- Card corregir: el docente dueño de una solicitud rechazada. Es la misma
-         idea que "Corregir reporte" en el detalle del reporte: editar los datos
-         la regresa a Pendiente y el trámite se reanuda desde firmar el FO. --%>
+    <%-- Card corregir: el docente dueño de una solicitud rechazada. Editar los
+         datos la regresa a Pendiente y el trámite se reanuda desde firmar el FO. --%>
     <c:if test="${esDocente && esPropia && estado == 'Rechazada'}">
         <div class="detalle-card">
             <h6>Corregir solicitud</h6>

@@ -121,8 +121,7 @@ public class ReporteDetalleServlet extends HttpServlet {
         String estado = reporte.getNombreEstado();
         String action = request.getParameter("action");
 
-        // Clave del aviso si la operación no se pudo hacer; null = todo bien.
-        // Antes cualquier fallo recargaba la página sin decir nada.
+        // Clave del aviso si la operación no se pudo hacer; null = todo bien
         String error = null;
 
         if ("generar".equals(action)) {

@@ -16,9 +16,9 @@ import java.io.IOException;
 import java.text.MessageFormat;
 
 /**
- * Página de detalles de la visita: el corazón del sistema. Es UNA sola página
- * cuyas cards se muestran u ocultan según el rol y el estado de la solicitud
- * (el docente ve la carga de archivos; el coordinador la card de evaluación).
+ * Página de detalles de la visita. Es una sola página cuyas cards se muestran
+ * u ocultan según el rol y el estado de la solicitud (el docente ve la carga
+ * de archivos; el coordinador la card de evaluación).
  */
 @WebServlet(name = "DetalleSolicitudServlet", value = "/detalle")
 public class DetalleSolicitudServlet extends HttpServlet {
@@ -64,9 +64,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
         String action = request.getParameter("action");
         int id = solicitud.getIdSolicitud();
 
-        // Clave del aviso que verá el usuario si la operación no se pudo hacer;
-        // null significa que todo salió bien. Antes cualquier fallo terminaba en
-        // la misma recarga sin explicación y el botón parecía no responder.
+        // Clave del aviso si la operación no se pudo hacer; null = todo bien
         String error = null;
 
         if ("enviar".equals(action)) {
@@ -118,9 +116,8 @@ public class DetalleSolicitudServlet extends HttpServlet {
      * el coordinador solo las que ya fueron enviadas.
      *
      * Devuelve null cuando no se puede mostrar, pero antes manda la página de
-     * error que corresponde: 404 si la solicitud no existe y 403 si existe pero
-     * no es de quien la pide. Antes los dos casos redirigían al inicio en
-     * silencio y parecía que el sistema no había hecho nada.
+     * error que corresponde: 404 si la solicitud no existe y 403 si existe
+     * pero no es de quien la pide.
      */
     private Solicitud cargarSolicitudPermitida(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
