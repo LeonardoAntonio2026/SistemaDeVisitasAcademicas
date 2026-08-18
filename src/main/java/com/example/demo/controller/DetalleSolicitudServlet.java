@@ -16,9 +16,13 @@ import java.io.IOException;
 import java.text.MessageFormat;
 
 /**
- * Página de detalles de la visita: el corazón del sistema. Es UNA sola página
- * cuyas cards se muestran u ocultan según el rol y el estado de la solicitud
- * (el docente ve la carga de archivos; el coordinador la card de evaluación).
+ * Controlador servlet encargado de gestionar la visita detallada de una visita acádemica.
+ * <p>
+ *     Funciona como el núcleo dinámico de interacción en el sistema, adaptando el contenido de la visita
+ *     según el rol del usuario (Docente solicitante o Estadias supervisor) así cómo el estado actual de la solicitud
+ * </p>
+ * @author Eder Gabriel García Vázquez
+ * @since 18/08/2026
  */
 @WebServlet(name = "DetalleSolicitudServlet", value = "/detalle")
 public class DetalleSolicitudServlet extends HttpServlet {
@@ -29,6 +33,20 @@ public class DetalleSolicitudServlet extends HttpServlet {
     private final SolicitudDao solicitudDao = new SolicitudDao();
     private final DocumentoDao documentoDao = new DocumentoDao();
     private final ReporteDao reporteDao = new ReporteDao();
+
+    /**
+     * Procesa las peticiones HTTP {@code GET} par cargar y renderizar los detalles de una solcitud.
+     * <p>
+     *     Carga la solitud validando los permisos del usuario, sus documentos asociados, la existencia
+     *     del formato firmado y el reporte de la visita si existiera.
+     * </p>
+     * @param request objeto {@link HttpServletRequest} con el parámetro "id" de la solicitud.
+     * @param response objeto {@link HttpServletResponse} para renderizar la visita o envíar errores HTTP
+     * @throws ServletException si ocurre un error cuándo se envía la petición
+     * @throws IOException si ocurre un error de entrada/salida.
+     * @author Eder Gabriel García Vázquez
+     * since 18/08/2026
+     */
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

@@ -56,7 +56,6 @@ public class SolicitudServlet extends HttpServlet {
      * @author Eder Gabriel García Vázquez
      * @since 17/08/2026
      */
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -300,7 +299,6 @@ public class SolicitudServlet extends HttpServlet {
      * @since 17/08/2026
      */
 
-    /** Campo de texto obligatorio: ni vacío ni más largo de lo que acepta la columna. */
     private void exigirTexto(List<String> errores, String valor, String etiqueta, int maxLargo) {
         if (Validador.vacio(valor)) {
             errores.add("Completa el campo \"" + etiqueta + "\".");
@@ -310,14 +308,17 @@ public class SolicitudServlet extends HttpServlet {
     }
 
     /**
-     *
-     * @param request
-     * @param response
-     * @param solicitud
-     * @param errores
-     * @param editando
-     * @throws ServletException
-     * @throws IOException
+     * Redirige nuevamente al JSP del formulario conservando los datos capturados y los errores generados.
+     * <p>
+     *     Restaura además la información completa de los docentes acompañantes para mostrar de nuevo la lista.
+     * </p>
+     * @param request objeto de la petición
+     * @param response objeto de la respuesta
+     * @param solicitud objeto con los datos capturados que se desean mantener
+     * @param errores lista de errores a desplegar en la vista
+     * @param editando {@code true} si la vista proviene de una edición, {@code false} si es una nueva solicitud
+     * @throws ServletException si ocurre un fallo al redirigir mediante {@code forward}
+     * @throws IOException si ocurre un un fallo de entrada/salida
      * @author Eder Gabriel García Vázquez
      * @since 17/08/2026
      */
@@ -339,7 +340,13 @@ public class SolicitudServlet extends HttpServlet {
         request.getRequestDispatcher("SolicitudDocente.jsp").forward(request, response);
     }
 
-    /** Copia al modelo los campos capturados en el formulario (crear y editar). */
+    /**
+     * Mapea los parametros recibidos en el {@link HttpServletRequest} hacia las propiedas del objeto {@link Solicitud}
+     * @param solicitud objeto de dominio a llenar
+     * @param request peticion HTTP que contiene los datos del formulario
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private void llenarDesdeFormulario(Solicitud solicitud, HttpServletRequest request) {
         solicitud.setNombreEmpresaActividad(request.getParameter("nombreEmpresa"));
         solicitud.setLugarDireccion(request.getParameter("direccionLugar"));
@@ -358,8 +365,11 @@ public class SolicitudServlet extends HttpServlet {
     }
 
     /**
-     * Docentes acompañantes elegidos con el autocompletado; llegan como ids en
-     * inputs ocultos. Se ignoran repetidos y los que no sean números.
+     * Parsea los idetnficadores de los docentes acompañantes enviados en la peticón
+     * @param request peticion HTTP que contiene el arreglo de los identificadores
+     * @return lista de objetos {@link Usuario} que representan a los docentes acompañantes, sin duplicidades.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private List<Usuario> leerAcompanantes(HttpServletRequest request) {
         List<Usuario> docentes = new ArrayList<>();
@@ -387,24 +397,38 @@ public class SolicitudServlet extends HttpServlet {
     }
 
     /**
-     * Carga la solicitud del parámetro id para editarla: solo el docente que la
-     * creó, y solo Pendiente (todavía no se envía) o Rechazada (Estadías la
-     * devolvió y corregirla la reabre, como el reporte rechazado). En revisión,
-     * Aprobada y Completada ya no se editan.
+     * Carga la solicitud identificada en los parámetros de la petición solo si pertenece al docente en sesión
+     * y se encuentra en estado modificable (Pendiente o Rechazada)
+     * @param request petición HTTP de la cual se obtiene el parametro id.
+     * @return la {@link Solicitud} correspondiente si cumple las condiciones, o {@code null} en caso contrario.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private Solicitud cargarEditablePorDueno(HttpServletRequest request) {
         return cargarPorDuenoEnEstados(request, "Pendiente", "Rechazada");
     }
 
     /**
-     * Igual que cargarEditablePorDueno pero solo Pendiente: una solicitud que ya
-     * pasó por Estadías no se borra aunque sí se pueda corregir (RF-11).
+     * Carga una solicitud identificada en los parametros solo si pertenece al docente en sesión
+     * y su estado es estrictamente "Pendiente"
+     * @param request peticion HTTP con el identificador de la solicitud
+     * @return la {@link Solicitud} a borrar, o {@code null} si no cumple la regla
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private Solicitud cargarBorrablePorDueno(HttpServletRequest request) {
         return cargarPorDuenoEnEstados(request, "Pendiente");
     }
 
-    /** La solicitud del parámetro id si es del docente en sesión y su estado está en la lista. */
+    /**
+     * Obtiene una solicitud de la base de datos validando la propiedad de la misma, así cómo su estado actual.
+     *
+     * @param request petición HTTP con el parámetro Id
+     * @param estadosPermitidos lista de nombres de estados con los que es válido recuperar la contraseña
+     * @return la {@link Solicitud} si existe, pertenece al usuarui actual y coincide con el estado de la solicitud, de lo contrario {@code null}
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private Solicitud cargarPorDuenoEnEstados(HttpServletRequest request, String... estadosPermitidos) {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
@@ -431,9 +455,11 @@ public class SolicitudServlet extends HttpServlet {
     }
 
     /**
-     * Arma las filas del desglose por programa educativo; ignora las filas vacías.
-     * La división académica no viaja en el POST: se deduce del programa elegido
-     * (el select de división solo sirve para filtrar la lista en el navegador).
+     * Construye la lista de desglose de programas educativos leyendo los parámetros del formulario
+     * @param request peticion HTTP con los arreglos de entrada
+     * @return lista de objetos {@link ProgramaEducativo} capturados en el formulario.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private List<ProgramaEducativo> leerProgramas(HttpServletRequest request) {
         List<ProgramaEducativo> programas = new ArrayList<>();
@@ -460,6 +486,13 @@ public class SolicitudServlet extends HttpServlet {
         return programas;
     }
 
+    /**
+     * Extrae el listado de asignaturas a reforzar a partir de los campos del formulario
+     * @param request peticion HTTP
+     * @return lista de nombres de asignaturas
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private List<String> leerAsignaturas(HttpServletRequest request) {
         List<String> asignaturas = new ArrayList<>();
         String[] valores = request.getParameterValues("asignaturas");
@@ -472,6 +505,15 @@ public class SolicitudServlet extends HttpServlet {
         }
         return asignaturas;
     }
+
+    /**
+     * Convierte un arreglo de cadenas a un número entero.
+     * @param valores arreglo de cadenas
+     * @param indice posición dentro del arreglo a parsear (convertir a numerico)
+     * @return el valor entero del texto o {@code null} si el índice es inválido
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
 
     private int parseEntero(String[] valores, int indice) {
         if (valores == null || indice >= valores.length || valores[indice] == null) {
