@@ -1,0 +1,88 @@
+/* ============================================================
+   Páginas de error (error/error.jsp). Son autocontenidas a
+   propósito: un error 500 puede ocurrir con la base de datos
+   caída, así que no dependen de la sesión ni del sidebar.
+   ============================================================ */
+
+.error-body {
+    min-height: 100vh;
+    background-color: var(--color-fondo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    margin: 0;
+}
+
+.error-card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--color-superficie);
+    border-radius: var(--radio-card);
+    box-shadow: var(--sombra-card);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.error-logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 1.25rem;
+}
+
+/* El número del error: grande, pero no más que el mensaje */
+.error-codigo {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-azul);
+    margin-bottom: 0.5rem;
+}
+
+.error-icono {
+    font-size: 2.2rem;
+    color: var(--color-rojo);
+    margin-bottom: 0.5rem;
+}
+
+.error-titulo {
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    color: var(--color-azul);
+    margin: 0 0 0.75rem;
+}
+
+.error-texto {
+    font-size: var(--fs-base);
+    color: var(--color-texto-3);
+    margin: 0 0 1.75rem;
+    line-height: 1.5;
+}
+
+/* Ruta que se intentó abrir; ayuda a soporte a ubicar el problema */
+.error-ruta {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--color-texto-tenue);
+    margin-top: 1.25rem;
+    overflow-wrap: anywhere;
+}
+
+.error-acciones {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 575.98px) {
+    .error-card { padding: 2rem 1.25rem; }
+
+    .error-codigo { font-size: 44px; }
+
+    .error-acciones { flex-direction: column; }
+
+    .error-acciones .btn-volver,
+    .error-acciones .btncrear { width: 100%; }
+}
