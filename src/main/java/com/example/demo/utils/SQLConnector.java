@@ -87,7 +87,8 @@ public class SQLConnector {
             // usuario. Nuestras escrituras son de pocas filas y no ganan nada con el
             // paralelismo, así que se desactiva en cada conexión del pool.
             config.setConnectionInitSql("ALTER SESSION DISABLE PARALLEL DML");
-
+            //agregue esta linea para que en las pruebas no pida una conexion real y no marque error
+            config.setInitializationFailTimeout(-1);
             config.setMaximumPoolSize(10);
             config.setMinimumIdle(2);
             config.setIdleTimeout(30000);

@@ -9,7 +9,8 @@
         "http://localhost/*",
         "http://127.0.0.1/*",
         "https://localhost/*",
-        "https://127.0.0.1/*"
+        "https://127.0.0.1/*",
+        "http://161.153.57.186/*"
       ],
       "js": ["src/presets.js", "src/autollenado.js", "src/content.js"],
       "run_at": "document_idle"

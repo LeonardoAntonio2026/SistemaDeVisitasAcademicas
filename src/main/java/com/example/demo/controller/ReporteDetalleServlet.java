@@ -36,7 +36,10 @@ import java.util.List;
  * el docente genera el formato imprimible, lo firma, sube el PDF y lo envía.
  */
 @WebServlet(name = "ReporteDetalleServlet", value = "/reporte")
-@MultipartConfig(maxFileSize = 5L * 1024 * 1024, maxRequestSize = 18L * 1024 * 1024)
+// El tope del contenedor va A PROPOSITO por encima de MAX_IMG_BYTES: si fueran
+// iguales, Tomcat cortaría primero y validarImagen() nunca podría explicarle al
+// usuario que la imagen pesa de más. Igual que en DocumentoServlet.
+@MultipartConfig(maxFileSize = 6L * 1024 * 1024, maxRequestSize = 20L * 1024 * 1024)
 public class ReporteDetalleServlet extends HttpServlet {
 
     /** Tipo del PDF firmado del reporte (fila de TIPO_DOCUMENTO, ver sql/). */
@@ -108,6 +111,24 @@ public class ReporteDetalleServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+
+        // El cuerpo se lee aquí, antes que nada, y de forma controlada: si una
+        // imagen pasa del tope del contenedor, Tomcat aborta el parseo y TODOS
+        // los campos se quedan en null (incluido el id). Por eso el formulario
+        // manda id y action en la URL: es lo único que sobrevive.
+        if (esMultipart(request)) {
+            try {
+                request.getParts();
+            } catch (IllegalStateException e) {
+                Integer idAviso = enteroONull(request.getParameter("id"));
+                if (idAviso == null) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                } else {
+                    response.sendRedirect("reporte?id=" + idAviso + "&error=tamano");
+                }
+                return;
+            }
+        }
 
         Reporte reporte = cargarReportePermitido(request, response);
         if (reporte == null) {
@@ -200,17 +221,12 @@ public class ReporteDetalleServlet extends HttpServlet {
         String observaciones = request.getParameter("observaciones");
 
         // Imágenes nuevas: varias partes con el mismo name="imagenes"
+        // El cuerpo ya se parseó en doPost(), así que aquí no puede fallar
         List<Part> partesImagen = new ArrayList<>();
-        try {
-            for (Part p : request.getParts()) {
-                if ("imagenes".equals(p.getName()) && p.getSize() > 0) {
-                    partesImagen.add(p);
-                }
+        for (Part p : request.getParts()) {
+            if ("imagenes".equals(p.getName()) && p.getSize() > 0) {
+                partesImagen.add(p);
             }
-        } catch (IllegalStateException e) {
-            // El contenedor rechazó una parte por exceder maxFileSize (RN-07)
-            response.sendRedirect("reporte?id=" + idReporte + "&error=tamano");
-            return;
         }
 
         for (Part p : partesImagen) {
@@ -322,6 +338,24 @@ public class ReporteDetalleServlet extends HttpServlet {
         boolean esPng = contenido.length > 3 && (contenido[0] & 0xFF) == 0x89
         && contenido[1] == 'P' && contenido[2] == 'N' && contenido[3] == 'G';
         return esPng ? "image/png" : "image/jpeg";
+    }
+
+    /**
+     * ¿El POST trae un archivo? Solo esos se pueden (y se deben) parsear con
+     * getParts(); en un formulario normal esa llamada revienta.
+     */
+    private static boolean esMultipart(HttpServletRequest request) {
+        String tipo = request.getContentType();
+        return tipo != null && tipo.toLowerCase().startsWith("multipart/form-data");
+    }
+
+    /** El parámetro como entero, o null si viene vacío o no es un número. */
+    private static Integer enteroONull(String valor) {
+        try {
+            return Integer.valueOf(valor);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**

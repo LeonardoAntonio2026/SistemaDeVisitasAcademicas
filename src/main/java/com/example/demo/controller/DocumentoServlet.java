@@ -34,7 +34,11 @@ import java.util.Base64;
  *  - POST action=reporteFirmado&reporte=N  sube el PDF firmado del reporte.
  */
 @WebServlet(name = "DocumentoServlet", value = "/documento")
-@MultipartConfig(maxFileSize = 10 * 1024 * 1024, maxRequestSize = 12 * 1024 * 1024)
+// El tope del contenedor va A PROPOSITO por encima de MAX_PDF_BYTES: si fueran
+// iguales, Tomcat cortaría primero y la comprobación de abajo (la que sabe
+// explicarle al usuario qué pasó) nunca llegaría a ejecutarse. El contenedor
+// queda solo como red de seguridad para lo absurdo.
+@MultipartConfig(maxFileSize = 12L * 1024 * 1024, maxRequestSize = 14L * 1024 * 1024)
 public class DocumentoServlet extends HttpServlet {
 
     private static final long MAX_PDF_BYTES = 10L * 1024 * 1024;
@@ -140,6 +144,19 @@ public class DocumentoServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+
+        // El cuerpo se lee aquí, antes que nada, y de forma controlada: si el
+        // archivo pasa del tope del contenedor, Tomcat aborta el parseo y TODOS
+        // los campos del formulario se quedan en null. Sin esto el servlet se
+        // caía con la pantalla de error genérica en vez de decir qué pasó.
+        if (esMultipart(request)) {
+            try {
+                request.getParts();
+            } catch (IllegalStateException e) {
+                avisarArchivoGrande(request, response);
+                return;
+            }
+        }
 
         // El PDF firmado del reporte tiene su propia rama (cuelga de un
         // reporte, no de una solicitud)
@@ -261,6 +278,47 @@ public class DocumentoServlet extends HttpServlet {
 
         response.sendRedirect("reporte?id=" + idReporte
                 + (guardado ? "&subido=firmado" : "&error=guardar"));
+    }
+
+    /**
+     * ¿El POST trae un archivo? Solo esos se pueden (y se deben) parsear con
+     * getParts(); en un formulario normal esa llamada revienta.
+     */
+    private static boolean esMultipart(HttpServletRequest request) {
+        String tipo = request.getContentType();
+        return tipo != null && tipo.toLowerCase().startsWith("multipart/form-data");
+    }
+
+    /**
+     * Aviso de "el archivo pesa demasiado" cuando el cuerpo del POST ni se pudo
+     * leer. Como los campos del formulario se perdieron con el parseo, el
+     * destino se arma con los identificadores que viajan en la URL; por eso los
+     * formularios de carga los mandan ahí y no solo como campos ocultos.
+     */
+    private void avisarArchivoGrande(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        Integer idReporte = enteroONull(request.getParameter("reporte"));
+        if (idReporte != null) {
+            // Prefijo para no confundirlo con los errores de las imágenes
+            response.sendRedirect("reporte?id=" + idReporte + "&error=firmado-tamano");
+            return;
+        }
+        Integer idSolicitud = enteroONull(request.getParameter("solicitud"));
+        if (idSolicitud != null) {
+            response.sendRedirect("detalle?id=" + idSolicitud + "&error=tamano");
+            return;
+        }
+        // Sin identificador no hay a dónde volver
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    /** El parámetro como entero, o null si viene vacío o no es un número. */
+    private static Integer enteroONull(String valor) {
+        try {
+            return Integer.valueOf(valor);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /** Solo PDF y máximo 10 MB (RN-07). Devuelve la clave del error o null si es válido. */

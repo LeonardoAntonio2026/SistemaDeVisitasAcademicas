@@ -12,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class SolicitudDao implements Dao<Solicitud, Integer> {
 
@@ -144,7 +143,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
 
             solicitud.setProgramas(getProgramas(con, id));
             solicitud.setAsignaturas(getAsignaturas(con, id));
-            solicitud.setEstudiantesPorDivision(getEstudiantesPorDivision(con, id));
+            // El desglose por división no se guarda: se suma de los programas ya cargados
+            solicitud.recalcularEstudiantesPorDivision();
             solicitud.setDocentesAcompanantes(getDocentesAcompanantes(con, id));
             return solicitud;
 
@@ -442,8 +442,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
 
     /**
      * Inserta las tablas hijas de la solicitud (desglose por programa,
-     * asignaturas, estudiantes por división y docentes acompañantes) usando la
-     * conexión de la transacción que ya viene abierta.
+     * asignaturas y docentes acompañantes) usando la conexión de la
+     * transacción que ya viene abierta.
      */
     private void guardarHijos(Connection con, int idSolicitud, Solicitud entidad) throws SQLException {
         if (!entidad.getProgramas().isEmpty()) {
@@ -470,26 +470,6 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
                     ps.setString(2, asignatura);
                     ps.addBatch();
                 }
-                ps.executeBatch();
-            }
-        }
-
-        // Solo se guardan las divisiones con estudiantes; las que van en 0 no ocupan fila
-        String sqlDivision = "INSERT INTO estudiantes_division (id_solicitud, division, no_estudiantes) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = con.prepareStatement(sqlDivision)) {
-            boolean hayFilas = false;
-            for (Map.Entry<String, Integer> e : entidad.getEstudiantesPorDivision().entrySet()) {
-                int cantidad = e.getValue() != null ? e.getValue() : 0;
-                if (cantidad <= 0) {
-                    continue;
-                }
-                ps.setInt(1, idSolicitud);
-                ps.setString(2, e.getKey());
-                ps.setInt(3, cantidad);
-                ps.addBatch();
-                hayFilas = true;
-            }
-            if (hayFilas) {
                 ps.executeBatch();
             }
         }
@@ -522,28 +502,13 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     /** Borra las tablas hijas para volver a escribirlas (update) o eliminar la solicitud. */
     private void borrarHijos(Connection con, int idSolicitud) throws SQLException {
         String[] tablas = {"asignatura_reforzar_solicitud", "programa_educativo",
-                "estudiantes_division", "solicitud_docente"};
+                "solicitud_docente"};
         for (String tabla : tablas) {
             try (PreparedStatement ps = con.prepareStatement("DELETE FROM " + tabla + " WHERE id_solicitud = ?")) {
                 ps.setInt(1, idSolicitud);
                 ps.executeUpdate();
             }
         }
-    }
-
-    /** Devuelve siempre las 4 divisiones; las que no tienen fila quedan en 0. */
-    private Map<String, Integer> getEstudiantesPorDivision(Connection con, int idSolicitud) throws SQLException {
-        Map<String, Integer> divisiones = Solicitud.divisionesEnCero();
-        String sql = "SELECT division, no_estudiantes FROM estudiantes_division WHERE id_solicitud = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idSolicitud);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    divisiones.put(rs.getString("division"), rs.getInt("no_estudiantes"));
-                }
-            }
-        }
-        return divisiones;
     }
 
     private List<Usuario> getDocentesAcompanantes(Connection con, int idSolicitud) throws SQLException {

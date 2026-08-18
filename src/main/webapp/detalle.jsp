@@ -392,10 +392,12 @@
              la zona nace oculta (se ve el archivo, no un recuadro vacío que
              hace pensar que todavía falta subir algo). --%>
         <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
-            <form id="carga-fo-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
-                  enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
-                <input type="hidden" name="action" value="firmado">
-                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
+            <%-- action y solicitud viajan en la URL, no como campos ocultos: si el
+                 PDF pasa del tope, el servidor no puede leer el cuerpo y solo le
+                 queda la URL para saber a dónde devolver el aviso. --%>
+            <form id="carga-fo-firmado" method="POST" class="form-carga" ${existeFirmado ? 'hidden' : ''}
+                  action="${pageContext.request.contextPath}/documento?action=firmado&solicitud=${s.idSolicitud}"
+                  enctype="multipart/form-data">
                 <div class="separador-firmar">${existeFirmado ? 'Reemplazar el formato firmado' : 'Carga del formato firmado'}</div>
                 <div class="zona-carga">
                     <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
@@ -411,15 +413,13 @@
         </c:if>
 
         <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
-            <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data"
-                  class="form-carga"
+            <form method="POST" enctype="multipart/form-data" class="form-carga"
+                  action="${pageContext.request.contextPath}/documento?action=responsiva&solicitud=${s.idSolicitud}"
                   data-confirmar="Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita."
                   data-confirmar-titulo="Cerrar la solicitud"
                   data-confirmar-detalle="Después de esto ya no podrás cambiar los documentos de la solicitud."
                   data-confirmar-tipo="aviso"
                   data-confirmar-ok="Sí, subir y cerrar">
-                <input type="hidden" name="action" value="responsiva">
-                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
                 <div class="separador-firmar">Carga de la carta responsiva firmada</div>
                 <div class="zona-carga">
                     <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
