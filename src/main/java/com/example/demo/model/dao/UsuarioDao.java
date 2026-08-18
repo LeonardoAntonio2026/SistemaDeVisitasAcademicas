@@ -213,7 +213,6 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
                 "DELETE FROM documento WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM programa_educativo WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM estudiantes_division WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM solicitud_docente WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM solicitud WHERE id_usuario_solicitante = ?"
             };

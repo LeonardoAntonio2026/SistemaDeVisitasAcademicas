@@ -191,10 +191,11 @@
         <c:when test="${subFase == 'formulario'}">
             <div class="detalle-card">
                 <h6>${estado == 'Rechazado' ? 'Corregir reporte de la visita' : 'Completar reporte de la visita'}</h6>
-                <form action="${pageContext.request.contextPath}/reporte" method="POST"
-                      enctype="multipart/form-data" id="form-reporte">
-                    <input type="hidden" name="id" value="${r.idReporte}">
-                    <input type="hidden" name="action" value="generar">
+                <%-- id y action viajan en la URL, no como campos ocultos: si una
+                     imagen pasa del tope, el servidor no puede leer el cuerpo y
+                     solo le queda la URL para saber a dónde devolver el aviso. --%>
+                <form method="POST" enctype="multipart/form-data" id="form-reporte"
+                      action="${pageContext.request.contextPath}/reporte?id=${r.idReporte}&action=generar">
 
                     <label class="form-label" for="resultados">Resultados de la visita</label>
                     <textarea name="resultados" id="resultados" class="form-control" rows="4" required
@@ -312,10 +313,11 @@
                     </c:forEach>
                 </c:if>
 
-                <form id="carga-reporte-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
-                      enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
-                    <input type="hidden" name="action" value="reporteFirmado">
-                    <input type="hidden" name="reporte" value="${r.idReporte}">
+                <%-- Igual que arriba: los identificadores van en la URL para que
+                     sobrevivan si el PDF pasa del tope y no se puede leer el cuerpo. --%>
+                <form id="carga-reporte-firmado" method="POST" class="form-carga" ${existeFirmado ? 'hidden' : ''}
+                      action="${pageContext.request.contextPath}/documento?action=reporteFirmado&reporte=${r.idReporte}"
+                      enctype="multipart/form-data">
                     <div class="separador-firmar">${existeFirmado ? 'Reemplazar el reporte firmado' : 'Carga del reporte firmado'}</div>
                     <div class="zona-carga">
                         <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
