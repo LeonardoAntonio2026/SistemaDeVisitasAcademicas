@@ -1,0 +1,198 @@
+/* ============================================================
+   tokens.css — Fuente única de verdad del sistema de diseño.
+   Todas las demás hojas (layout, home, form, detalle, reporte,
+   stepper) consumen estas variables en vez de valores sueltos.
+   Cárgalo SIEMPRE antes que las demás hojas.
+   ============================================================ */
+
+/* Base de la escala rem: Bootstrap y buena parte de estas hojas miden en
+   rem, así que subir esto agranda el contenido de forma pareja. Se usa un
+   porcentaje (no px) para respetar el tamaño de letra del navegador. */
+:root {
+    font-size: 106.25%;  /* 17px con la configuración por defecto */
+
+    /* ---------- Colores de marca ---------- */
+    --color-azul: #183052;          /* primario: botones, títulos, marca */
+    --color-azul-hover: #2C5084;    /* hover del primario / azul secundario */
+    --color-verde: #2a7a5a;         /* acento: progreso, nav activo, foco */
+    --color-verde-hover: #236549;
+    --color-rojo: #C0392B;          /* acciones destructivas / rechazo */
+    --color-rojo-oscuro: #B02A37;
+
+    /* ---------- Texto ---------- */
+    --color-texto: #1c1c1e;         /* texto principal */
+    --color-texto-2: #3a3a3c;       /* texto secundario */
+    --color-texto-3: #5A5A5A;       /* texto de apoyo / descripciones */
+    --color-texto-tenue: #8A8A8A;   /* etiquetas, placeholders, meta */
+
+    /* ---------- Superficies ---------- */
+    --color-fondo: #F2F2F7;         /* fondo de la app */
+    --color-superficie: #ffffff;    /* tarjetas */
+    --color-superficie-2: #FAFAFC;  /* zonas y filas suaves */
+
+    /* ---------- Bordes ---------- */
+    --color-borde: #c7c7cc;         /* inputs, contornos marcados */
+    --color-borde-suave: #e5e5ea;   /* separadores de card */
+    --color-borde-tenue: #ECECEC;   /* líneas internas tenues */
+
+    /* ---------- Radios ---------- */
+    --radio-sm: 6px;                /* micro-controles */
+    --radio-input: 8px;             /* inputs, pills de archivo */
+    --radio-btn: 10px;              /* TODOS los botones */
+    --radio-card: 12px;             /* tarjetas */
+    --radio-lg: 1rem;               /* contenedores grandes: navbar, sidebar, login */
+    --radio-pill: 20px;             /* badges y chips */
+
+    /* ---------- Sombras ---------- */
+    --sombra-card: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --sombra-elevada: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    /* ---------- Tipografía (escala) ----------
+       Se subió un escalón respecto al prototipo: el contenido se veía
+       chico y costaba leerlo. Va de la mano con el font-size de :root,
+       que agranda todo lo que está en rem (Bootstrap incluido). */
+    --fs-2xl: 30px;   /* encabezado de página */
+    --fs-xl: 26px;    /* subtítulo de sección / título de detalle */
+    --fs-lg: 21px;    /* título de tarjeta */
+    --fs-md: 17px;    /* texto destacado */
+    --fs-base: 15px;  /* cuerpo */
+    --fs-sm: 14px;    /* secundario */
+    --fs-xs: 13px;    /* etiquetas, meta */
+
+    /* ---------- Foco accesible ---------- */
+    --anillo-foco: 0 0 0 0.2rem rgba(42, 122, 90, 0.15);
+
+    /* ---------- Layout ---------- */
+    --ancho-contenido: 1180px;   /* tope del área principal: evita inputs kilométricos en pantallas anchas */
+
+    /* ---------- Medidas de botón ---------- */
+    --btn-pad-y: 0.6rem;         /* botón estándar (Crear, Volver, Enviar, Descargar grande...) */
+    --btn-pad-x: 1.5rem;
+    --btn-sm-pad-y: 0.4rem;      /* botón chico inline (Agregar grupo, Descargar en filas/tabla) */
+    --btn-sm-pad-x: 1rem;
+}
+
+/* ============================================================
+   Clases base de botón. Úsalas en marcado nuevo; las clases
+   existentes (.botonnueva, .btncrear, etc.) ya consumen estos
+   mismos tokens, así que todo queda visualmente alineado.
+   ============================================================ */
+
+.btn-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primario {
+    background-color: var(--color-azul);
+    color: #ffffff;
+}
+.btn-primario:hover { background-color: var(--color-azul-hover); }
+
+.btn-secundario {
+    background-color: var(--color-superficie);
+    color: var(--color-azul);
+    border: 1.5px solid var(--color-borde);
+}
+.btn-secundario:hover {
+    background-color: var(--color-fondo);
+    border-color: var(--color-azul);
+}
+
+.btn-acento {
+    background-color: var(--color-verde);
+    color: #ffffff;
+}
+.btn-acento:hover { background-color: var(--color-verde-hover); }
+
+.btn-peligro {
+    background-color: var(--color-rojo);
+    color: #ffffff;
+}
+
+/* Botón "+ Agregar ..." (agregar grupo / agregar imagen): verde, tier chico */
+.btn-agregar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-verde);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radio-btn);
+    padding: var(--btn-sm-pad-y) var(--btn-sm-pad-x);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-agregar:hover { background: var(--color-verde-hover); }
+.btn-agregar:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-base:disabled,
+.btn-primario:disabled,
+.btn-acento:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   Feedback de carga: barra de progreso superior + botón cargando.
+   (La lógica vive en js/loading.js)
+   ============================================================ */
+#barra-carga {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    background: var(--color-verde);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+}
+/* Barra indeterminada: avanza y desacelera; nunca llega al 100%
+   porque la página se recarga antes (estilo NProgress). */
+#barra-carga.activa {
+    width: 92%;
+    opacity: 1;
+    transition: width 8s cubic-bezier(0.1, 0.7, 0.1, 1), opacity 0.2s ease;
+}
+
+/* Botón mientras procesa: sin clicks, con el spinner de Bootstrap.
+   No usamos [disabled] a propósito (perdería name/value en el POST). */
+.cargando {
+    pointer-events: none;
+    opacity: 0.9;
+}
+.cargando .spinner-border {
+    vertical-align: -0.15em;
+}
+
+/* ============================================================
+   Barra de acciones al pie de formularios y detalle.
+   (Antes estaba duplicada en form.css y detalle.css con
+   valores distintos; ahora vive aquí una sola vez.)
+   ============================================================ */
+.acciones-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+/* Variante para formularios sin acción secundaria: la acción principal
+   igual queda al pie a la derecha, no pegada al borde izquierdo. */
+.acciones-form--derecha { justify-content: flex-end; }
