@@ -46,9 +46,36 @@ public class Solicitud implements Serializable {
     // Docentes acompañantes (SOLICITUD_DOCENTE); solo se usan id y nombre
     private List<Usuario> docentesAcompanantes = new ArrayList<>();
 
+    /**
+     * Entidad que representa una Solicitud de Visita Académica
+     * <p>
+     *   Mapea la información general del trámite y consolida datos complementarios requeridos para la generación
+     *   del formato oficial <b>FO-UTEZ-EST-08</b>, tales como programas educativos, asignaturas, docentes acompañantes
+     *   y el desglose de estudiantes.
+     * </p>
+     * <p>
+     *     Además de sus propiedades persistentes, incluye lógica de negocio para
+     *     determinar el estado legible de la visita según el ciclo de vida del reporte,
+     *     mapeo de estilos de CSS para visitas y formeadores de texto para la redacción
+     *     de oficios y cartas responsivas.
+     * </p>
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     public Solicitud() {}
 
-    /** Mapa con las 4 divisiones en 0, para que la vista siempre encuentre la llave. */
+    /**
+     * Crea un mapa ordenado inicializado con todas las divisiones académicas
+     * oficiales registradas en cero.
+     * <p>
+     * Este asegura que las vistas JSP y procesadores siempre encuentren las
+     * llaves correspondientes a cada división sin arrojar excepciones por valores nulos.
+     * </p>
+     *
+     * @return un {@link Map} con las divisiones académicas como clave y {@code 0} como valor inicial.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     public static Map<String, Integer> divisionesEnCero() {
         Map<String, Integer> mapa = new LinkedHashMap<>();
         for (String division : DIVISIONES) {

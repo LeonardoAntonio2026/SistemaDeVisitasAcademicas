@@ -147,15 +147,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
         response.sendRedirect("detalle?id=" + id + (error != null ? "&error=" + error : ""));
     }
 
-    /**
-     * Carga la solicitud validando el acceso: el docente solo ve las suyas y
-     * el coordinador solo las que ya fueron enviadas.
-     *
-     * Devuelve null cuando no se puede mostrar, pero antes manda la página de
-     * error que corresponde: 404 si la solicitud no existe y 403 si existe pero
-     * no es de quien la pide. Antes los dos casos redirigían al inicio en
-     * silencio y parecía que el sistema no había hecho nada.
-     */
+
 
     /**
      * Recupera y valida la solicitud dependiendo la solicitud especificada en la petición
