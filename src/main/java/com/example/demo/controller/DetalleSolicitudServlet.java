@@ -68,6 +68,22 @@ public class DetalleSolicitudServlet extends HttpServlet {
         request.getRequestDispatcher("detalle.jsp").forward(request, response);
     }
 
+    /**
+     * Procesa las peticiones HTTP {@code POST} para la toma de decisiones y cambios de estado de la solicitud.
+     * <p>
+     *     Maneja las siguientes acciones:
+     *     {code Enviar} Cambio de estado a "En revisión" por parte del docente tras adjuntar el archivo firmado
+     *     {code Aprobar} Autorización por parte del supervisor (Estadías)
+     *     {code Rechazar} Devolución de la solicitud con un motivo para su posterior edición
+     *     Utiliza el patrón PRG (Post/Redirect/Get) añadiendo parámetros de control o error a la URL de dirección
+     * </p>
+     * @param request objeto {@link HttpServletRequest} con la acción a ejecutar y sus parámetros
+     * @param response objeto {@link HttpServletResponse} para la redirección o respuesta del error
+     * @throws ServletException si ocurre un error en el Servlet
+     * @throws IOException si ocurre un error en la entrada/salida de la petición
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -140,6 +156,20 @@ public class DetalleSolicitudServlet extends HttpServlet {
      * no es de quien la pide. Antes los dos casos redirigían al inicio en
      * silencio y parecía que el sistema no había hecho nada.
      */
+
+    /**
+     * Recupera y valida la solicitud dependiendo la solicitud especificada en la petición
+     * Reglas de acceso:
+     * Los docentes solo pueden ver las solicitudes creadas por ellos mismos.
+     * Los coordinadores o supervisores no pueden consultar solicitudes en estado "Pendiente"
+     * En caso de denegación o ausencia, emite las respuestas de HTTP 404 (Not found) o 403 (Forbidden)
+     * @param request petición HTTP con el parámetro Id
+     * @param response respuesta HTTP
+     * @return el objeto {@link Solicitud} validado, o {@code null} si el acceso no es permitido o no existe
+     * @throws IOException si ocurre un fallo al emitir el error HTTP en la respuesta.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private Solicitud cargarSolicitudPermitida(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         Integer idUsuario = SesionUtils.idUsuario(request);
@@ -174,6 +204,15 @@ public class DetalleSolicitudServlet extends HttpServlet {
         return solicitud;
     }
 
+    /**
+     * Construye y envía una notificación por correo electrónico de manera asíncrona al docente solicitante
+     * informando sobre la resolución (Aprobada/Rechazada) de su visita.
+     * @param solicitud la {@link Solicitud} evaluada.
+     * @param nuevoEstado el dictamen emitido ("Aprobado o Rechazado")
+     * @param motivo la justificación o retroalimentación otorgada de parte de Estadías.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     /** Correo automático al docente cuando su solicitud es aprobada o rechazada  */
     private void notificarDecision(Solicitud solicitud, String nuevoEstado, String motivo) {
         if (solicitud.getCorreoSolicitante() == null) {
