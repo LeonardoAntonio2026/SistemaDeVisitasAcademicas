@@ -14,8 +14,10 @@ import java.io.PrintWriter;
 import java.util.List;
 
 /**
- * Sugerencias para el autocompletado de docentes acompañantes del formulario
- * de solicitud. Devuelve JSON: [{"id":1,"nombre":"...","correo":"..."}]
+ * Servicio que provee sugerencias de autocompletado para los docentes acompañantes mediante su nombre o
+ * correo institucional y retornando los resultados en formato JSON
+ * @author Eder Gabriel García Vázquez
+ * @since 18/08/2026
  */
 @WebServlet(name = "DocenteBuscarServlet", value = "/docentes")
 public class DocenteBuscarServlet extends HttpServlet {
@@ -24,6 +26,18 @@ public class DocenteBuscarServlet extends HttpServlet {
 
     private final UsuarioDao usuarioDao = new UsuarioDao();
 
+    /**
+     * Procesa las peticiones HTTP {@code GET} para la búsqueda dinámica de docentes.
+     * Válida la existencia de una sesión activa para proteger los datos y su acceso.
+     * Retorna una cadena JSON con la lista de coincidencias encontradas si el parámetro
+     * de consulta {@code q} contiene al menos dos caracteres
+     * @param request objeto {@link HttpServletRequest} que contiene el parámetro de búsqueda {@code q}
+     * @param response objeto {@link HttpServletResponse} donde se escribe el arreglo JSON
+     * @throws ServletException si ocurre un fallo interno en el procesamiento del Servlet
+     * @throws IOException si ocurre un error al escribir en la respuesta HTTP
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -65,7 +79,15 @@ public class DocenteBuscarServlet extends HttpServlet {
         }
     }
 
-    /** Escapa lo mínimo para que un nombre con comillas no rompa el JSON. */
+    /**
+     * Sanitiza y escapa caracteres especiales dentro de una cadena de texto para asegurar
+     * su validez sintáctica de la estructura JSON generada manualmente.
+     * @param valor la cadena de texto a sanitizar
+     * @return la cadena formateada y segura para su inclusión dentro de las propiedades de un objeto JSON,
+     * o una cdena vacía el valor proporcionado es {@code null}
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private String escapar(String valor) {
         if (valor == null) {
             return "";
