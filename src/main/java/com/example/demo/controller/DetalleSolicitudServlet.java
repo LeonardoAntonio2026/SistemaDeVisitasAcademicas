@@ -164,11 +164,19 @@ public class DetalleSolicitudServlet extends HttpServlet {
         boolean aprobada = "Aprobada".equals(nuevoEstado);
         String plantillaHtml = """
         <html>
-            <body style="font-family: Arial, sans-serif; color: #333333;">
-                <h2 style="color: #183052;">Tu solicitud fue {0}</h2>
-                <p>La solicitud de visita a <strong>{1}</strong> fue <strong>{0}</strong> por el área de Estadías.</p>
+                 <body style="margin: 0; padding: 20px; background-color: #f4f6f9; font-family: Arial, sans-serif; color: #333333;">
+                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                 <tr>
+                 <td style="background-color: #183052; height: 8px; line-height: 8px; font-size: 8px;">&nbsp;</td>
+                 </tr>
+                 <tr>
+                 <td style="padding: 30px 25px;">
+                 <h2 style="color: #183052; margin-top: 0; font-size: 20px;">Tu solicitud fue {0}</h2>
+                 <p style="font-size: 15px; line-height: 1.5; color: #4a5568;">
+                 La solicitud de visita a <strong style="color: #1a202c;">{1}</strong> fue <strong>{0}</strong> por el área de Estadías.
+                </p>
                 {2}
-                <p>{3}</p>
+                <p style="font-size: 14px; line-height: 1.5; color: #4a5568; margin-top: 20px;">{3}</p>
                 <p style="font-size: 12px; color: #777777;">Sistema de Gestión de Visitas Académicas - UTEZ</p>
             </body>
         </html>
