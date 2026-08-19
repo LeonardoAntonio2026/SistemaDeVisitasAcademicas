@@ -2,7 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.RolDao;
+import com.example.demo.model.dao.TokenRecuperacionDao;
 import com.example.demo.model.dao.UsuarioDao;
+import com.example.demo.utils.EmailSender;
+import com.example.demo.utils.EnlaceContrasena;
 import com.example.demo.utils.SesionUtils;
 import com.example.demo.utils.Validador;
 import com.google.gson.Gson;
@@ -14,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +38,7 @@ public class UsuarioServlet extends HttpServlet {
 
     private final UsuarioDao usuarioDao = new UsuarioDao();
     private final RolDao rolDao = new RolDao();
+    private final TokenRecuperacionDao tokenDao = new TokenRecuperacionDao();
     private final Gson gson = new Gson();
 
     @Override
@@ -151,7 +156,56 @@ public class UsuarioServlet extends HttpServlet {
         // create() deja el id generado en la entidad; el nombre del rol se
         // completa para que el panel pueda pintar la fila nueva sin releer la BD
         nuevo.setNombreRol(rol);
+
+        // La cuenta ya existe: si el correo falla no se deshace el alta, solo se
+        // queda sin avisar y el administrador tendrá que decirle la contraseña.
+        enviarCorreoBienvenida(request, nuevo);
+
         return Respuesta.exito("Usuario creado correctamente.", nuevo);
+    }
+
+    /**
+     * Manda el correo de bienvenida con un enlace para que la persona defina su
+     * propia contraseña.
+     *
+     * Nadie se registra solo en el sistema: las cuentas las da de alta el
+     * administrador, así que la contraseña que se escribió en el panel la conoce
+     * él y no el dueño de la cuenta. Por eso el correo lleva el mismo token de un
+     * solo uso que el de "olvidé mi contraseña": el docente entra al enlace, pone
+     * la suya y la del administrador queda pisada.
+     *
+     * Se envía con sendMailAsync porque este servlet responde JSON al panel y
+     * abrir la conexión SMTP tarda varios segundos: si fuera síncrono, el modal
+     * de "crear usuario" se quedaría congelado esperando al correo.
+     *
+     * @param request petición en curso, para armar la URL del enlace
+     * @param usuario usuario recién creado, ya con su id y su nombre de rol
+     */
+    private void enviarCorreoBienvenida(HttpServletRequest request, Usuario usuario) {
+        String token = EnlaceContrasena.generarToken();
+        if (!tokenDao.crear(usuario.getId(), token)) {
+            System.err.println("No se pudo guardar el token de bienvenida de: " + usuario.getCorreo());
+            return;
+        }
+        String enlace = EnlaceContrasena.construirUrl(request, token);
+
+        String plantillaHtml = """
+        <html>
+            <body style="font-family: Arial, sans-serif; color: #333333;">
+                <h2 style="color: #183052;">Te damos la bienvenida, {0}</h2>
+                <p>El administrador te creó una cuenta en el Sistema de Gestión de Visitas Académicas con el rol de <strong>{1}</strong>.</p>
+                <p>Para entrar, primero define tu propia contraseña:</p>
+                <p><a href="{2}" style="color: #183052;">Crear mi contraseña</a></p>
+                <p>El enlace es válido durante <strong>{3} horas</strong> y solo se puede usar una vez. Si se te vence, pide otro desde la opción de contraseña olvidada en la pantalla de inicio de sesión.</p>
+                <p style="font-size: 12px; color: #777777;">Sistema de Gestión de Visitas Académicas - UTEZ</p>
+            </body>
+        </html>
+        """;
+        String cuerpo = MessageFormat.format(plantillaHtml, usuario.getNombre(), usuario.getNombreRol(),
+                enlace, String.valueOf(TokenRecuperacionDao.HORAS_VIGENCIA));
+
+        EmailSender.sendMailAsync(usuario.getCorreo(),
+                "Bienvenido al Sistema de Visitas Académicas", cuerpo);
     }
 
     /** Edición de nombre, correo y rol. La contraseña no se toca desde aquí. */

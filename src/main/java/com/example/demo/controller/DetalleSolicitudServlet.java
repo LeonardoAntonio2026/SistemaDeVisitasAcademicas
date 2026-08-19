@@ -164,6 +164,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
         boolean aprobada = "Aprobada".equals(nuevoEstado);
         String plantillaHtml = """
         <html>
+        
                  <body style="margin: 0; padding: 20px; background-color: #f4f6f9; font-family: Arial, sans-serif; color: #333333;">
                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
                  <tr>
