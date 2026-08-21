@@ -1,3 +1,15 @@
+<%--
+/**
+ * Vista JSP para la consulta y gestión del listado general de solicitudes.
+ * <p>
+ * Muestra el catálogo de solicitudes recientes según el rol del usuario en sesión
+ * e incluye el redireccionamiento defensivo hacia el Servlet correspondiente si la lista no está cargada.
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 20/08/2026
+ */
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%-- Mismo guardado que en index.jsp: entrar directo al JSP (sin el servlet)
