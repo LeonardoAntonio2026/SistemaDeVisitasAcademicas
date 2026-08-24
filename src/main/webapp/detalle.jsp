@@ -2,13 +2,18 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <% request.setAttribute("pageTitle", "Detalle de la solicitud"); %>
-<c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
-<%-- Una solicitud terminada vive en el Histórico, y hacia allá apuntan el menú
-     y el botón de volver. Una rechazada está terminada para Estadías, pero no
-     para el docente, que todavía la puede corregir. --%>
+<%-- Toda la página se decide con esto: si la solicitud es MÍA veo lo del
+     docente (subir, enviar, corregir) y si es de alguien más, lo del revisor.
+     No se pregunta por el rol porque el Administrador es las dos cosas: revisa
+     las de los demás y también levanta las suyas. --%>
+<c:set var="esPropia" value="${sessionScope.idUsuario == solicitud.idUsuarioSolicitante}"/>
+<%-- Una solicitud terminada ya no vive en Solicitudes sino en el Histórico: el
+     menú y el botón de volver apuntan allá. Una rechazada está terminada para
+     Estadías, pero no para quien la mandó: él la puede corregir y le sigue
+     apareciendo en su bandeja, así que para él la salida es Solicitudes. --%>
 <c:set var="esTerminada" scope="request"
        value="${solicitud.nombreEstado == 'Completada'
-                || (solicitud.nombreEstado == 'Rechazada' && !esDocente)}"/>
+                || (solicitud.nombreEstado == 'Rechazada' && !esPropia)}"/>
 <c:set var="activeNav" scope="request" value="${esTerminada ? 'historico' : 'solicitudes'}"/>
 <% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
 <% request.setAttribute("nombresDivision", com.example.demo.model.CatalogoAcademico.getNombres()); %>
@@ -24,11 +29,17 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
     <c:set var="s" value="${solicitud}"/>
-    <%-- esDocente ya viene definido arriba: lo necesita esTerminada --%>
-    <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
+    <%-- esPropia ya viene definido arriba: lo necesita esTerminada --%>
     <c:set var="estado" value="${s.nombreEstado}"/>
+    <%-- Corregir los datos también lo hace el Administrador con las de los
+         demás (mientras el estado lo permita). Lo que no le pasa es firmar,
+         subir el PDF firmado ni enviar: eso es del dueño. --%>
+    <c:set var="puedeEditar" value="${esPropia || esAdministrador}"/>
 
-    <%-- El botón dice a dónde lleva, no solo "Volver" --%>
+    <%-- El botón dice a dónde lleva: "Volver" a secas se entendía como
+         "regresar al paso anterior" y aquí sale de la solicitud. Una
+         solicitud terminada ya no aparece en Solicitudes: se vuelve al
+         Histórico, que es donde quedó. --%>
     <c:choose>
         <c:when test="${esTerminada}">
             <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
@@ -40,16 +51,19 @@
         </c:otherwise>
     </c:choose>
 
-    <%-- Volver también aquí arriba, para no recorrer la página entera --%>
+    <%-- Volver también aquí arriba: quien entró solo a consultar no tiene por
+         qué recorrer la página entera para encontrar la salida --%>
     <a href="${volverUrl}" class="volver-arriba">
         <i class="bi bi-arrow-left"></i> ${volverTexto}
     </a>
 
+    <%-- "Detalle de la solicitud", no "de la visita": la página vive bajo la
+         sección Solicitudes y lo que muestra es la solicitud --%>
     <div class="superior">
         <h2>Detalle de la solicitud</h2>
         <p>
             <c:choose>
-                <c:when test="${!esDocente && estado == 'En revisión'}">Evalúa la solicitud enviada por el docente</c:when>
+                <c:when test="${!esPropia && estado == 'En revisión'}">Evalúa la solicitud enviada por el docente</c:when>
                 <c:otherwise>Consulta la información y el avance de la solicitud</c:otherwise>
             </c:choose>
         </p>
@@ -70,7 +84,7 @@
             <i class="bi bi-check-circle"></i>
             <div>
                 <div class="instruccion-titulo">Datos actualizados</div>
-                <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: ábrelo, fírmalo y súbelo.</p>
+                <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: ${esPropia ? 'ábrelo, fírmalo y súbelo' : 'el docente tiene que abrirlo, firmarlo y subirlo otra vez'}.</p>
             </div>
         </div>
     </c:if>
@@ -81,7 +95,12 @@
             <i class="bi bi-check-circle"></i>
             <div>
                 <div class="instruccion-titulo">Solicitud corregida</div>
-                <p>La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Abre el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</p>
+                <p>
+                    <c:choose>
+                        <c:when test="${esPropia}">La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Abre el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</c:when>
+                        <c:otherwise>La solicitud volvió a quedar <strong>Pendiente</strong>. El docente tiene que abrir el formato FO-UTEZ-EST-08 con los datos nuevos, firmarlo, subirlo y volver a enviarla a Estadías.</c:otherwise>
+                    </c:choose>
+                </p>
             </div>
         </div>
     </c:if>
@@ -139,11 +158,12 @@
             <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
         </div>
 
-        <%-- Mini card de instrucciones: qué falta y a quién le toca. Si algo fue
-             rechazado manda el rechazo con su motivo, no el "sube tal archivo". --%>
+        <%-- Mini card de instrucciones: qué falta y a quién le toca. Cuando algo
+             fue rechazado manda el rechazo, nunca el "sube tal archivo": es lo
+             primero que el docente tiene que leer, y con el motivo a la vista. --%>
         <c:set var="estadoReporte" value="${s.estadoReporte}"/>
         <c:choose>
-            <c:when test="${estado == 'Pendiente' && esDocente && existeFirmado}">
+            <c:when test="${estado == 'Pendiente' && esPropia && existeFirmado}">
                 <div class="instruccion instruccion-accion">
                     <i class="bi bi-send"></i>
                     <div>
@@ -152,7 +172,7 @@
                     </div>
                 </div>
             </c:when>
-            <c:when test="${estado == 'Pendiente' && esDocente}">
+            <c:when test="${estado == 'Pendiente' && esPropia}">
                 <div class="instruccion instruccion-accion">
                     <i class="bi bi-exclamation-circle"></i>
                     <div>
@@ -161,7 +181,17 @@
                     </div>
                 </div>
             </c:when>
-            <c:when test="${estado == 'En revisión' && esDocente}">
+            <c:when test="${estado == 'Pendiente'}">
+                <%-- Pendiente y no es mía: solo el Administrador llega aquí --%>
+                <div class="instruccion instruccion-info">
+                    <i class="bi bi-hourglass-split"></i>
+                    <div>
+                        <div class="instruccion-titulo">Solicitud sin enviar</div>
+                        <p>El docente <c:out value="${s.nombreSolicitante}"/> todavía no la manda a Estadías. Le puedes corregir los datos con <strong>Editar datos</strong>; firmar el formato y enviarla le toca a él.</p>
+                    </div>
+                </div>
+            </c:when>
+            <c:when test="${estado == 'En revisión' && esPropia}">
                 <div class="instruccion instruccion-info">
                     <i class="bi bi-send-check"></i>
                     <div>
@@ -170,7 +200,7 @@
                     </div>
                 </div>
             </c:when>
-            <c:when test="${estado == 'En revisión' && !esDocente}">
+            <c:when test="${estado == 'En revisión' && !esPropia}">
                 <div class="instruccion instruccion-accion">
                     <i class="bi bi-clipboard-check"></i>
                     <div>
@@ -180,7 +210,7 @@
                     </div>
                 </div>
             </c:when>
-            <c:when test="${estado == 'Aprobada' && esDocente}">
+            <c:when test="${estado == 'Aprobada' && esPropia}">
                 <div class="instruccion instruccion-accion">
                     <i class="bi bi-file-earmark-arrow-up"></i>
                     <div>
@@ -192,7 +222,7 @@
                     </div>
                 </div>
             </c:when>
-            <c:when test="${estado == 'Aprobada' && !esDocente}">
+            <c:when test="${estado == 'Aprobada' && !esPropia}">
                 <div class="instruccion instruccion-info">
                     <i class="bi bi-clock"></i>
                     <div>
@@ -212,7 +242,7 @@
                                 <c:otherwise>No se registró un motivo.</c:otherwise>
                             </c:choose>
                         </p>
-                        <c:if test="${esDocente}">
+                        <c:if test="${esPropia}">
                             <p>Corrige lo señalado con <strong>Editar datos</strong>, firma nuevamente el formato FO-UTEZ-EST-08 y vuelve a enviar la solicitud a revisión.</p>
                         </c:if>
                     </div>
@@ -231,7 +261,7 @@
                                 <c:otherwise>No se registró un motivo.</c:otherwise>
                             </c:choose>
                         </p>
-                        <c:if test="${esDocente}">
+                        <c:if test="${esPropia}">
                             <p>Corrige el reporte y envíalo nuevamente:
                                 <a href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">ir al reporte de esta visita</a>.</p>
                         </c:if>
@@ -265,7 +295,7 @@
                         <div class="instruccion-titulo">Solicitud cerrada: falta el reporte de la visita</div>
                         <p>
                             <c:choose>
-                                <c:when test="${esDocente}">
+                                <c:when test="${esPropia}">
                                     La solicitud quedó cerrada, pero el proceso concluye hasta entregar el reporte.
                                     Complétalo después de realizar la visita:
                                     <a href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">ir al reporte de esta visita</a>.
@@ -288,13 +318,16 @@
 
     <%-- ===================== Card archivos =====================
          Va pegada a la card de instrucciones porque casi todo lo que ahí se
-         pide ("descarga el formato", "sube la carta responsiva") se hace aquí. --%>
+         pide ("descarga el formato", "sube la carta responsiva") se hace
+         aquí: si esta card queda hasta el final hay que recorrer los datos
+         de la solicitud para encontrar aquello de lo que habla el aviso. --%>
     <div class="detalle-card">
         <h6>Archivos</h6>
 
-        <%-- Documentos que genera el sistema con los datos de la solicitud;
-             abren su vista imprimible y de ahí se guardan como PDF. El FO se
-             muestra siempre, por si hay que rehacer la firma. --%>
+        <%-- Documentos que genera el sistema con los datos de la solicitud.
+             El FO se muestra siempre: aunque ya esté firmado y subido, si el
+             docente quiere rehacer la firma tiene que poder bajarlo otra vez.
+             Estos abren su vista imprimible, de ahí se guardan como PDF. --%>
         <div class="separador-archivos">Generados por el sistema</div>
         <div class="archivo-row">
             <span class="archivo-pill">
@@ -325,7 +358,7 @@
             </div>
         </c:if>
 
-        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
+        <c:if test="${esPropia && estado == 'Aprobada'}">
             <div class="archivo-row">
                 <span class="archivo-pill">
                     <i class="bi bi-file-earmark-pdf"></i>
@@ -340,11 +373,13 @@
             </div>
         </c:if>
 
-        <%-- Archivos subidos por el docente. "Ver" los abre en otra pestaña,
-             sin bajarlos. El FO firmado es el único que se puede reemplazar, y
-             solo antes de enviar. --%>
+        <%-- Archivos subidos por el docente. "Ver" los abre en una pestaña
+             aparte: es la forma de comprobar que el PDF que se subió es el
+             correcto sin bajarlo y abrirlo a mano. El FO firmado es el único
+             que se puede reemplazar (y solo antes de enviar): por eso su fila
+             lleva "Reemplazar", que es lo que abre la zona de carga. --%>
         <c:if test="${not empty documentos}">
-            <div class="separador-archivos">${esDocente && esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
+            <div class="separador-archivos">${esPropia ? 'Subidos por ti' : 'Subidos por el docente'}</div>
             <c:forEach var="d" items="${documentos}">
                 <div class="archivo-row">
                     <span class="archivo-pill archivo-pill--subido">
@@ -361,7 +396,10 @@
                            href="${pageContext.request.contextPath}/documento?ver=${d.idDocumento}">
                             <i class="bi bi-eye"></i> Ver
                         </a>
-                        <c:if test="${esDocente && esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
+                        <c:if test="${esPropia && estado == 'Pendiente' && d.nombreTipo == tipoFoFirmado}">
+                            <%-- "Reemplazar", no "Volver a cargar": convivía con
+                                 "Volver a solicitudes" y los dos "Volver" hacían
+                                 cosas de categorías distintas --%>
                             <button type="button" class="btn-recargar" data-abre-carga="carga-fo-firmado">
                                 <i class="bi bi-arrow-repeat"></i> Reemplazar
                             </button>
@@ -373,12 +411,15 @@
 
         <%-- Zonas de carga: solo el docente dueño y solo en los 2 momentos del
              proceso en los que toca subir algo. Si el archivo ya está cargado
-             la zona nace oculta. --%>
-        <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
-            <form id="carga-fo-firmado" action="${pageContext.request.contextPath}/documento" method="POST"
-                  enctype="multipart/form-data" class="form-carga" ${existeFirmado ? 'hidden' : ''}>
-                <input type="hidden" name="action" value="firmado">
-                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
+             la zona nace oculta (se ve el archivo, no un recuadro vacío que
+             hace pensar que todavía falta subir algo). --%>
+        <c:if test="${esPropia && estado == 'Pendiente'}">
+            <%-- action y solicitud viajan en la URL, no como campos ocultos: si el
+                 PDF pasa del tope, el servidor no puede leer el cuerpo y solo le
+                 queda la URL para saber a dónde devolver el aviso. --%>
+            <form id="carga-fo-firmado" method="POST" class="form-carga" ${existeFirmado ? 'hidden' : ''}
+                  action="${pageContext.request.contextPath}/documento?action=firmado&solicitud=${s.idSolicitud}"
+                  enctype="multipart/form-data">
                 <div class="separador-firmar">${existeFirmado ? 'Reemplazar el formato firmado' : 'Carga del formato firmado'}</div>
                 <div class="zona-carga">
                     <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
@@ -393,16 +434,14 @@
             </form>
         </c:if>
 
-        <c:if test="${esDocente && esPropia && estado == 'Aprobada'}">
-            <form action="${pageContext.request.contextPath}/documento" method="POST" enctype="multipart/form-data"
-                  class="form-carga"
+        <c:if test="${esPropia && estado == 'Aprobada'}">
+            <form method="POST" enctype="multipart/form-data" class="form-carga"
+                  action="${pageContext.request.contextPath}/documento?action=responsiva&solicitud=${s.idSolicitud}"
                   data-confirmar="Al subir la carta responsiva firmada la solicitud se cierra y se genera el reporte de la visita."
                   data-confirmar-titulo="Cerrar la solicitud"
                   data-confirmar-detalle="Después de esto ya no podrás cambiar los documentos de la solicitud."
                   data-confirmar-tipo="aviso"
                   data-confirmar-ok="Sí, subir y cerrar">
-                <input type="hidden" name="action" value="responsiva">
-                <input type="hidden" name="solicitud" value="${s.idSolicitud}">
                 <div class="separador-firmar">Carga de la carta responsiva firmada</div>
                 <div class="zona-carga">
                     <i class="bi bi-cloud-arrow-up" style="font-size: 1.6rem; color: var(--color-texto-tenue);"></i>
@@ -419,14 +458,19 @@
     </div>
 
     <%-- ===================== Acciones del docente: Editar / Enviar =====================
-         Van pegadas a la card de Archivos porque enviar es lo que sigue justo
-         después de subir el formato firmado. --%>
-    <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
+         Van pegadas a la card de Archivos y no al pie de la página: enviar es
+         lo que sigue justo después de subir el formato firmado, y ahí abajo
+         obligaba a recorrer los datos de la solicitud para llegar al botón.
+
+         Editar lo puede hacer también el Administrador; enviar no, porque hace
+         falta el formato firmado por el docente. --%>
+    <c:if test="${puedeEditar && estado == 'Pendiente'}">
         <div class="acciones-form acciones-form--derecha acciones-tras-card">
             <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"
                class="btn-editar-datos" title="Corregir los datos antes de enviar">
                 <i class="bi bi-pencil"></i> Editar datos
             </a>
+            <c:if test="${esPropia}">
             <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
                   data-confirmar="La solicitud pasa al área de Estadías para su revisión."
                   data-confirmar-titulo="Enviar solicitud a Estadías"
@@ -440,15 +484,18 @@
                     <i class="bi bi-send"></i> Enviar solicitud a Estadías
                 </button>
             </form>
+            </c:if>
         </div>
     </c:if>
 
-    <%-- Card corregir: el docente dueño de una solicitud rechazada. Editar los
-         datos la regresa a Pendiente y el trámite se reanuda desde firmar el FO. --%>
-    <c:if test="${esDocente && esPropia && estado == 'Rechazada'}">
+    <%-- Card corregir: quien puede editar una solicitud rechazada (el dueño o
+         el Administrador). Es la misma idea que "Corregir reporte" en el
+         detalle del reporte: editar los datos la regresa a Pendiente y el
+         trámite se reanuda desde firmar el FO. --%>
+    <c:if test="${puedeEditar && estado == 'Rechazada'}">
         <div class="detalle-card">
             <h6>Corregir solicitud</h6>
-            <p>Edita los datos conforme a lo que señaló Estadías y vuelve a enviarla. Al guardar los cambios la solicitud queda otra vez <strong>Pendiente</strong>, así que hay que firmar y subir de nuevo el formato FO-UTEZ-EST-08.</p>
+            <p>Edita los datos conforme a lo que señaló Estadías y ${esPropia ? 'vuelve a enviarla' : 'el docente vuelve a enviarla'}. Al guardar los cambios la solicitud queda otra vez <strong>Pendiente</strong>, así que hay que firmar y subir de nuevo el formato FO-UTEZ-EST-08.</p>
             <a class="btn-editar-datos"
                href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}">
                 <i class="bi bi-pencil"></i> Editar datos
@@ -585,8 +632,11 @@
         </c:if>
     </div>
 
-    <%-- ===================== Card evaluar solicitud (solo coordinador y En revisión) ===================== --%>
-    <c:if test="${!esDocente && estado == 'En revisión'}">
+    <%-- ===================== Card evaluar solicitud (solo revisor y En revisión) =====================
+         Aquí sí manda el rol y no esPropia: al Administrador le aparece también
+         en sus propias solicitudes, para que no se le queden atoradas cuando no
+         hay nadie de Estadías que se las apruebe. --%>
+    <c:if test="${esRevisor && estado == 'En revisión'}">
         <div class="detalle-card">
             <h6>Evaluar solicitud</h6>
             <form action="${pageContext.request.contextPath}/detalle" method="POST" id="form-evaluar">

@@ -36,7 +36,10 @@ import java.util.List;
  * el docente genera el formato imprimible, lo firma, sube el PDF y lo envía.
  */
 @WebServlet(name = "ReporteDetalleServlet", value = "/reporte")
-@MultipartConfig(maxFileSize = 5L * 1024 * 1024, maxRequestSize = 18L * 1024 * 1024)
+// El tope del contenedor va A PROPOSITO por encima de MAX_IMG_BYTES: si fueran
+// iguales, Tomcat cortaría primero y validarImagen() nunca podría explicarle al
+// usuario que la imagen pesa de más. Igual que en DocumentoServlet.
+@MultipartConfig(maxFileSize = 6L * 1024 * 1024, maxRequestSize = 20L * 1024 * 1024)
 public class ReporteDetalleServlet extends HttpServlet {
 
     /** Tipo del PDF firmado del reporte (fila de TIPO_DOCUMENTO, ver sql/). */
@@ -68,27 +71,41 @@ public class ReporteDetalleServlet extends HttpServlet {
 
         Integer idUsuario = SesionUtils.idUsuario(request);
         boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
+        boolean puedeEditar = puedeEditar(request, esDueno);
 
         request.setAttribute("reporte", reporte);
         request.setAttribute("esDueno", esDueno);
+        request.setAttribute("puedeEditar", puedeEditar);
         request.setAttribute("imagenes", imagenReporteDao.getByReporte(idReporte));
         request.setAttribute("documentos", documentoDao.getByReporte(idReporte));
         request.setAttribute("existeFirmado",
         documentoDao.existeTipoEnReporte(idReporte, TIPO_REPORTE_FIRMADO));
-        request.setAttribute("subFase", calcularSubFase(request, reporte, esDueno));
+        request.setAttribute("subFase", calcularSubFase(request, reporte, esDueno, puedeEditar));
         request.getRequestDispatcher("reporte-detalle.jsp").forward(request, response);
+    }
+
+    /**
+     * Quién puede llenar o corregir el formulario del reporte: el dueño y el
+     * Administrador, que también le corrige los suyos a los demás.
+     *
+     * Firmar, subir el PDF y enviar NO entran aquí: eso lo hace el dueño, que
+     * es quien firma el papel.
+     */
+    private boolean puedeEditar(HttpServletRequest request, boolean esDueno) {
+        return esDueno || SesionUtils.esAdministrador(request);
     }
 
     /**
      * Sub-fase del docente dentro del estado Pendiente (y la edición de un
      * Rechazado). El estado en BD no cambia hasta generar/enviar:
      *  - "formulario": captura o corrección (Pendiente sin resultados, o
-     *    ?editar=1 del dueño en Pendiente/Rechazado).
+     *    ?editar=1 en Pendiente/Rechazado).
      *  - "firmar": ya generó; descarga el formato, sube el firmado y envía.
-     *  - null: no aplica (otros estados o quien mira no es el dueño).
+     *  - null: no aplica (otros estados, o quien mira no lo puede tocar).
      */
-    private String calcularSubFase(HttpServletRequest request, Reporte reporte, boolean esDueno) {
-        if (!esDueno) {
+    private String calcularSubFase(HttpServletRequest request, Reporte reporte,
+    boolean esDueno, boolean puedeEditar) {
+        if (!puedeEditar) {
             return null;
         }
         String estado = reporte.getNombreEstado();
@@ -96,7 +113,11 @@ public class ReporteDetalleServlet extends HttpServlet {
         boolean editar = "1".equals(request.getParameter("editar"));
 
         if ("Pendiente".equalsIgnoreCase(estado)) {
-            return (!tieneResultados || editar) ? "formulario" : "firmar";
+            if (!tieneResultados || editar) {
+                return "formulario";
+            }
+            // "firmar" es del dueño: al Administrador le toca corregir, no firmar
+            return esDueno ? "firmar" : null;
         }
         if ("Rechazado".equalsIgnoreCase(estado) && editar) {
             return "formulario";
@@ -109,6 +130,24 @@ public class ReporteDetalleServlet extends HttpServlet {
     throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
+        // El cuerpo se lee aquí, antes que nada, y de forma controlada: si una
+        // imagen pasa del tope del contenedor, Tomcat aborta el parseo y TODOS
+        // los campos se quedan en null (incluido el id). Por eso el formulario
+        // manda id y action en la URL: es lo único que sobrevive.
+        if (esMultipart(request)) {
+            try {
+                request.getParts();
+            } catch (IllegalStateException e) {
+                Integer idAviso = enteroONull(request.getParameter("id"));
+                if (idAviso == null) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                } else {
+                    response.sendRedirect("reporte?id=" + idAviso + "&error=tamano");
+                }
+                return;
+            }
+        }
+
         Reporte reporte = cargarReportePermitido(request, response);
         if (reporte == null) {
             return; // el helper ya mandó la página de error que corresponde
@@ -116,7 +155,6 @@ public class ReporteDetalleServlet extends HttpServlet {
         int idReporte = reporte.getIdReporte();
 
         Integer idUsuario = SesionUtils.idUsuario(request);
-        boolean esDocente = SesionUtils.esDocente(request);
         boolean esDueno = reporte.getIdUsuarioSolicitante() == idUsuario;
         String estado = reporte.getNombreEstado();
         String action = request.getParameter("action");
@@ -125,8 +163,9 @@ public class ReporteDetalleServlet extends HttpServlet {
         String error = null;
 
         if ("generar".equals(action)) {
-            // El dueño llena/corrige el formulario: desde Pendiente o Rechazado
-            if (!esDueno) {
+            // Llenar/corregir el formulario: el dueño o el Administrador, y
+            // desde Pendiente o Rechazado
+            if (!puedeEditar(request, esDueno)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -156,7 +195,7 @@ public class ReporteDetalleServlet extends HttpServlet {
             }
         } else if ("aprobar".equals(action) || "rechazar".equals(action)) {
             // Solo Estadías/Admin evalúa, y solo un reporte enviado (Completado)
-            if (esDocente) {
+            if (!SesionUtils.esRevisor(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -199,17 +238,12 @@ public class ReporteDetalleServlet extends HttpServlet {
         String observaciones = request.getParameter("observaciones");
 
         // Imágenes nuevas: varias partes con el mismo name="imagenes"
+        // El cuerpo ya se parseó en doPost(), así que aquí no puede fallar
         List<Part> partesImagen = new ArrayList<>();
-        try {
-            for (Part p : request.getParts()) {
-                if ("imagenes".equals(p.getName()) && p.getSize() > 0) {
-                    partesImagen.add(p);
-                }
+        for (Part p : request.getParts()) {
+            if ("imagenes".equals(p.getName()) && p.getSize() > 0) {
+                partesImagen.add(p);
             }
-        } catch (IllegalStateException e) {
-            // El contenedor rechazó una parte por exceder maxFileSize (RN-07)
-            response.sendRedirect("reporte?id=" + idReporte + "&error=tamano");
-            return;
         }
 
         for (Part p : partesImagen) {
@@ -324,6 +358,24 @@ public class ReporteDetalleServlet extends HttpServlet {
     }
 
     /**
+     * ¿El POST trae un archivo? Solo esos se pueden (y se deben) parsear con
+     * getParts(); en un formulario normal esa llamada revienta.
+     */
+    private static boolean esMultipart(HttpServletRequest request) {
+        String tipo = request.getContentType();
+        return tipo != null && tipo.toLowerCase().startsWith("multipart/form-data");
+    }
+
+    /** El parámetro como entero, o null si viene vacío o no es un número. */
+    private static Integer enteroONull(String valor) {
+        try {
+            return Integer.valueOf(valor);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
      * Carga el reporte validando el acceso (RNF-08): el docente solo ve los
      * de sus propias solicitudes; Estadías/Admin pueden ver cualquiera.
      * Mismo patrón que DetalleSolicitudServlet.cargarSolicitudPermitida().
@@ -356,16 +408,17 @@ public class ReporteDetalleServlet extends HttpServlet {
         return reporte;
     }
 
-    /** Regla de acceso de solo lectura: docente dueño, o Estadías/Admin (cualquiera). */
+    /** Regla de acceso de solo lectura: el dueño, o Estadías/Admin (cualquiera). */
     private boolean puedeVer(HttpServletRequest request, Reporte reporte) {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return false;
         }
-        if (SesionUtils.esDocente(request)) {
-            return reporte.getIdUsuarioSolicitante() == idUsuario;
+        // Primero el dueño: el Administrador también tiene reportes propios
+        if (reporte.getIdUsuarioSolicitante() == idUsuario.intValue()) {
+            return true;
         }
-        return true;
+        return SesionUtils.esRevisor(request);
     }
 
     /** Correo automático al docente cuando su reporte es aprobado o rechazado. */

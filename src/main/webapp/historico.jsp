@@ -15,14 +15,17 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/form.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
-    <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
-
+    <%-- esRevisor lo define layout/header.jsp --%>
     <%-- El docente no ve aquí sus rechazadas: las puede corregir, así que le
-         siguen apareciendo en Solicitudes. Y no todo lo de aquí está terminado,
-         una solicitud cerrada puede seguir esperando su reporte. --%>
+         siguen apareciendo en Solicitudes y no se repiten en el histórico.
+         Al revisor sí le salen todas las rechazadas (para él ya están
+         cerradas), incluidas las suyas si es el Administrador. --%>
+    <%-- No todo lo de aquí está terminado: una solicitud cerrada puede seguir
+         esperando su reporte. El subtítulo lo dice, en vez de prometer que
+         "ya se completó todo" y contradecirse con los badges de abajo. --%>
     <div class="superior">
         <h2>Histórico</h2>
-        <p>${esDocente ? 'Solicitudes cerradas: el estado indica cómo va el reporte de cada visita'
+        <p>${!esRevisor ? 'Solicitudes cerradas: el estado indica cómo va el reporte de cada visita'
                        : 'Solicitudes cerradas (con su reporte en curso) y rechazadas'}</p>
     </div>
 
@@ -30,7 +33,7 @@
         <c:when test="${empty listaHistorico}">
             <div class="solicitud-vacia">
                 <h5>Aún no hay solicitudes cerradas</h5>
-                <p>${esDocente ? 'Cuando una solicitud se complete aparecerá aquí'
+                <p>${!esRevisor ? 'Cuando una solicitud se complete aparecerá aquí'
                                : 'Cuando una solicitud se complete o se rechace aparecerá aquí'}</p>
             </div>
         </c:when>
@@ -41,7 +44,7 @@
                 <div class="filtro-campo filtro-campo--busqueda">
                     <label class="form-label" for="filtro-texto">Buscar</label>
                     <input id="filtro-texto" class="form-control" type="search" autocomplete="off"
-                           placeholder="${esDocente ? 'Empresa o actividad' : 'Empresa, actividad o docente'}">
+                           placeholder="${!esRevisor ? 'Empresa o actividad' : 'Empresa, actividad o docente'}">
                 </div>
 
                 <%-- Las opciones de estos dos selects las llena
@@ -53,7 +56,7 @@
                     </select>
                 </div>
 
-                <c:if test="${!esDocente}">
+                <c:if test="${esRevisor}">
                     <div class="filtro-campo">
                         <label class="form-label" for="filtro-docente">Docente</label>
                         <select id="filtro-docente" class="form-control">
@@ -86,7 +89,7 @@
                     <thead>
                     <tr>
                         <th>Empresa o actividad</th>
-                        <c:if test="${!esDocente}"><th>Docente</th></c:if>
+                        <c:if test="${esRevisor}"><th>Docente</th></c:if>
                         <th>Alumnos</th>
                         <th>Fecha de visita</th>
                         <th>Estado</th>
@@ -103,7 +106,7 @@
                             data-docente="<c:out value="${s.nombreSolicitante}"/>"
                             data-fecha="<c:out value="${s.fechaInicio}"/>">
                             <td><c:out value="${s.nombreEmpresaActividad}"/></td>
-                            <c:if test="${!esDocente}"><td><c:out value="${s.nombreSolicitante}"/></td></c:if>
+                            <c:if test="${esRevisor}"><td><c:out value="${s.nombreSolicitante}"/></td></c:if>
                             <td>${s.totalEstudiantes}</td>
                             <td>${empty s.fechaInicio ? '—' : s.fechaInicio}</td>
                             <td>
@@ -117,12 +120,13 @@
                                 <a class="btn-descargar btn-contorno" style="margin-right: 6px;"
                                    href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver solicitud</a>
                                 <c:if test="${s.nombreEstado == 'Completada' && s.idReporte != null}">
+                                    <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
                                     <c:choose>
-                                        <c:when test="${esDocente && s.estadoReporte == 'Pendiente'}">
+                                        <c:when test="${esPropia && s.estadoReporte == 'Pendiente'}">
                                             <a class="btn-descargar"
                                                href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Completar reporte</a>
                                         </c:when>
-                                        <c:when test="${esDocente && s.estadoReporte == 'Rechazado'}">
+                                        <c:when test="${esPropia && s.estadoReporte == 'Rechazado'}">
                                             <a class="btn-descargar"
                                                href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Corregir reporte</a>
                                         </c:when>

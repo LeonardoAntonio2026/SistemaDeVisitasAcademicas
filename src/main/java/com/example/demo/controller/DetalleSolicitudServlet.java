@@ -60,7 +60,10 @@ public class DetalleSolicitudServlet extends HttpServlet {
             return; // el helper ya mandó la página de error que corresponde
         }
 
-        boolean esDocente = SesionUtils.esDocente(request);
+        // Lo del docente lo hace el DUEÑO de la solicitud, no "el rol Docente":
+        // el Administrador también levanta las suyas y con ellas le toca
+        // firmar y enviar como cualquier docente
+        boolean esDueno = solicitud.getIdUsuarioSolicitante() == SesionUtils.idUsuario(request);
         String action = request.getParameter("action");
         int id = solicitud.getIdSolicitud();
 
@@ -69,8 +72,8 @@ public class DetalleSolicitudServlet extends HttpServlet {
 
         if ("enviar".equals(action)) {
             // El paso "Enviar solicitud" solo se completa dando click en ENVIAR,
-            // y solo si el docente ya subió su FO-UTEZ-EST-08 firmado (RN-02)
-            if (!esDocente) {
+            // y solo si el dueño ya subió su FO-UTEZ-EST-08 firmado (RN-02)
+            if (!esDueno) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -83,7 +86,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
             }
         } else if ("aprobar".equals(action) || "rechazar".equals(action)) {
             // Solo el coordinador de Estadías (o Admin) evalúa, y solo En revisión
-            if (esDocente) {
+            if (!SesionUtils.esRevisor(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -112,8 +115,12 @@ public class DetalleSolicitudServlet extends HttpServlet {
     }
 
     /**
-     * Carga la solicitud validando el acceso: el docente solo ve las suyas y
-     * el coordinador solo las que ya fueron enviadas.
+     * Carga la solicitud validando el acceso: la suya la ve siempre quien la
+     * creó, y las ajenas solo el revisor y solo si ya fueron enviadas.
+     *
+     * Se pregunta primero por el dueño y no por el rol porque el Administrador
+     * es las dos cosas: con sus propias solicitudes entra como dueño (incluso
+     * Pendientes, que es cuando firma y envía) y con las demás como revisor.
      *
      * Devuelve null cuando no se puede mostrar, pero antes manda la página de
      * error que corresponde: 404 si la solicitud no existe y 403 si existe
@@ -141,10 +148,14 @@ public class DetalleSolicitudServlet extends HttpServlet {
             return null;
         }
 
-        boolean permitida = SesionUtils.esDocente(request)
-                ? solicitud.getIdUsuarioSolicitante() == idUsuario
-                // Coordinador/Admin: las Pendientes aún no se envían, no le aparecen
-                : !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado());
+        boolean permitida = solicitud.getIdUsuarioSolicitante() == idUsuario
+                // El Administrador entra a cualquiera, en cualquier estado:
+                // también le toca corregirle los datos al docente, y si no
+                // vería las Pendientes no podría abrir la que acaba de corregir
+                || SesionUtils.esAdministrador(request)
+                // Estadías: las Pendientes no, porque el docente todavía no las envía
+                || (SesionUtils.esRevisor(request)
+                    && !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado()));
 
         if (!permitida) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -161,11 +172,20 @@ public class DetalleSolicitudServlet extends HttpServlet {
         boolean aprobada = "Aprobada".equals(nuevoEstado);
         String plantillaHtml = """
         <html>
-            <body style="font-family: Arial, sans-serif; color: #333333;">
-                <h2 style="color: #183052;">Tu solicitud fue {0}</h2>
-                <p>La solicitud de visita a <strong>{1}</strong> fue <strong>{0}</strong> por el área de Estadías.</p>
+        
+                 <body style="margin: 0; padding: 20px; background-color: #f4f6f9; font-family: Arial, sans-serif; color: #333333;">
+                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                 <tr>
+                 <td style="background-color: #183052; height: 8px; line-height: 8px; font-size: 8px;">&nbsp;</td>
+                 </tr>
+                 <tr>
+                 <td style="padding: 30px 25px;">
+                 <h2 style="color: #183052; margin-top: 0; font-size: 20px;">Tu solicitud fue {0}</h2>
+                 <p style="font-size: 15px; line-height: 1.5; color: #4a5568;">
+                 La solicitud de visita a <strong style="color: #1a202c;">{1}</strong> fue <strong>{0}</strong> por el área de Estadías.
+                </p>
                 {2}
-                <p>{3}</p>
+                <p style="font-size: 14px; line-height: 1.5; color: #4a5568; margin-top: 20px;">{3}</p>
                 <p style="font-size: 12px; color: #777777;">Sistema de Gestión de Visitas Académicas - UTEZ</p>
             </body>
         </html>

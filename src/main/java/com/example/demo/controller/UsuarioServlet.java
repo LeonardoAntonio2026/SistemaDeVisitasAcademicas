@@ -5,6 +5,7 @@ import com.example.demo.model.dao.RolDao;
 import com.example.demo.model.dao.TokenRecuperacionDao;
 import com.example.demo.model.dao.UsuarioDao;
 import com.example.demo.utils.EmailSender;
+import com.example.demo.utils.EnlaceContrasena;
 import com.example.demo.utils.SesionUtils;
 import com.example.demo.utils.Validador;
 import com.google.gson.Gson;
@@ -16,10 +17,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -31,7 +30,8 @@ import java.util.List;
  *
  * El JSP se pinta una sola vez, al entrar (GET sin action). De ahí en adelante
  * todo pasa por JSON y lo consume gestion-usuarios.js con fetch: los modales
- * piden datos con GET y las tres operaciones van por POST.
+ * piden datos con GET y las tres operaciones van por POST. Así la página nunca
+ * se recarga y no hay dos versiones de la misma pantalla que mantener.
  */
 @WebServlet(name = "UsuarioServlet", value = "/usuarios")
 public class UsuarioServlet extends HttpServlet {
@@ -40,21 +40,21 @@ public class UsuarioServlet extends HttpServlet {
     private final RolDao rolDao = new RolDao();
     private final TokenRecuperacionDao tokenDao = new TokenRecuperacionDao();
     private final Gson gson = new Gson();
-    private final SecureRandom random = new SecureRandom();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Gestión de usuarios es solo del Administrador; a los demás se les
-        // dice por qué no pueden entrar
+        // Gestión de usuarios es solo del Administrador: a los demás se les dice
+        // por qué no pueden entrar, en vez de rebotarlos al inicio sin explicación
         if (!SesionUtils.esAdministrador(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
-        // Con action el panel pide lo que necesitan sus modales; sin action es
-        // la carga normal de la página
+        // Con action el panel está pidiendo lo que necesitan sus modales:
+        // los datos del usuario a editar o el resumen de lo que se perdería al
+        // darlo de baja. Sin action es la carga normal de la página.
         String action = request.getParameter("action");
         if ("editar".equals(action) || "confirmar".equals(action)) {
             responderJson(response, consultar(action, request));
@@ -156,54 +156,56 @@ public class UsuarioServlet extends HttpServlet {
         // create() deja el id generado en la entidad; el nombre del rol se
         // completa para que el panel pueda pintar la fila nueva sin releer la BD
         nuevo.setNombreRol(rol);
-        darLaBienvenida(request, nuevo);
-        return Respuesta.exito("Usuario creado. Se le envió un correo para que defina su contraseña.", nuevo);
+
+        // La cuenta ya existe: si el correo falla no se deshace el alta, solo se
+        // queda sin avisar y el administrador tendrá que decirle la contraseña.
+        enviarCorreoBienvenida(request, nuevo);
+
+        return Respuesta.exito("Usuario creado correctamente.", nuevo);
     }
 
     /**
-     * Correo de alta: le avisa al usuario que ya tiene cuenta y le da un enlace
-     * para poner su propia contraseña, en vez de mandarle la que escribió el
-     * administrador (que quedaría en el correo para siempre).
+     * Manda el correo de bienvenida con un enlace para que la persona defina su
+     * propia contraseña.
      *
-     * Es el mismo token de la recuperación (RF-02), así que si el enlace vence
-     * el usuario puede pedir otro desde "Recuperar contraseña" sin ayuda.
-     * Si algo falla aquí no se deshace el alta: la cuenta ya está creada y la
-     * contraseña inicial del administrador sigue sirviendo para entrar.
+     * Nadie se registra solo en el sistema: las cuentas las da de alta el
+     * administrador, así que la contraseña que se escribió en el panel la conoce
+     * él y no el dueño de la cuenta. Por eso el correo lleva el mismo token de un
+     * solo uso que el de "olvidé mi contraseña": el docente entra al enlace, pone
+     * la suya y la del administrador queda pisada.
+     *
+     * Se envía con sendMailAsync porque este servlet responde JSON al panel y
+     * abrir la conexión SMTP tarda varios segundos: si fuera síncrono, el modal
+     * de "crear usuario" se quedaría congelado esperando al correo.
+     *
+     * @param request petición en curso, para armar la URL del enlace
+     * @param usuario usuario recién creado, ya con su id y su nombre de rol
      */
-    private void darLaBienvenida(HttpServletRequest request, Usuario nuevo) {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        if (!tokenDao.crear(nuevo.getId(), token)) {
-            System.err.println("No se pudo generar el enlace de bienvenida para " + nuevo.getCorreo());
+    private void enviarCorreoBienvenida(HttpServletRequest request, Usuario usuario) {
+        String token = EnlaceContrasena.generarToken();
+        if (!tokenDao.crear(usuario.getId(), token)) {
+            System.err.println("No se pudo guardar el token de bienvenida de: " + usuario.getCorreo());
             return;
         }
-
-        int puerto = request.getServerPort();
-        String sufijoPuerto = (puerto == 80 || puerto == 443) ? "" : ":" + puerto;
-        String enlace = request.getScheme() + "://" + request.getServerName() + sufijoPuerto
-                + request.getContextPath() + "/restablecer-contrasena?token=" + token;
+        String enlace = EnlaceContrasena.construirUrl(request, token);
 
         String plantillaHtml = """
         <html>
             <body style="font-family: Arial, sans-serif; color: #333333;">
-                <h2 style="color: #183052;">¡Hola, {0}!</h2>
-                <p>Se creó tu cuenta en el Sistema de Gestión de Visitas Académicas con el rol de <strong>{1}</strong>.</p>
-                <p>Entras con este correo: <strong>{2}</strong></p>
-                <p>Para definir tu contraseña, <a href="{3}" style="color: #183052;">haz click aquí</a>.
-                   El enlace es válido durante <strong>{4} horas</strong>; si vence, usa "Recuperar contraseña"
-                   en la pantalla de inicio de sesión.</p>
+                <h2 style="color: #183052;">Te damos la bienvenida, {0}</h2>
+                <p>El administrador te creó una cuenta en el Sistema de Gestión de Visitas Académicas con el rol de <strong>{1}</strong>.</p>
+                <p>Para entrar, primero define tu propia contraseña:</p>
+                <p><a href="{2}" style="color: #183052;">Crear mi contraseña</a></p>
+                <p>El enlace es válido durante <strong>{3} horas</strong> y solo se puede usar una vez. Si se te vence, pide otro desde la opción de contraseña olvidada en la pantalla de inicio de sesión.</p>
                 <p style="font-size: 12px; color: #777777;">Sistema de Gestión de Visitas Académicas - UTEZ</p>
             </body>
         </html>
         """;
-        String cuerpo = MessageFormat.format(plantillaHtml, nuevo.getNombre(), nuevo.getNombreRol(),
-                nuevo.getCorreo(), enlace, String.valueOf(TokenRecuperacionDao.HORAS_VIGENCIA));
+        String cuerpo = MessageFormat.format(plantillaHtml, usuario.getNombre(), usuario.getNombreRol(),
+                enlace, String.valueOf(TokenRecuperacionDao.HORAS_VIGENCIA));
 
-        // En un hilo aparte: el panel espera el JSON para pintar la fila nueva y
-        // el SMTP tarda varios segundos
-        EmailSender.sendMailAsync(nuevo.getCorreo(),
-                "Tu cuenta en el Sistema de Visitas Académicas", cuerpo);
+        EmailSender.sendMailAsync(usuario.getCorreo(),
+                "Bienvenido al Sistema de Visitas Académicas", cuerpo);
     }
 
     /** Edición de nombre, correo y rol. La contraseña no se toca desde aquí. */

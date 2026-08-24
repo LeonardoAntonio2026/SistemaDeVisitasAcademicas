@@ -41,7 +41,7 @@ public class Solicitud implements Serializable {
     private int totalEstudiantes;
     private List<ProgramaEducativo> programas = new ArrayList<>();
     private List<String> asignaturas = new ArrayList<>();
-    // Estudiantes por división académica (ESTUDIANTES_DIVISION), siempre con las 4 llaves
+    // Estudiantes por división académica; no se guarda, se suma de los programas
     private Map<String, Integer> estudiantesPorDivision = divisionesEnCero();
     // Docentes acompañantes (SOLICITUD_DOCENTE); solo se usan id y nombre
     private List<Usuario> docentesAcompanantes = new ArrayList<>();
@@ -308,6 +308,9 @@ public class Solicitud implements Serializable {
      * Rehace el desglose por división sumando los grupos capturados. El docente
      * no captura estas cifras: elige el programa educativo de cada grupo y la
      * división sale del catálogo, así que los dos totales nunca se desfasan.
+     * No se persiste: se recalcula al leer la solicitud, porque guardar una
+     * suma que ya se puede derivar de PROGRAMA_EDUCATIVO solo la deja
+     * desfasarse (así pasó con las solicitudes viejas de texto libre).
      */
     public void recalcularEstudiantesPorDivision() {
         Map<String, Integer> mapa = divisionesEnCero();

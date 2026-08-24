@@ -41,10 +41,11 @@ public class SolicitudServlet extends HttpServlet {
             return;
         }
 
-        // Editar: el mismo formulario, precargado. Solo el docente dueño y
-        // solo si está Pendiente o Rechazada
+        // Editar: el mismo formulario de nueva solicitud pero precargado.
+        // El dueño (o el Administrador, que corrige las de los demás), y solo
+        // si está Pendiente (aún no se envía) o Rechazada (corregirla la reabre)
         if ("editar".equals(request.getParameter("action"))) {
-            Solicitud solicitud = cargarEditablePorDueno(request);
+            Solicitud solicitud = cargarEditable(request);
             if (solicitud == null) {
                 // O no es suya, o está en un estado que ya no se edita
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -56,17 +57,20 @@ public class SolicitudServlet extends HttpServlet {
             return;
         }
 
-        // Lista de solicitudes: el docente ve las suyas, Estadías/Administrador las de todos
+        // Lista de solicitudes: el docente ve las suyas, Estadías las de todos
+        // y el Administrador las de todos MÁS las suyas (también solicita)
         Integer idUsuario = SesionUtils.idUsuario(request);
 
-        // Mismas consultas que el inicio (IndexSv): solo las activas. Filtrar
-        // aquí y no en la vista, o la página sale vacía y sin el mensaje de
-        // "No tienes ninguna solicitud".
+        // Mismas consultas que el inicio (IndexSv): solo las ACTIVAS. Antes se
+        // traían todas y la vista escondía las terminadas, así que un docente
+        // con puras solicitudes rechazadas veía la página vacía sin el mensaje
+        // de "No tienes ninguna solicitud".
         List<Solicitud> solicitudes;
         if (idUsuario == null) {
             solicitudes = new ArrayList<>();
         } else if (SesionUtils.esRevisor(request)) {
-            solicitudes = solicitudDao.getActivasParaRevision();
+            solicitudes = solicitudDao.getActivasParaRevision(
+                    SesionUtils.puedeSolicitar(request) ? idUsuario : null);
         } else {
             solicitudes = solicitudDao.getActivasBySolicitante(idUsuario);
         }
@@ -83,8 +87,9 @@ public class SolicitudServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         if ("delete".equals(action)) {
-            // Solo el docente dueño y solo mientras siga Pendiente: una vez
-            // enviada a Estadías se corrige y se reenvía, no se borra (RF-11)
+            // Solo el docente dueño y solo mientras siga Pendiente; una vez
+            // enviada a Estadías ya no se elimina, ni siquiera si la rechazaron:
+            // se corrige y se reenvía (RF-11)
             Solicitud aEliminar = cargarBorrablePorDueno(request);
             if (aEliminar != null) {
                 solicitudDao.delete(aEliminar.getIdSolicitud());
@@ -112,13 +117,14 @@ public class SolicitudServlet extends HttpServlet {
                 response.sendRedirect("detalle?id=" + solicitud.getIdSolicitud());
                 return;
             }
-            // Falló el INSERT: se regresa al formulario con lo capturado
+            // Falló el INSERT: se regresa al formulario con lo capturado en vez
+            // de mandarlo al inicio sin decirle que su solicitud no se guardó
             errores.add("No se pudo guardar la solicitud en la base de datos. "
                     + "No se registró nada; revisa tu conexión e inténtalo de nuevo.");
             regresarAlFormulario(request, response, solicitud, errores, false);
             return;
         } else if ("update".equals(action)) {
-            Solicitud solicitud = cargarEditablePorDueno(request);
+            Solicitud solicitud = cargarEditable(request);
             if (solicitud == null) {
                 // O no es suya, o está en un estado que ya no se edita
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -158,7 +164,8 @@ public class SolicitudServlet extends HttpServlet {
 
     /**
      * Reglas de la solicitud. Devuelve la lista de mensajes a mostrar; vacía si
-     * todo está bien.
+     * todo está bien. El navegador ya valida lo mismo, pero un POST directo se
+     * lo salta: esta es la validación que de verdad protege los datos.
      *
      * Los largos máximos son los de las columnas VARCHAR2 del esquema: si se
      * cambia una columna hay que mover también el maxlength de la vista.
@@ -248,7 +255,10 @@ public class SolicitudServlet extends HttpServlet {
         }
     }
 
-    /** Vuelve a pintar el formulario con lo capturado y la lista de errores. */
+    /**
+     * Vuelve a pintar el formulario con lo que el docente había capturado y la
+     * lista de errores, para que no pierda el trabajo por un dato mal escrito.
+     */
     private void regresarAlFormulario(HttpServletRequest request, HttpServletResponse response,
                                       Solicitud solicitud, List<String> errores, boolean editando)
             throws ServletException, IOException {
@@ -315,23 +325,35 @@ public class SolicitudServlet extends HttpServlet {
     }
 
     /**
-     * Carga la solicitud del parámetro id para editarla: solo el docente que la
-     * creó, y solo si está Pendiente o Rechazada.
+     * Carga la solicitud del parámetro id para editarla: solo Pendiente
+     * (todavía no se envía) o Rechazada (Estadías la devolvió y corregirla la
+     * reabre, como el reporte rechazado). En revisión, Aprobada y Completada ya
+     * no se editan.
+     *
+     * La edita el docente que la creó y también el Administrador, que corrige
+     * las de los demás mientras el estado lo permita. Lo que NO le pasa al
+     * Administrador es firmar y enviar: eso sigue siendo del dueño.
      */
-    private Solicitud cargarEditablePorDueno(HttpServletRequest request) {
-        return cargarPorDuenoEnEstados(request, "Pendiente", "Rechazada");
+    private Solicitud cargarEditable(HttpServletRequest request) {
+        return cargarEnEstados(request, false, "Pendiente", "Rechazada");
     }
 
     /**
-     * Igual que cargarEditablePorDueno pero solo Pendiente: lo que ya pasó por
-     * Estadías se corrige, no se borra (RF-11).
+     * Igual que cargarEditable pero solo Pendiente y solo el dueño: una
+     * solicitud que ya pasó por Estadías no se borra aunque sí se pueda
+     * corregir (RF-11), y borrar el trabajo de otro no es corregirlo.
      */
     private Solicitud cargarBorrablePorDueno(HttpServletRequest request) {
-        return cargarPorDuenoEnEstados(request, "Pendiente");
+        return cargarEnEstados(request, true, "Pendiente");
     }
 
-    /** La solicitud del parámetro id si es del docente en sesión y su estado está en la lista. */
-    private Solicitud cargarPorDuenoEnEstados(HttpServletRequest request, String... estadosPermitidos) {
+    /**
+     * La solicitud del parámetro id si su estado está en la lista y quien la
+     * pide la puede modificar: siempre el dueño y, si soloDueno es false,
+     * también el Administrador.
+     */
+    private Solicitud cargarEnEstados(HttpServletRequest request, boolean soloDueno,
+                                      String... estadosPermitidos) {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return null;
@@ -345,7 +367,12 @@ public class SolicitudServlet extends HttpServlet {
         }
 
         Solicitud solicitud = solicitudDao.getById(id);
-        if (solicitud == null || solicitud.getIdUsuarioSolicitante() != idUsuario) {
+        if (solicitud == null) {
+            return null;
+        }
+        boolean puedeTocarla = solicitud.getIdUsuarioSolicitante() == idUsuario.intValue()
+                || (!soloDueno && SesionUtils.esAdministrador(request));
+        if (!puedeTocarla) {
             return null;
         }
         for (String estado : estadosPermitidos) {

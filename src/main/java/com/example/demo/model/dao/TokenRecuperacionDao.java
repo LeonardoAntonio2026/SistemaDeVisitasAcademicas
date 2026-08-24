@@ -21,11 +21,7 @@ public class TokenRecuperacionDao {
         String sqlInsert = "INSERT INTO token_recuperacion (id_usuario, token, fecha_expiracion, usado) "
                 + "VALUES (?, ?, ?, 'N')";
 
-        // La expiración se calcula aquí y no con SYSTIMESTAMP + INTERVAL: el servidor
-        // de BD trabaja en UTC (DBTIMEZONE +00:00) y FECHA_EXPIRACION no guarda zona,
-        // así que al releerla con la zona de la app (UTC-6) se le sumaban 6 horas de
-        // regalo y el enlace duraba 30 h en vez de 24. Escribiendo y leyendo el
-        // Timestamp desde Java ambos lados usan la misma zona.
+
         Timestamp expiracion = Timestamp.from(Instant.now().plus(HORAS_VIGENCIA, ChronoUnit.HOURS));
 
         Connection con = null;

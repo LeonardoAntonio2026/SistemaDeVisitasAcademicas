@@ -30,8 +30,12 @@ public class FiltroAutenticacion extends HttpFilter {
         // 1. ¿El usuario ya inició sesión? (guardamos el atributo "usuario" al hacer login)
         boolean loggedIn = (session != null && session.getAttribute("usuario") != null);
 
-        // 2. Rutas públicas: solo el login. Las cuentas las da de alta el
-        // Administrador desde la gestión de usuarios, no hay registro público.
+        // 2. Ruta pública: solo el login.
+        // Aquí estaban también "/registro.jsp" y "/register": se quitaron junto con
+        // el registro público porque nadie se da de alta solo, las cuentas las crea
+        // el Administrador desde /usuarios. Mientras estuvo abierto, cualquiera con
+        // la URL podía crearse una cuenta Docente sin que el Administrador se
+        // enterara.
         // Comparación exacta, no endsWith(): endsWith aceptaba cualquier ruta que
         // terminara en "login.jsp".
         boolean loginRequest =
