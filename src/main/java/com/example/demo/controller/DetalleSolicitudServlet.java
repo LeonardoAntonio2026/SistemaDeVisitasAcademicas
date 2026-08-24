@@ -60,7 +60,10 @@ public class DetalleSolicitudServlet extends HttpServlet {
             return; // el helper ya mandó la página de error que corresponde
         }
 
-        boolean esDocente = SesionUtils.esDocente(request);
+        // Lo del docente lo hace el DUEÑO de la solicitud, no "el rol Docente":
+        // el Administrador también levanta las suyas y con ellas le toca
+        // firmar y enviar como cualquier docente
+        boolean esDueno = solicitud.getIdUsuarioSolicitante() == SesionUtils.idUsuario(request);
         String action = request.getParameter("action");
         int id = solicitud.getIdSolicitud();
 
@@ -71,8 +74,8 @@ public class DetalleSolicitudServlet extends HttpServlet {
 
         if ("enviar".equals(action)) {
             // El paso "Enviar solicitud" solo se completa dando click en ENVIAR,
-            // y solo si el docente ya subió su FO-UTEZ-EST-08 firmado (RN-02)
-            if (!esDocente) {
+            // y solo si el dueño ya subió su FO-UTEZ-EST-08 firmado (RN-02)
+            if (!esDueno) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -85,7 +88,7 @@ public class DetalleSolicitudServlet extends HttpServlet {
             }
         } else if ("aprobar".equals(action) || "rechazar".equals(action)) {
             // Solo el coordinador de Estadías (o Admin) evalúa, y solo En revisión
-            if (esDocente) {
+            if (!SesionUtils.esRevisor(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -114,8 +117,12 @@ public class DetalleSolicitudServlet extends HttpServlet {
     }
 
     /**
-     * Carga la solicitud validando el acceso: el docente solo ve las suyas y
-     * el coordinador solo las que ya fueron enviadas.
+     * Carga la solicitud validando el acceso: la suya la ve siempre quien la
+     * creó, y las ajenas solo el revisor y solo si ya fueron enviadas.
+     *
+     * Se pregunta primero por el dueño y no por el rol porque el Administrador
+     * es las dos cosas: con sus propias solicitudes entra como dueño (incluso
+     * Pendientes, que es cuando firma y envía) y con las demás como revisor.
      *
      * Devuelve null cuando no se puede mostrar, pero antes manda la página de
      * error que corresponde: 404 si la solicitud no existe y 403 si existe pero
@@ -144,10 +151,14 @@ public class DetalleSolicitudServlet extends HttpServlet {
             return null;
         }
 
-        boolean permitida = SesionUtils.esDocente(request)
-                ? solicitud.getIdUsuarioSolicitante() == idUsuario
-                // Coordinador/Admin: las Pendientes aún no se envían, no le aparecen
-                : !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado());
+        boolean permitida = solicitud.getIdUsuarioSolicitante() == idUsuario
+                // El Administrador entra a cualquiera, en cualquier estado:
+                // también le toca corregirle los datos al docente, y si no
+                // vería las Pendientes no podría abrir la que acaba de corregir
+                || SesionUtils.esAdministrador(request)
+                // Estadías: las Pendientes no, porque el docente todavía no las envía
+                || (SesionUtils.esRevisor(request)
+                    && !"Pendiente".equalsIgnoreCase(solicitud.getNombreEstado()));
 
         if (!permitida) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);

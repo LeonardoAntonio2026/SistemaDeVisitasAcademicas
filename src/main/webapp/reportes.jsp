@@ -14,13 +14,12 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/reporte.css">
 
-    <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
-
+    <%-- esRevisor lo define layout/header.jsp --%>
     <div class="superior">
         <h2>Reportes</h2>
         <p>
             <c:choose>
-                <c:when test="${esDocente}">Reportes pendientes por subir de tus visitas realizadas</c:when>
+                <c:when test="${!esRevisor}">Reportes pendientes por subir de tus visitas realizadas</c:when>
                 <c:otherwise>Reportes de los docentes pendientes de subir y recientemente subidos</c:otherwise>
             </c:choose>
         </p>
@@ -34,7 +33,7 @@
                 <h5>No hay reportes por ahora</h5>
                 <p>
                     <c:choose>
-                        <c:when test="${esDocente}">Cuando completes una solicitud se creará aquí su reporte de visita</c:when>
+                        <c:when test="${!esRevisor}">Cuando completes una solicitud se creará aquí su reporte de visita</c:when>
                         <c:otherwise>Cuando un docente complete una solicitud aparecerá aquí su reporte</c:otherwise>
                     </c:choose>
                 </p>
@@ -50,7 +49,7 @@
                                 <i class="bi bi-pin-map"></i>
                                 <span><c:out value="${empty r.lugarDireccion ? 'Sin dirección' : r.lugarDireccion}"/></span>
                             </div>
-                            <c:if test="${!esDocente}">
+                            <c:if test="${esRevisor}">
                                 <div class="solicitud-ubicacion">
                                     <i class="bi bi-person"></i>
                                     <span><c:out value="${r.nombreSolicitante}"/></span>
@@ -83,12 +82,16 @@
                                href="${pageContext.request.contextPath}/detalle?id=${r.idSolicitud}">
                                 <i class="bi bi-arrow-right"></i> Ir a la solicitud
                             </a>
+                            <%-- Llenar o corregir el reporte le toca al dueño de
+                                 la visita, no a un rol: el Administrador ve en
+                                 esta lista los suyos y los de los demás --%>
+                            <c:set var="esPropio" value="${sessionScope.idUsuario == r.idUsuarioSolicitante}"/>
                             <c:choose>
-                                <c:when test="${esDocente && r.nombreEstado == 'Pendiente'}">
+                                <c:when test="${esPropio && r.nombreEstado == 'Pendiente'}">
                                     <a class="btn-ver-detalles" style="text-decoration: none;"
                                        href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Completar reporte</a>
                                 </c:when>
-                                <c:when test="${esDocente && r.nombreEstado == 'Rechazado'}">
+                                <c:when test="${esPropio && r.nombreEstado == 'Rechazado'}">
                                     <a class="btn-ver-detalles" style="text-decoration: none;"
                                        href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}">Corregir reporte</a>
                                 </c:when>

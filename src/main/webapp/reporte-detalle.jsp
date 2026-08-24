@@ -109,8 +109,8 @@
                             <c:otherwise>No se registró un motivo.</c:otherwise>
                         </c:choose>
                     </p>
-                    <c:if test="${esDueno && empty param.editar}">
-                        <p>Corrige lo señalado con <strong>Editar formulario</strong>, firma nuevamente el formato y envía el reporte a revisión.</p>
+                    <c:if test="${puedeEditar && empty param.editar}">
+                        <p>Corrige lo señalado con <strong>Editar formulario</strong>${esDueno ? ', firma nuevamente el formato y envía el reporte a revisión' : '; firmar el formato y enviarlo le toca al docente'}.</p>
                     </c:if>
                 </div>
             </div>
@@ -350,6 +350,39 @@
              Estadías solo se muestra el banner y el resumen de arriba.
              ============================================================ --%>
         <c:otherwise>
+            <%-- Pendiente, ya capturado y no soy el dueño: solo el Administrador
+                 llega aquí. Es su entrada al formulario para corregirlo; firmar
+                 y enviar siguen siendo del docente, por eso no ve esa card. --%>
+            <c:if test="${estado == 'Pendiente' && puedeEditar && !esDueno}">
+                <div class="detalle-card">
+                    <h6>Reporte capturado por el docente</h6>
+                    <div class="datos-grid">
+                        <div class="dato-full">
+                            <div class="dato-label">Resultados</div>
+                            <div class="dato-valor"><c:out value="${r.resultados}"/></div>
+                        </div>
+                        <div class="dato-full">
+                            <div class="dato-label">Observaciones</div>
+                            <div class="dato-valor"><c:out value="${empty r.observaciones ? '—' : r.observaciones}"/></div>
+                        </div>
+                    </div>
+                    <c:if test="${not empty imagenes}">
+                        <div class="galeria-previa">
+                            <c:forEach var="img" items="${imagenes}">
+                                <div class="galeria-item">
+                                    <img src="${pageContext.request.contextPath}/reporte?imagen=${img.idImagen}"
+                                         alt="Imagen del reporte">
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </c:if>
+                    <p>Al editarlo, el formato se regenera con los datos nuevos y el docente tiene que firmarlo y subirlo otra vez.</p>
+                    <a class="btn-editar-datos btn-resumen-solicitud"
+                       href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}&editar=1">
+                        <i class="bi bi-pencil"></i> Editar formulario
+                    </a>
+                </div>
+            </c:if>
             <c:if test="${estado != 'Pendiente'}">
                 <%-- Los archivos van antes que el contenido del reporte, igual
                      que en el detalle de la solicitud: es lo que se viene a
@@ -421,8 +454,11 @@
                     </div>
                 </c:if>
 
-                <%-- Card evaluar: solo Estadías/Admin con el reporte enviado --%>
-                <c:if test="${estado == 'Completado' && !esDueno}">
+                <%-- Card evaluar: solo Estadías/Admin con el reporte enviado.
+                     Se mira el rol y no el dueño (igual que en detalle.jsp): al
+                     Administrador le sale también en sus propios reportes, para
+                     que no se le queden atorados si no hay nadie de Estadías. --%>
+                <c:if test="${estado == 'Completado' && esRevisor}">
                     <div class="detalle-card">
                         <h6>Evaluar reporte</h6>
                         <form action="${pageContext.request.contextPath}/reporte" method="POST" id="form-evaluar-reporte">
@@ -455,11 +491,12 @@
                     </div>
                 </c:if>
 
-                <%-- Card corregir: el dueño de un reporte rechazado --%>
-                <c:if test="${estado == 'Rechazado' && esDueno}">
+                <%-- Card corregir: quien puede editar un reporte rechazado
+                     (el dueño o el Administrador) --%>
+                <c:if test="${estado == 'Rechazado' && puedeEditar}">
                     <div class="detalle-card">
                         <h6>Corregir reporte</h6>
-                        <p>Edita los datos del reporte conforme a lo solicitado y vuelve a enviarlo.</p>
+                        <p>Edita los datos del reporte conforme a lo solicitado y ${esDueno ? 'vuelve a enviarlo' : 'el docente vuelve a firmarlo y enviarlo'}.</p>
                         <%-- Mismo botón de editar (contorno azul) que en el detalle de la solicitud --%>
                         <a class="btn-editar-datos"
                            href="${pageContext.request.contextPath}/reporte?id=${r.idReporte}&editar=1">
