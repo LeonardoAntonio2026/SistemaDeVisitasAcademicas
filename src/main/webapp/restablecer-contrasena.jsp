@@ -1,3 +1,11 @@
+<%--
+  Vista de Cambiar / Restablecer Contraseña.
+  Renderiza el formulario para la asignación de una nueva clave de acceso mediante un token válido,
+  o despliega el mensaje de error correspondiente si el enlace ha expirado o no es válido.
+
+  @author Hugo Alberto Ramirez Martinez
+  @since 25/08/2026
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%-- Misma plantilla visual que login.jsp (auth.css): antes esta pantalla usaba
