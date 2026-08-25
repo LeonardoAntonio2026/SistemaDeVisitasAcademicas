@@ -1,7 +1,5 @@
 # SGVA — Sistema de Gestión de Visitas Académicas
 
-Repositorio: <https://github.com/LeonardoAntonio2026/SistemaDeVisitasAcademicas>
-
 ## Equipo
 
 Universidad Tecnológica Emiliano Zapata del Estado de Morelos (UTEZ) —
@@ -122,21 +120,12 @@ db/schema.sql            Tablas
 db/seed.sql              Catálogos: roles, estados, tipos de documento
 ```
 
-### Extensión de autollenado — `extension-autollenado/`
-
-Extensión de Chrome que llena el formulario de solicitud con datos de prueba
-para no capturarlo a mano en cada demostración. Es una herramienta de apoyo al
-desarrollo, no forma parte del WAR.
-
 ## Requisitos
 
 - **JDK 21** (el `pom.xml` fija `source`/`target` en 21).
 - **Tomcat 10.1 o superior.** No sirve Tomcat 9: la app usa el espacio de
   nombres `jakarta.*`, no `javax.*`.
 - Acceso a la base Oracle Autonomous y su *wallet*.
-
-No hace falta instalar Maven: se usa el wrapper (`mvnw.cmd` en Windows, `mvnw`
-en Linux/macOS).
 
 ## Configuración
 
