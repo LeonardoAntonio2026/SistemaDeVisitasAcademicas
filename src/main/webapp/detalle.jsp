@@ -1,3 +1,16 @@
+<%--
+/**
+ * Vista JSP para la consulta detallada de una solicitud de visita académica.
+ * <p>
+ * Visualiza la información del lugar, participantes, asignaturas y desglose por división,
+ * gestiona el flujo de archivos (FO-UTEZ-EST-08, Oficio, Carta Responsiva) y ofrece
+ * las acciones correspondientes según el rol en sesión (edición, envío, aprobación/rechazo).
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 24/08/2026
+ */
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
@@ -34,14 +47,14 @@
          solicitud terminada ya no aparece en Solicitudes: se vuelve al
          Histórico, que es donde quedó. --%>
     <c:choose>
-        <c:when test="${esTerminada}">
-            <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
-            <c:set var="volverTexto" value="Volver al histórico"/>
-        </c:when>
-        <c:otherwise>
-            <c:set var="volverUrl" value="${pageContext.request.contextPath}/solicitud"/>
-            <c:set var="volverTexto" value="Volver a solicitudes"/>
-        </c:otherwise>
+    <c:when test="${esTerminada}">
+        <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
+        <c:set var="volverTexto" value="Volver al histórico"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="volverUrl" value="${pageContext.request.contextPath}/solicitud"/>
+        <c:set var="volverTexto" value="Volver a solicitudes"/>
+    </c:otherwise>
     </c:choose>
 
     <%-- Volver también aquí arriba: quien entró solo a consultar no tiene por
@@ -64,33 +77,33 @@
 
     <%-- Confirmaciones: archivo subido / datos actualizados --%>
     <c:if test="${not empty param.subido}">
-        <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
-            <i class="bi bi-check-circle"></i>
-            <div>
-                <div class="instruccion-titulo">Archivo subido correctamente</div>
-                <p>Tu documento ya quedó guardado en el sistema. Lo puedes ver en la sección <strong>Archivos</strong>.</p>
-            </div>
+    <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
+        <i class="bi bi-check-circle"></i>
+        <div>
+            <div class="instruccion-titulo">Archivo subido correctamente</div>
+            <p>Tu documento ya quedó guardado en el sistema. Lo puedes ver en la sección <strong>Archivos</strong>.</p>
         </div>
+    </div>
     </c:if>
     <c:if test="${not empty param.actualizado}">
-        <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
-            <i class="bi bi-check-circle"></i>
-            <div>
-                <div class="instruccion-titulo">Datos actualizados</div>
-                <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: ábrelo, fírmalo y súbelo.</p>
-            </div>
+    <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
+        <i class="bi bi-check-circle"></i>
+        <div>
+            <div class="instruccion-titulo">Datos actualizados</div>
+            <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: ábrelo, fírmalo y súbelo.</p>
         </div>
+    </div>
     </c:if>
     <%-- Corregir una solicitud rechazada la regresa a Pendiente: el aviso lo
          dice, porque el cambio de estado es lo que más sorprende al docente --%>
     <c:if test="${not empty param.corregida}">
-        <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
-            <i class="bi bi-check-circle"></i>
-            <div>
-                <div class="instruccion-titulo">Solicitud corregida</div>
-                <p>La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Abre el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</p>
-            </div>
+    <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
+        <i class="bi bi-check-circle"></i>
+        <div>
+            <div class="instruccion-titulo">Solicitud corregida</div>
+            <p>La solicitud volvió a quedar <strong>Pendiente</strong>, como si apenas la registraras. Abre el formato FO-UTEZ-EST-08 con los datos nuevos, fírmalo, súbelo y vuelve a enviarla a Estadías.</p>
         </div>
+    </div>
     </c:if>
 
     <%-- Errores de la subida de archivos (RN-07) y de las acciones de la página
@@ -98,36 +111,36 @@
     <c:if test="${not empty param.error}">
         <c:set var="errorDeArchivo"
                value="${param.error == 'tipo' || param.error == 'tamano' || param.error == 'vacio'}"/>
-        <div class="instruccion instruccion-rechazo" style="margin-top: 1rem;">
-            <i class="bi bi-exclamation-triangle"></i>
-            <div>
-                <div class="instruccion-titulo">
+    <div class="instruccion instruccion-rechazo" style="margin-top: 1rem;">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div>
+            <div class="instruccion-titulo">
                     ${errorDeArchivo ? 'No se pudo subir el archivo' : 'No se pudo completar la operación'}
-                </div>
-                <p>
-                    <c:choose>
-                        <c:when test="${param.error == 'tipo'}">Solo se permiten archivos PDF.</c:when>
-                        <c:when test="${param.error == 'tamano'}">El archivo supera el tamaño máximo de 10 MB.</c:when>
-                        <c:when test="${param.error == 'vacio'}">Selecciona un archivo antes de subir.</c:when>
-                        <c:when test="${param.error == 'sinfirmado'}">
-                            Primero sube el formato FO-UTEZ-EST-08 firmado: sin él la solicitud no se puede enviar a revisión.
-                        </c:when>
-                        <c:when test="${param.error == 'enviada'}">
-                            Esta solicitud ya se había enviado a Estadías, así que no se envió otra vez.
-                        </c:when>
-                        <c:when test="${param.error == 'sinmotivo'}">
-                            Para rechazar una solicitud es obligatorio escribir el motivo, porque es lo que se le notifica al docente.
-                        </c:when>
-                        <c:when test="${param.error == 'yaevaluada'}">
-                            Esta solicitud ya fue evaluada por alguien más: recarga la página para ver en qué estado quedó.
-                        </c:when>
-                        <c:otherwise>
-                            Ocurrió un problema al guardar en la base de datos y no se registró ningún cambio. Intenta de nuevo.
-                        </c:otherwise>
-                    </c:choose>
-                </p>
             </div>
+            <p>
+                <c:choose>
+                    <c:when test="${param.error == 'tipo'}">Solo se permiten archivos PDF.</c:when>
+                    <c:when test="${param.error == 'tamano'}">El archivo supera el tamaño máximo de 10 MB.</c:when>
+                    <c:when test="${param.error == 'vacio'}">Selecciona un archivo antes de subir.</c:when>
+                    <c:when test="${param.error == 'sinfirmado'}">
+                        Primero sube el formato FO-UTEZ-EST-08 firmado: sin él la solicitud no se puede enviar a revisión.
+                    </c:when>
+                    <c:when test="${param.error == 'enviada'}">
+                        Esta solicitud ya se había enviado a Estadías, así que no se envió otra vez.
+                    </c:when>
+                    <c:when test="${param.error == 'sinmotivo'}">
+                        Para rechazar una solicitud es obligatorio escribir el motivo, porque es lo que se le notifica al docente.
+                    </c:when>
+                    <c:when test="${param.error == 'yaevaluada'}">
+                        Esta solicitud ya fue evaluada por alguien más: recarga la página para ver en qué estado quedó.
+                    </c:when>
+                    <c:otherwise>
+                        Ocurrió un problema al guardar en la base de datos y no se registró ningún cambio. Intenta de nuevo.
+                    </c:otherwise>
+                </c:choose>
+            </p>
         </div>
+    </div>
     </c:if>
 
 
@@ -440,39 +453,39 @@
          lo que sigue justo después de subir el formato firmado, y ahí abajo
          obligaba a recorrer los datos de la solicitud para llegar al botón. --%>
     <c:if test="${esDocente && esPropia && estado == 'Pendiente'}">
-        <div class="acciones-form acciones-form--derecha acciones-tras-card">
-            <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"
-               class="btn-editar-datos" title="Corregir los datos antes de enviar">
-                <i class="bi bi-pencil"></i> Editar datos
-            </a>
-            <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
-                  data-confirmar="La solicitud pasa al área de Estadías para su revisión."
-                  data-confirmar-titulo="Enviar solicitud a Estadías"
-                  data-confirmar-detalle="Ya no podrás editar los datos ni reemplazar el formato firmado."
-                  data-confirmar-tipo="aviso"
-                  data-confirmar-ok="Sí, enviar">
-                <input type="hidden" name="id" value="${s.idSolicitud}">
-                <input type="hidden" name="action" value="enviar">
-                <button type="submit" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
-                        title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el formato firmado'}">
-                    <i class="bi bi-send"></i> Enviar solicitud a Estadías
-                </button>
-            </form>
-        </div>
+    <div class="acciones-form acciones-form--derecha acciones-tras-card">
+        <a href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}"
+           class="btn-editar-datos" title="Corregir los datos antes de enviar">
+            <i class="bi bi-pencil"></i> Editar datos
+        </a>
+        <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
+              data-confirmar="La solicitud pasa al área de Estadías para su revisión."
+              data-confirmar-titulo="Enviar solicitud a Estadías"
+              data-confirmar-detalle="Ya no podrás editar los datos ni reemplazar el formato firmado."
+              data-confirmar-tipo="aviso"
+              data-confirmar-ok="Sí, enviar">
+            <input type="hidden" name="id" value="${s.idSolicitud}">
+            <input type="hidden" name="action" value="enviar">
+            <button type="submit" class="btn-enviar-solicitud" ${existeFirmado ? '' : 'disabled'}
+                    title="${existeFirmado ? 'Enviar a revisión de Estadías' : 'Primero sube el formato firmado'}">
+                <i class="bi bi-send"></i> Enviar solicitud a Estadías
+            </button>
+        </form>
+    </div>
     </c:if>
 
     <%-- Card corregir: el docente dueño de una solicitud rechazada. Es la misma
          idea que "Corregir reporte" en el detalle del reporte: editar los datos
          la regresa a Pendiente y el trámite se reanuda desde firmar el FO. --%>
     <c:if test="${esDocente && esPropia && estado == 'Rechazada'}">
-        <div class="detalle-card">
-            <h6>Corregir solicitud</h6>
-            <p>Edita los datos conforme a lo que señaló Estadías y vuelve a enviarla. Al guardar los cambios la solicitud queda otra vez <strong>Pendiente</strong>, así que hay que firmar y subir de nuevo el formato FO-UTEZ-EST-08.</p>
-            <a class="btn-editar-datos"
-               href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}">
-                <i class="bi bi-pencil"></i> Editar datos
-            </a>
-        </div>
+    <div class="detalle-card">
+        <h6>Corregir solicitud</h6>
+        <p>Edita los datos conforme a lo que señaló Estadías y vuelve a enviarla. Al guardar los cambios la solicitud queda otra vez <strong>Pendiente</strong>, así que hay que firmar y subir de nuevo el formato FO-UTEZ-EST-08.</p>
+        <a class="btn-editar-datos"
+           href="${pageContext.request.contextPath}/solicitud?action=editar&id=${s.idSolicitud}">
+            <i class="bi bi-pencil"></i> Editar datos
+        </a>
+    </div>
     </c:if>
 
     <%-- ===================== Card datos del lugar ===================== --%>
@@ -527,125 +540,12 @@
 
         <div class="dato-label" style="margin-top: 14px;">Docentes acompañantes</div>
         <c:choose>
-            <c:when test="${not empty s.docentesAcompanantes}">
-                <div>
-                    <c:forEach var="d" items="${s.docentesAcompanantes}">
-                        <span class="chip-asignatura"><c:out value="${d.nombre}"/></span>
-                    </c:forEach>
-                </div>
-            </c:when>
-            <c:otherwise>
-                <div class="dato-valor">—</div>
-            </c:otherwise>
-        </c:choose>
-
-        <c:if test="${not empty s.programas}">
-            <div class="dato-label" style="margin-top: 14px;">Grupos que participan</div>
-            <div class="tabla-scroll">
-                <table class="tabla-programas">
-                    <thead>
-                    <tr>
-                        <th>División</th>
-                        <th>Programa educativo</th>
-                        <th>Cuatrimestre</th>
-                        <th>Grupo</th>
-                        <th>Estudiantes</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach var="p" items="${s.programas}">
-                        <tr>
-                            <td title="${fn:escapeXml(nombresDivision[p.division])}"><c:out value="${p.divisionMostrable}"/></td>
-                            <td><c:out value="${p.programa}"/></td>
-                            <td>${p.cuatrimestre}°</td>
-                            <td><c:out value="${empty p.grupo ? '—' : p.grupo}"/></td>
-                            <td>${p.noEstudiantes}</td>
-                        </tr>
-                    </c:forEach>
-                    <tr class="fila-total">
-                        <td colspan="4">Total de estudiantes</td>
-                        <td>${s.totalEstudiantes}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <%-- Desglose por división: se calcula con los grupos de arriba --%>
-            <div class="dato-label" style="margin-top: 14px;">Número de estudiantes por división académica</div>
-            <div class="tabla-scroll">
-                <table class="tabla-programas">
-                    <thead>
-                    <tr>
-                        <c:forEach var="division" items="${divisiones}">
-                            <th title="${fn:escapeXml(nombresDivision[division])}"><c:out value="${division}"/></th>
-                        </c:forEach>
-                        <th>Total</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <c:forEach var="division" items="${divisiones}">
-                            <td>${empty s.estudiantesPorDivision[division] ? 0 : s.estudiantesPorDivision[division]}</td>
-                        </c:forEach>
-                        <td>${s.totalPorDivision}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </c:if>
-
-        <c:if test="${not empty s.asignaturas}">
-            <div class="dato-label" style="margin-top: 14px;">Asignaturas que se reforzarán</div>
-            <div>
-                <c:forEach var="a" items="${s.asignaturas}">
-                    <span class="chip-asignatura"><c:out value="${a}"/></span>
-                </c:forEach>
-            </div>
-        </c:if>
-    </div>
-
-    <%-- ===================== Card evaluar solicitud (solo coordinador y En revisión) ===================== --%>
-    <c:if test="${!esDocente && estado == 'En revisión'}">
-        <div class="detalle-card">
-            <h6>Evaluar solicitud</h6>
-            <form action="${pageContext.request.contextPath}/detalle" method="POST" id="form-evaluar">
-                <input type="hidden" name="id" value="${s.idSolicitud}">
-                <label class="form-label" for="motivo">Motivo</label>
-                <textarea name="motivo" id="motivo" class="form-control" rows="3"
-                          placeholder="Detalles de la decisión"></textarea>
-                <%-- Cada botón trae su propia confirmación (js/modales.js):
-                     el rechazo además exige que el motivo esté capturado --%>
-                <div class="acciones-evaluar">
-                    <button type="submit" name="action" value="rechazar" class="btn-rechazar"
-                            data-confirmar="El docente será notificado del rechazo y del motivo que escribiste."
-                            data-confirmar-titulo="Rechazar solicitud"
-                            data-confirmar-tipo="peligro"
-                            data-confirmar-ok="Sí, rechazar"
-                            data-confirmar-requiere="#motivo"
-                            data-confirmar-requiere-titulo="Falta el motivo"
-                            data-confirmar-requiere-mensaje="Escribe el motivo del rechazo: es lo que verá el docente para saber qué corregir.">
-                        <i class="bi bi-x-lg"></i> Rechazar solicitud
-                    </button>
-                    <button type="submit" name="action" value="aprobar" class="btn-aprobar"
-                            data-confirmar="El docente será notificado y podrá continuar con la carta responsiva."
-                            data-confirmar-titulo="Aprobar solicitud"
-                            data-confirmar-tipo="exito"
-                            data-confirmar-ok="Sí, aprobar">
-                        <i class="bi bi-check-lg"></i> Aprobar solicitud
-                    </button>
-                </div>
-            </form>
+        <c:when test="${not empty s.docentesAcompanantes}">
+        <div>
+            <c:forEach var="d" items="${s.docentesAcompanantes}">
+                <span class="chip-asignatura"><c:out value="${d.nombre}"/></span>
+            </c:forEach>
         </div>
-    </c:if>
-
-    <%-- ===================== Barra final: Volver ===================== --%>
-    <div class="acciones-form">
-        <a href="${volverUrl}" class="btn-volver-detalle">
-            <i class="bi bi-arrow-left"></i> ${volverTexto}
-        </a>
-    </div>
-
-    <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>
-</main>
-
-<%@ include file="layout/footer.jsp" %>
+        </c:when>
+        <c:otherwise>
+        <div>
