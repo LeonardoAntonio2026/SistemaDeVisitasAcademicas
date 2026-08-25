@@ -3,30 +3,78 @@ package com.example.demo.model;
 import java.io.Serializable;
 
 /**
- * Reporte post-visita. Se crea automáticamente (estado Pendiente) cuando la
- * solicitud se completa; el docente lo llena después de realizar la visita.
+ * Modelo de datos que representa un Reporte post-visita.
+ * <p>
+ * Se crea automáticamente con estado "Pendiente" cuando una solicitud se completa;
+ * posteriormente, el docente llena los campos requeridos tras realizar la visita.
+ * </p>
+ *
+ * @author Alan Esteban Zariñana Arizmendi
+ * @version 1.0
+ * @since 25/08/2026
  */
 public class Reporte implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    // --- Atributos de la tabla REPORTE ---
+
+    /** Identificador único del reporte. */
     private int idReporte;
+
+    /** Identificador de la solicitud a la que está vinculado el reporte. */
     private int idSolicitud;
+
+    /** Fecha de realización del reporte o visita. */
     private String fecha;
+
+    /** Resultados obtenidos durante la visita. */
     private String resultados;
+
+    /** Observaciones adicionales capturadas por el docente. */
     private String observaciones;
+
+    /** Fecha de creación del registro en el sistema. */
     private String fechaCreacion;
+
+    /** Identificador del estado actual del reporte. */
     private int idEstado;
+
+    /** Motivo en caso de rechazo o aclaración del estado. */
     private String motivo;
 
-    // Campos de apoyo para la vista (vienen de joins, no de REPORTE)
+    // --- Campos de apoyo para la vista (Obtenidos vía JOINs, no persisten en la tabla REPORTE) ---
+
+    /** Nombre del estado original del reporte. */
     private String nombreEstado;
+
+    /** Nombre de la empresa o actividad asociada a la visita. */
     private String nombreEmpresaActividad;
+
+    /** Dirección o lugar donde se realizó la visita. */
     private String lugarDireccion;
+
+    /** Identificador del usuario docente que realizó la solicitud. */
     private int idUsuarioSolicitante;
+
+    /** Nombre completo del docente solicitante. */
     private String nombreSolicitante;
+
+    /** Correo electrónico del docente solicitante. */
     private String correoSolicitante;
+
+    /** Total de estudiantes que asistieron o participan en la visita. */
     private int totalEstudiantes;
+
+    /** Fecha en la que se creó la solicitud original. */
     private String fechaSolicitud;
 
+    /**
+     * Constructor por defecto de la clase.
+     */
     public Reporte() {}
+
+    // --- Getters y Setters ---
 
     public int getIdReporte() {
         return idReporte;
@@ -97,15 +145,13 @@ public class Reporte implements Serializable {
     }
 
     /**
-     * Estado tal como se le muestra al usuario. En la base de datos un reporte
-     * enviado se llama "Completado", que el docente lee como "ya terminé"
-     * cuando en realidad apenas va a revisión; y "Pendiente" no dice quién
-     * tiene la pelota. Aquí se traducen a lo que de verdad está pasando.
+     * Mapea el estado registrado en la base de datos a un texto comprensible para el usuario.
+     * <p>
+     * Estandariza la nomenclatura con "Reporte" como prefijo para distinguirlo visualmente
+     * de las solicitudes y mantiene consistencia con {@code Solicitud.getEstadoLegible()}.
+     * </p>
      *
-     * Todos empiezan con "Reporte": así el badge dice de qué habla (antes un
-     * reporte "En revisión" se veía idéntico a una solicitud "En revisión") y
-     * el texto es el MISMO que usa Solicitud.getEstadoLegible() para la misma
-     * visita en el Histórico.
+     * @return El nombre del estado formateado para la interfaz de usuario.
      */
     public String getEstadoLegible() {
         if ("Pendiente".equalsIgnoreCase(nombreEstado)) {
@@ -123,13 +169,17 @@ public class Reporte implements Serializable {
         return nombreEstado;
     }
 
-    /** Sufijo de la clase CSS del badge (.estado-…) que corresponde al estado visible. */
+    /**
+     * Obtiene el sufijo CSS correspondiente a la etiqueta de estado (.estado-...)
+     * para la renderización de badges en la vista.
+     *
+     * @return Nombre de la clase CSS del estado.
+     */
     public String getClaseEstado() {
         if ("Pendiente".equalsIgnoreCase(nombreEstado)) {
             return "reporte-pendiente";
         }
         if ("Completado".equalsIgnoreCase(nombreEstado)) {
-            // Se lee "En revisión": mismo amarillo que la solicitud en revisión
             return "en-revision";
         }
         return "Aprobado".equalsIgnoreCase(nombreEstado) ? "aprobado" : "rechazado";

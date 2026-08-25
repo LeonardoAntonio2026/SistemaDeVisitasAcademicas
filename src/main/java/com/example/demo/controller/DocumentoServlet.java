@@ -22,16 +22,26 @@ import java.io.OutputStream;
 import java.util.Base64;
 
 /**
- * Archivos del proceso:
- *  - GET  ?id=N               descarga un documento subido (PDF en Base64).
- *  - GET  ?id=N&inline=1      sirve ese mismo PDF para verlo dentro del visor.
- *  - GET  ?ver=N              página del visor: muestra el PDF subido sin
- *    descargarlo, para comprobar que se cargó el archivo correcto.
- *  - GET  ?gen=fo|oficio|responsiva&solicitud=N  vista imprimible del formato
- *    generado a partir de los datos (se imprime o guarda como PDF y se firma).
- *  - GET  ?gen=reporte&reporte=N  vista imprimible del reporte de visita.
- *  - POST action=firmado|responsiva  sube el PDF firmado de la solicitud.
- *  - POST action=reporteFirmado&reporte=N  sube el PDF firmado del reporte.
+ * Servlet encargado de la gestión de documentos PDF del sistema:
+ * generación de formatos imprimibles, carga de archivos firmados y
+ * descarga/visualización de los documentos ya almacenados.
+ * <p>
+ * Rutas que atiende:
+ * <ul>
+ *   <li>GET  ?id=N               descarga un documento subido (PDF en Base64).</li>
+ *   <li>GET  ?id=N&amp;inline=1  sirve ese mismo PDF para verlo dentro del visor.</li>
+ *   <li>GET  ?ver=N              página del visor: muestra el PDF subido sin
+ *       descargarlo, para comprobar que se cargó el archivo correcto.</li>
+ *   <li>GET  ?gen=fo|oficio|responsiva&amp;solicitud=N  vista imprimible del
+ *       formato generado a partir de los datos (se imprime o guarda como PDF
+ *       y se firma).</li>
+ *   <li>GET  ?gen=reporte&amp;reporte=N  vista imprimible del reporte de visita.</li>
+ *   <li>POST action=firmado|responsiva  sube el PDF firmado de la solicitud.</li>
+ *   <li>POST action=reporteFirmado&amp;reporte=N  sube el PDF firmado del reporte.</li>
+ * </ul>
+ *
+ * @author Alan Esteban Zarinana Arizmendi
+ * @since 2026-08-25
  */
 @WebServlet(name = "DocumentoServlet", value = "/documento")
 // El tope del contenedor va A PROPOSITO por encima de MAX_PDF_BYTES: si fueran
@@ -41,6 +51,7 @@ import java.util.Base64;
 @MultipartConfig(maxFileSize = 12L * 1024 * 1024, maxRequestSize = 14L * 1024 * 1024)
 public class DocumentoServlet extends HttpServlet {
 
+    /** Tamaño máximo permitido para un PDF subido por el usuario (RN-07). */
     private static final long MAX_PDF_BYTES = 10L * 1024 * 1024;
 
     private final DocumentoDao documentoDao = new DocumentoDao();
@@ -48,6 +59,16 @@ public class DocumentoServlet extends HttpServlet {
     private final ReporteDao reporteDao = new ReporteDao();
     private final ImagenReporteDao imagenReporteDao = new ImagenReporteDao();
 
+    /**
+     * Enruta las peticiones GET según el parámetro presente: generación de
+     * formato imprimible ({@code gen}), visor de documento ({@code ver}) o
+     * descarga directa del PDF almacenado ({@code id}).
+     *
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws ServletException si falla el despacho a una vista JSP
+     * @throws IOException      si falla la escritura de la respuesta
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -99,7 +120,13 @@ public class DocumentoServlet extends HttpServlet {
 
     /**
      * Página aparte para ver un documento subido sin descargarlo. Solo trae los
-     * metadatos; el PDF lo pide el visor con ?id=N&inline=1.
+     * metadatos; el PDF lo pide el visor con ?id=N&amp;inline=1.
+     *
+     * @param idTexto  id del documento como texto (parámetro {@code ver})
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws ServletException si falla el despacho a la vista del visor
+     * @throws IOException      si falla la escritura de la respuesta
      */
     private void abrirVisor(String idTexto, HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -128,6 +155,10 @@ public class DocumentoServlet extends HttpServlet {
     /**
      * Un documento se puede ver si se puede ver aquello de lo que cuelga:
      * la solicitud o el reporte al que pertenece.
+     *
+     * @param request petición HTTP entrante (para obtener la sesión/usuario)
+     * @param doc     documento cuyo acceso se está validando
+     * @return {@code true} si el usuario en sesión puede ver el documento
      */
     private boolean documentoPermitido(HttpServletRequest request, Documento doc) {
         if (doc.getIdSolicitud() != null) {
@@ -139,6 +170,16 @@ public class DocumentoServlet extends HttpServlet {
         return false;
     }
 
+    /**
+     * Enruta las peticiones POST: subida del PDF firmado de un reporte
+     * ({@code action=reporteFirmado}) o subida del PDF firmado/responsiva de
+     * una solicitud ({@code action=firmado|responsiva}).
+     *
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws ServletException si falla el procesamiento de la petición
+     * @throws IOException      si falla la lectura del archivo o la respuesta
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -229,6 +270,11 @@ public class DocumentoServlet extends HttpServlet {
     /**
      * Sube el PDF firmado del reporte de visita. Solo el docente dueño, con
      * el reporte Pendiente y el formulario ya generado (con resultados).
+     *
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws ServletException si falla el procesamiento de la petición
+     * @throws IOException      si falla la lectura del archivo o la respuesta
      */
     private void subirReporteFirmado(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -282,6 +328,9 @@ public class DocumentoServlet extends HttpServlet {
     /**
      * ¿El POST trae un archivo? Solo esos se pueden (y se deben) parsear con
      * getParts(); en un formulario normal esa llamada revienta.
+     *
+     * @param request petición HTTP entrante
+     * @return {@code true} si el Content-Type es multipart/form-data
      */
     private static boolean esMultipart(HttpServletRequest request) {
         String tipo = request.getContentType();
@@ -293,6 +342,10 @@ public class DocumentoServlet extends HttpServlet {
      * leer. Como los campos del formulario se perdieron con el parseo, el
      * destino se arma con los identificadores que viajan en la URL; por eso los
      * formularios de carga los mandan ahí y no solo como campos ocultos.
+     *
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws IOException si falla la redirección
      */
     private void avisarArchivoGrande(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -311,7 +364,12 @@ public class DocumentoServlet extends HttpServlet {
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
     }
 
-    /** El parámetro como entero, o null si viene vacío o no es un número. */
+    /**
+     * El parámetro como entero, o null si viene vacío o no es un número.
+     *
+     * @param valor texto a convertir
+     * @return el entero parseado, o {@code null} si no es válido
+     */
     private static Integer enteroONull(String valor) {
         try {
             return Integer.valueOf(valor);
@@ -320,7 +378,13 @@ public class DocumentoServlet extends HttpServlet {
         }
     }
 
-    /** Solo PDF y máximo 10 MB (RN-07). Devuelve la clave del error o null si es válido. */
+    /**
+     * Solo PDF y máximo 10 MB (RN-07).
+     *
+     * @param archivo parte del multipart con el PDF subido
+     * @return la clave del error ({@code "vacio"}, {@code "tamano"} o
+     *         {@code "tipo"}), o {@code null} si el archivo es válido
+     */
     private String validarPdf(Part archivo) {
         if (archivo == null || archivo.getSize() == 0) {
             return "vacio";
@@ -334,7 +398,16 @@ public class DocumentoServlet extends HttpServlet {
         return esPdf ? null : "tipo";
     }
 
-    /** Vista imprimible del documento generado con los datos de la solicitud. */
+    /**
+     * Vista imprimible del documento generado con los datos de la solicitud.
+     *
+     * @param gen      tipo de formato a generar ({@code fo}, {@code oficio},
+     *                 {@code responsiva} o {@code reporte})
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws ServletException si falla el despacho a la vista JSP
+     * @throws IOException      si falla la escritura de la respuesta
+     */
     private void generarFormato(String gen, HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if ("reporte".equals(gen)) {
@@ -376,6 +449,11 @@ public class DocumentoServlet extends HttpServlet {
     /**
      * Vista imprimible del reporte de visita (datos + resultados + fotos).
      * Solo tiene sentido cuando el formulario ya se generó.
+     *
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP a completar
+     * @throws ServletException si falla el despacho a la vista JSP
+     * @throws IOException      si falla la escritura de la respuesta
      */
     private void generarFormatoReporte(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -407,6 +485,10 @@ public class DocumentoServlet extends HttpServlet {
     /**
      * Regla de acceso a los archivos del reporte, igual que en
      * ReporteDetalleServlet: el dueño, o el revisor (cualquiera).
+     *
+     * @param request   petición HTTP entrante (para obtener la sesión/usuario)
+     * @param idReporte id del reporte a validar
+     * @return el reporte si el usuario en sesión tiene acceso, o {@code null}
      */
     private Reporte reportePermitido(HttpServletRequest request, int idReporte) {
         Integer idUsuario = SesionUtils.idUsuario(request);
@@ -423,7 +505,13 @@ public class DocumentoServlet extends HttpServlet {
         return SesionUtils.esRevisor(request) ? reporte : null;
     }
 
-    /** Mismas reglas de acceso que la página de detalles. */
+    /**
+     * Mismas reglas de acceso que la página de detalles.
+     *
+     * @param request     petición HTTP entrante (para obtener la sesión/usuario)
+     * @param idSolicitud id de la solicitud a validar
+     * @return la solicitud si el usuario en sesión tiene acceso, o {@code null}
+     */
     private Solicitud solicitudPermitida(HttpServletRequest request, int idSolicitud) {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
