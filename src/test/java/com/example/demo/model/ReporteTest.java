@@ -150,12 +150,16 @@ class ReporteTest {
         assertEquals("Pendiente", reporte.getNombreEstado());
     }
 
+    // Todos los estados visibles del reporte empiezan con "Reporte": es lo que
+    // distingue en el badge un reporte "En revisión" de una solicitud "En
+    // revisión", y es el mismo texto que devuelve Solicitud.getEstadoLegible().
+
     @Test
     void getEstadoLegiblePendiente() {
         Reporte reporte = new Reporte();
         reporte.setNombreEstado("Pendiente");
 
-        assertEquals("Por completar", reporte.getEstadoLegible());
+        assertEquals("Reporte por completar", reporte.getEstadoLegible());
     }
 
     @Test
@@ -163,7 +167,7 @@ class ReporteTest {
         Reporte reporte = new Reporte();
         reporte.setNombreEstado("pendiente");
 
-        assertEquals("Por completar", reporte.getEstadoLegible());
+        assertEquals("Reporte por completar", reporte.getEstadoLegible());
     }
 
     @Test
@@ -171,7 +175,7 @@ class ReporteTest {
         Reporte reporte = new Reporte();
         reporte.setNombreEstado("Completado");
 
-        assertEquals("En revisión", reporte.getEstadoLegible());
+        assertEquals("Reporte en revisión", reporte.getEstadoLegible());
     }
 
     @Test
@@ -179,7 +183,7 @@ class ReporteTest {
         Reporte reporte = new Reporte();
         reporte.setNombreEstado("completado");
 
-        assertEquals("En revisión", reporte.getEstadoLegible());
+        assertEquals("Reporte en revisión", reporte.getEstadoLegible());
     }
 
     @Test
@@ -187,7 +191,7 @@ class ReporteTest {
         Reporte reporte = new Reporte();
         reporte.setNombreEstado("Aprobado");
 
-        assertEquals("Aprobado", reporte.getEstadoLegible());
+        assertEquals("Reporte aprobado", reporte.getEstadoLegible());
     }
 
     @Test
@@ -195,7 +199,7 @@ class ReporteTest {
         Reporte reporte = new Reporte();
         reporte.setNombreEstado("Rechazado");
 
-        assertEquals("Rechazado", reporte.getEstadoLegible());
+        assertEquals("Reporte rechazado", reporte.getEstadoLegible());
     }
 
     @Test
