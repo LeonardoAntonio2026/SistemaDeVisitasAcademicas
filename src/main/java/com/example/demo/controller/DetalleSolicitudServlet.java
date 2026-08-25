@@ -16,9 +16,15 @@ import java.io.IOException;
 import java.text.MessageFormat;
 
 /**
+ * Controlador servlet de la página de detalle de una visita académica.
+ * <p>
  * Página de detalles de la visita. Es una sola página cuyas cards se muestran
  * u ocultan según el rol y el estado de la solicitud (el docente ve la carga
  * de archivos; el coordinador la card de evaluación).
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 18/08/2026
  */
 @WebServlet(name = "DetalleSolicitudServlet", value = "/detalle")
 public class DetalleSolicitudServlet extends HttpServlet {
@@ -29,6 +35,20 @@ public class DetalleSolicitudServlet extends HttpServlet {
     private final SolicitudDao solicitudDao = new SolicitudDao();
     private final DocumentoDao documentoDao = new DocumentoDao();
     private final ReporteDao reporteDao = new ReporteDao();
+
+    /**
+     * Procesa las peticiones HTTP {@code GET} par cargar y renderizar los detalles de una solcitud.
+     * <p>
+     *     Carga la solitud validando los permisos del usuario, sus documentos asociados, la existencia
+     *     del formato firmado y el reporte de la visita si existiera.
+     * </p>
+     * @param request objeto {@link HttpServletRequest} con el parámetro "id" de la solicitud.
+     * @param response objeto {@link HttpServletResponse} para renderizar la visita o envíar errores HTTP
+     * @throws ServletException si ocurre un error cuándo se envía la petición
+     * @throws IOException si ocurre un error de entrada/salida.
+     * @author Eder Gabriel García Vázquez
+     * since 18/08/2026
+     */
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -50,6 +70,22 @@ public class DetalleSolicitudServlet extends HttpServlet {
         request.getRequestDispatcher("detalle.jsp").forward(request, response);
     }
 
+    /**
+     * Procesa las peticiones HTTP {@code POST} para la toma de decisiones y cambios de estado de la solicitud.
+     * <p>
+     *     Maneja las siguientes acciones:
+     *     {code Enviar} Cambio de estado a "En revisión" por parte del docente tras adjuntar el archivo firmado
+     *     {code Aprobar} Autorización por parte del supervisor (Estadías)
+     *     {code Rechazar} Devolución de la solicitud con un motivo para su posterior edición
+     *     Utiliza el patrón PRG (Post/Redirect/Get) añadiendo parámetros de control o error a la URL de dirección
+     * </p>
+     * @param request objeto {@link HttpServletRequest} con la acción a ejecutar y sus parámetros
+     * @param response objeto {@link HttpServletResponse} para la redirección o respuesta del error
+     * @throws ServletException si ocurre un error en el Servlet
+     * @throws IOException si ocurre un error en la entrada/salida de la petición
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -114,6 +150,8 @@ public class DetalleSolicitudServlet extends HttpServlet {
         response.sendRedirect("detalle?id=" + id + (error != null ? "&error=" + error : ""));
     }
 
+
+
     /**
      * Carga la solicitud validando el acceso: la suya la ve siempre quien la
      * creó, y las ajenas solo el revisor y solo si ya fueron enviadas.
@@ -125,6 +163,13 @@ public class DetalleSolicitudServlet extends HttpServlet {
      * Devuelve null cuando no se puede mostrar, pero antes manda la página de
      * error que corresponde: 404 si la solicitud no existe y 403 si existe
      * pero no es de quien la pide.
+     *
+     * @param request petición HTTP con el parámetro Id
+     * @param response respuesta HTTP
+     * @return el objeto {@link Solicitud} validado, o {@code null} si el acceso no es permitido o no existe
+     * @throws IOException si ocurre un fallo al emitir el error HTTP en la respuesta.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private Solicitud cargarSolicitudPermitida(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -164,6 +209,15 @@ public class DetalleSolicitudServlet extends HttpServlet {
         return solicitud;
     }
 
+    /**
+     * Construye y envía una notificación por correo electrónico de manera asíncrona al docente solicitante
+     * informando sobre la resolución (Aprobada/Rechazada) de su visita.
+     * @param solicitud la {@link Solicitud} evaluada.
+     * @param nuevoEstado el dictamen emitido ("Aprobado o Rechazado")
+     * @param motivo la justificación o retroalimentación otorgada de parte de Estadías.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     /** Correo automático al docente cuando su solicitud es aprobada o rechazada  */
     private void notificarDecision(Solicitud solicitud, String nuevoEstado, String motivo) {
         if (solicitud.getCorreoSolicitante() == null) {

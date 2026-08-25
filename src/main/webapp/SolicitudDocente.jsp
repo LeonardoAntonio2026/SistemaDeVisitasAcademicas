@@ -1,3 +1,15 @@
+<%--
+/**
+ * Vista JSP para la creación y edición de solicitudes de visita académica.
+ * <p>
+ * Gestiona la captura de datos de la empresa, docentes participantes, asignaturas
+ * y desglose de grupos académicos para la generación del formato FO-UTEZ-EST-08.
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 20/08/2026
+ */
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%-- El mismo formulario sirve para crear y para editar (con ${solicitud} precargada).
@@ -163,10 +175,7 @@
                 <small class="form-ayuda">Solo aparecen docentes registrados en el sistema.</small>
             </div>
 
-            <%-- ===== Grupos que participan =====
-                 Todo se elige de listas: la división filtra los programas y los
-                 grupos que ya se usaron se van descartando. El desglose por
-                 división de abajo se calcula solo, ya no se captura. --%>
+            <%-- Grupos que participan --%>
             <label class="form-label d-block mb-1">Grupos que participan en la visita</label>
             <small class="form-ayuda mb-2">Agrega una fila por cada grupo. Al elegir la división académica se muestran sus programas educativos.</small>
 
@@ -194,7 +203,7 @@
                 <i class="bi bi-plus-lg"></i> Agregar grupo
             </button>
 
-            <%-- ===== Desglose por división académica (calculado) ===== --%>
+            <%-- Desglose por división académica (calculado) --%>
             <label class="form-label d-block mb-1 mt-4">Número de estudiantes participantes por división académica</label>
             <div class="tabla-scroll" id="division-resumen">
                 <div class="division-table">
@@ -215,7 +224,7 @@
             <small class="form-ayuda">Se calcula automáticamente con los grupos capturados. Es el desglose que se imprime en el FO-UTEZ-EST-08.</small>
         </div>
 
-        <%-- ===== Datos para solicitud-form.js (no se ven) ===== --%>
+        <%-- Datos para solicitud-form.js (no se ven) --%>
 
         <%-- Catálogo de programas educativos por división --%>
         <div id="catalogo-programas" hidden>

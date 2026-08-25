@@ -33,6 +33,16 @@
    botón nunca entra en "Procesando…". Al aceptar se reenvía el mismo
    formulario con su submitter (para no perder name/value, p. ej.
    action=aprobar) y ahí sí corre loading.js con normalidad.
+   Se carga desde layout/header.jsp con `defer`, así que está disponible
+   en todas las páginas con sesión. Expone un único objeto global,
+   window.Modales, con los métodos avisar() y confirmar().
+
+   Si Bootstrap no cargó (el servidor de la universidad no siempre tiene
+   salida a internet), cada método cae a alert()/confirm() del navegador
+   en vez de dejar al usuario sin respuesta.
+
+   @author Leonardo Antonio Arroyo Rodriguez
+   @since 24/08/2026
    ============================================================ */
 (function (window, document) {
     "use strict";
@@ -52,11 +62,23 @@
     var alAceptar = null;   // qué hacer si el usuario acepta
     var acepto = false;
 
+    /**
+     * Indica si Bootstrap está cargado y se puede usar su modal.
+     *
+     * @returns {boolean} true si existe bootstrap.Modal
+     */
     function hayBootstrap() {
         return !!(window.bootstrap && window.bootstrap.Modal);
     }
 
-    /** Arma el modal la primera vez que se necesita y lo deja en el body. */
+    /**
+     * Arma el modal la primera vez que se necesita y lo deja en el body.
+     *
+     * Se construye una sola vez y se reutiliza en todos los avisos de la
+     * página; las llamadas siguientes devuelven el nodo ya creado.
+     *
+     * @returns {HTMLElement} el nodo del modal, listo para rellenar
+     */
     function obtenerNodo() {
         if (nodo) {
             return nodo;
@@ -128,11 +150,34 @@
         return nodo;
     }
 
-    /** Acepta tanto una cadena suelta como el objeto completo de opciones. */
+    /**
+     * Acepta tanto una cadena suelta como el objeto completo de opciones.
+     *
+     * Así quien llama puede escribir Modales.avisar("texto") sin armar el
+     * objeto cuando solo necesita el mensaje.
+     *
+     * @param {string|Object} opciones mensaje suelto, o el objeto de opciones
+     * @returns {Object} siempre un objeto de opciones (vacío si no llegó nada)
+     */
     function normalizar(opciones) {
         return typeof opciones === "string" ? { mensaje: opciones } : (opciones || {});
     }
 
+    /**
+     * Rellena el modal con las opciones dadas y lo muestra.
+     *
+     * @param {Object} op opciones ya normalizadas
+     * @param {string} [op.mensaje] texto principal
+     * @param {string} [op.titulo] encabezado del modal
+     * @param {string} [op.detalle] línea fina de apoyo bajo el mensaje
+     * @param {string} [op.tipo] info, aviso, exito o peligro
+     * @param {string} [op.aceptar] texto del botón principal
+     * @param {string} [op.cancelar] texto del botón de cancelar
+     * @param {boolean} confirmable true para pregunta (dos botones),
+     *        false para aviso (solo "Entendido")
+     * @param {?Function} accion qué ejecutar si el usuario acepta
+     * @returns {void}
+     */
     function abrir(op, confirmable, accion) {
         obtenerNodo();
         var tipo = TIPOS[op.tipo] || (confirmable ? TIPOS.info : TIPOS.aviso);
@@ -159,7 +204,13 @@
     }
 
     var Modales = {
-        /** Sustituye a alert(): informa y no continúa nada. */
+        /**
+         * Sustituye a alert(): informa y no continúa nada.
+         *
+         * @param {string|Object} opciones mensaje suelto, o el objeto de opciones
+         * @param {Function} [alCerrar] se ejecuta cuando el usuario cierra el aviso
+         * @returns {void}
+         */
         avisar: function (opciones, alCerrar) {
             var op = normalizar(opciones);
             if (!hayBootstrap()) {
@@ -181,7 +232,13 @@
             });
         },
 
-        /** Sustituye a confirm(): la acción corre solo si el usuario acepta. */
+        /**
+         * Sustituye a confirm(): la acción corre solo si el usuario acepta.
+         *
+         * @param {string|Object} opciones mensaje suelto, o el objeto de opciones
+         * @param {Function} accion qué ejecutar si el usuario acepta
+         * @returns {void}
+         */
         confirmar: function (opciones, accion) {
             var op = normalizar(opciones);
             if (!hayBootstrap()) {
@@ -198,7 +255,15 @@
     // Capa declarativa: data-confirmar en formularios, botones y enlaces
     // ============================================================
 
-    /** Lee la configuración del elemento; null si no pide confirmación. */
+    /**
+     * Lee la configuración del elemento; null si no pide confirmación.
+     *
+     * Los datos salen de los atributos data-confirmar-* del marcado.
+     *
+     * @param {?HTMLElement} el formulario, botón o enlace a inspeccionar
+     * @returns {?Object} las opciones del modal, o null si el elemento no
+     *          trae data-confirmar
+     */
     function configDe(el) {
         if (!el || !el.dataset || !el.dataset.confirmar) {
             return null;
@@ -218,9 +283,18 @@
     }
 
     /**
+     * Comprueba el campo obligatorio antes de dejar continuar.
+     *
      * Campo que no puede ir vacío (el motivo de un rechazo). Antes era un
      * alert() suelto; ahora avisa en el mismo modal y deja el cursor en el
      * campo. Devuelve true si falta capturarlo.
+     *
+     * @param {Object} op opciones del modal
+     * @param {string} [op.requiere] selector CSS del campo obligatorio
+     * @param {string} [op.requiereTitulo] título del aviso si está vacío
+     * @param {string} [op.requiereMensaje] mensaje del aviso si está vacío
+     * @returns {boolean} true si el campo está vacío (y ya se avisó al
+     *          usuario), false si se puede continuar
      */
     function faltaRequerido(op) {
         if (!op.requiere) {
@@ -240,7 +314,16 @@
         return true;
     }
 
-    /** Reenvía el formulario conservando el botón que lo envió. */
+    /**
+     * Reenvía el formulario conservando el botón que lo envió.
+     *
+     * Conservar el submitter importa: es lo que lleva el name/value que
+     * distingue "aprobar" de "rechazar" en un mismo formulario.
+     *
+     * @param {HTMLFormElement} form formulario a reenviar
+     * @param {?HTMLElement} submitter botón que originó el envío
+     * @returns {void}
+     */
     function reenviar(form, submitter) {
         if (typeof form.requestSubmit === "function") {
             form.requestSubmit(submitter || null);
@@ -252,8 +335,16 @@
     }
 
     /**
+     * Consume la marca de "esto ya se confirmó".
+     *
      * Marca de "esto ya se confirmó". El segundo envío tiene que pasar de
      * largo o la confirmación se repetiría en bucle.
+     *
+     * La marca se borra al leerla: es de un solo uso, así que un envío
+     * posterior del mismo formulario vuelve a preguntar.
+     *
+     * @param {HTMLElement} el formulario, botón o enlace a revisar
+     * @returns {boolean} true si ya venía confirmado (y se limpia la marca)
      */
     function yaConfirmado(el) {
         if (el.dataset.confirmado === "1") {

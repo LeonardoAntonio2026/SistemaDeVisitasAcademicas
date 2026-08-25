@@ -1,11 +1,25 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" isErrorPage="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%-- Página de error única para toda la app. El contenedor la usa para los
-     códigos declarados en WEB-INF/web.xml (400, 403, 404, 500) y para
-     cualquier excepción que no se haya atrapado.
+<%--
+    error.jsp — Página de error única para toda la app. El contenedor la usa
+    para los códigos declarados en WEB-INF/web.xml (400, 403, 404, 500) y para
+    cualquier excepción que no se haya atrapado.
 
-     El código llega en un atributo del request que pone el propio servidor;
-     si no viene (por ejemplo al abrir esta página a mano) se asume 500. --%>
+    El código llega en un atributo del request que pone el propio servidor;
+    si no viene (por ejemplo al abrir esta página a mano) se asume 500.
+
+    Atributos que pone el contenedor y que esta página lee:
+      jakarta.servlet.error.status_code   código HTTP (400, 403, 404, 500)
+      jakarta.servlet.error.request_uri   ruta que falló
+      jakarta.servlet.error.exception     excepción, si la hubo
+
+    Va declarada con isErrorPage="true", que es lo que permite leer esos
+    atributos. No usa layout/header.jsp porque el error puede ocurrir sin
+    sesión iniciada y la cabecera da por hecho que hay usuario.
+
+    @author Leonardo Antonio Arroyo Rodriguez
+    @since 24/08/2026
+--%>
 <c:set var="codigo" value="${empty requestScope['jakarta.servlet.error.status_code']
                              ? 500 : requestScope['jakarta.servlet.error.status_code']}"/>
 <c:set var="ruta" value="${requestScope['jakarta.servlet.error.request_uri']}"/>

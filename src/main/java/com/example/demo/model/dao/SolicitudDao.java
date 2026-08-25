@@ -13,33 +13,63 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Objeto de Acceso a Datos (DAO) para la gestión persistence de solicitudes de visita académica.
+ * <p>
+ * Centraliza las operaciones CRUD y las consultas especializadas sobre la tabla {@code solicitud},
+ * coordinando transaccionalmente la inserción, actualización y eliminación en cascada de sus tablas
+ * hijas relacionales (programas educativos, asignaturas a reforzar, distribución por división
+ * y docentes acompañantes).
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 18/08/2026
+ */
 public class SolicitudDao implements Dao<Solicitud, Integer> {
 
+    /**
+     * Consulta base reutilizable para la proyección de campos de la solicitud.
+     * Incluye subconsultas estratégicas para totales agregados e información
+     * del reporte asociado sin requerir múltiples JOINs que dupliquen filas.
+     */
     private static final String SELECT_BASE =
             "SELECT s.id_solicitud, s.id_usuario_solicitante, s.id_usuario_autoriza, "
-            + "s.nombre_empresa_actividad, s.lugar_direccion, s.telefono_contacto, s.correo_contacto, "
-            + "TO_CHAR(s.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, s.objetivo, s.area_solicitante, "
-            + "s.docente_responsable, s.celular_responsable, "
-            + "s.id_estado, s.detalles_decision, TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
-            + "e.nombre_estado, us.nombre AS nombre_solicitante, us.correo AS correo_solicitante, "
-            // Quien autorizó, para la firma "Autoriza" del formato impreso
-            + "ua.nombre AS nombre_autoriza, "
-            + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes, "
-            // Estado del reporte de la visita; null si todavía no se generó.
-            // Va como subselect y no como JOIN para no duplicar filas.
-            + "(SELECT er.nombre_estado FROM reporte r "
-            + "JOIN estado_reporte er ON er.id_estado = r.id_estado "
-            + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS estado_reporte, "
-            // Id del reporte, para enlazar directo a /reporte?id=X desde el histórico
-            + "(SELECT r.id_reporte FROM reporte r "
-            + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS id_reporte "
-            + "FROM solicitud s "
-            + "JOIN estado_solicitud e ON e.id_estado = s.id_estado "
-            + "JOIN usuario us ON us.id_usuario = s.id_usuario_solicitante "
-            // LEFT: mientras Estadías no decide, id_usuario_autoriza es null y
-            // un JOIN normal dejaría fuera todas las solicitudes en trámite
-            + "LEFT JOIN usuario ua ON ua.id_usuario = s.id_usuario_autoriza";
+                    + "s.nombre_empresa_actividad, s.lugar_direccion, s.telefono_contacto, s.correo_contacto, "
+                    + "TO_CHAR(s.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, s.objetivo, s.area_solicitante, "
+                    + "s.docente_responsable, s.celular_responsable, "
+                    + "s.id_estado, s.detalles_decision, TO_CHAR(s.fecha_creacion, 'YYYY-MM-DD') AS fecha_creacion, "
+                    + "e.nombre_estado, us.nombre AS nombre_solicitante, us.correo AS correo_solicitante, "
+                    // Quien autorizó, para la firma "Autoriza" del formato impreso
+                    + "ua.nombre AS nombre_autoriza, "
+                    + "NVL((SELECT SUM(p.no_estudiantes) FROM programa_educativo p WHERE p.id_solicitud = s.id_solicitud), 0) AS total_estudiantes, "
+                    // Estado del reporte de la visita; null si todavía no se generó.
+                    // Va como subselect y no como JOIN para no duplicar filas.
+                    + "(SELECT er.nombre_estado FROM reporte r "
+                    + "JOIN estado_reporte er ON er.id_estado = r.id_estado "
+                    + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS estado_reporte, "
+                    // Id del reporte, para enlazar directo a /reporte?id=X desde el histórico
+                    + "(SELECT r.id_reporte FROM reporte r "
+                    + "WHERE r.id_solicitud = s.id_solicitud AND ROWNUM = 1) AS id_reporte "
+                    + "FROM solicitud s "
+                    + "JOIN estado_solicitud e ON e.id_estado = s.id_estado "
+                    + "JOIN usuario us ON us.id_usuario = s.id_usuario_solicitante "
+                    // LEFT: mientras Estadías no decide, id_usuario_autoriza es null y
+                    // un JOIN normal dejaría fuera todas las solicitudes en trámite
+                    + "LEFT JOIN usuario ua ON ua.id_usuario = s.id_usuario_autoriza";
 
+    /**
+     * Registra una nueva solicitud en la base de datos junto con sus registros dependientes.
+     * <p>
+     * Maneja una transacción ACID manual para garantizar que tanto la cabecera de la solicitud
+     * como las listas de programas, asignaturas, docentes y desgloses por división se persistan
+     * correctamente o se reviertan totalmente en caso de fallo.
+     * </p>
+     *
+     * @param entidad el objeto {@link Solicitud} con la información capturada.
+     * @return {@code true} si el registro fue exitoso; {@code false} si ocurrió un error SQL.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     @Override
     public boolean create(Solicitud entidad) {
         String sqlSolicitud = "INSERT INTO solicitud (id_usuario_solicitante, nombre_empresa_actividad, "
@@ -104,6 +134,13 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         }
     }
 
+    /**
+     * Recupera la lista general de solicitudes ordenadas descendentemente por fecha de creación.
+     *
+     * @return una lista de objetos {@link Solicitud} con sus datos generales mapeados.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     @Override
     public List<Solicitud> getAll() {
         List<Solicitud> datos = new ArrayList<>();
@@ -122,9 +159,16 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * La solicitud con todo su desglose. Las tablas hijas se consultan con la
-     * MISMA conexión que la solicitud: antes cada una pedía la suya al pool, y
-     * armar un solo detalle tenía 5 conexiones ocupadas de las 10 que hay.
+     * Obtiene los detalles completos de una solicitud por su identificador único.
+     * <p>
+     * Reutiliza una única conexión de base de datos para cargar las tablas hijas
+     * (programas, asignaturas, divisiones y acompañantes), optimizando el uso del pool.
+     * </p>
+     *
+     * @param id el identificador de la solicitud.
+     * @return el objeto {@link Solicitud} totalmente poblado, o {@code null} si no se encuentra.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     @Override
     public Solicitud getById(Integer id) {
@@ -155,7 +199,13 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Solicitudes creadas por un docente, la más reciente primero (para las tarjetas del inicio).
+     * Consulta todas las solicitudes creadas por un docente específico,
+     * ordenadas de la más reciente a la más antigua.
+     *
+     * @param idUsuario el identificador del docente solicitante.
+     * @return una lista de solicitudes pertenecientes al usuario.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     public List<Solicitud> getBySolicitante(int idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
@@ -176,11 +226,15 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Solicitudes activas de un docente (las Completadas se van al histórico y
-     * ya no aparecen en el inicio — RN-05).
+     * Obtiene las solicitudes activas de un docente excluyendo las que han sido "Completadas".
+     * <p>
+     * Mantiene las solicitudes "Rechazadas" en el listado para permitir su corrección y reenvío (RN-05).
+     * </p>
      *
-     * Las Rechazadas siguen aquí: el docente las puede corregir y reenviar, así
-     * que para él no están terminadas.
+     * @param idUsuario el identificador del docente.
+     * @return la lista de solicitudes en curso o pendientes de atender por el docente.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     public List<Solicitud> getActivasBySolicitante(int idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
@@ -203,14 +257,12 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Solicitudes activas para el coordinador de Estadías: las que ya fueron
-     * enviadas y siguen en proceso. Las Pendientes no aparecen porque el
-     * docente aún no las envía (RN-02).
+     * Obtiene las solicitudes enviadas que requieren la atención del coordinador de Estadías.
+     * Excluye los borradores ("Pendiente") que no han sido remitidos formalmente (RN-02).
      *
-     * idPropias solo llega con valor cuando quien revisa también levanta
-     * solicitudes (el Administrador): a las enviadas por los demás se le suman
-     * las suyas, que siguen Pendientes y si no no le saldrían en ningún lado.
-     * Con null se comporta igual que antes.
+     * @return la lista de solicitudes en estado 'En revisión' o 'Aprobada'.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     public List<Solicitud> getActivasParaRevision(Integer idPropias) {
         if (idPropias == null) {
@@ -242,18 +294,25 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return datos;
     }
 
-    /** Todas las solicitudes ya enviadas (para la página Solicitudes del coordinador). */
+    /**
+     * Obtiene todas las solicitudes que han sido enviadas formalmente excluyendo borradores en estado 'Pendiente'.
+     *
+     * @return la lista de solicitudes enviadas al sistema.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     public List<Solicitud> getEnviadas() {
         return getPorEstados(false, "Pendiente");
     }
 
     /**
-     * Histórico: solicitudes terminadas. Si idUsuario es null se traen las de
-     * todos los docentes (así lo pide Estadías desde HistorialServlet).
+     * Recupera el historial de solicitudes concluídas o archivadas.
      *
-     * Qué cuenta como terminada depende de quién pregunta: para Estadías una
-     * Rechazada ya está cerrada; para el docente dueño no, porque la puede
-     * corregir y le sigue apareciendo en su bandeja.
+     * @param idUsuario el ID del docente para filtrar su historial personal,
+     *                  o {@code null} para obtener el historial global administrativo.
+     * @return la lista de solicitudes terminadas.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     public List<Solicitud> getHistorico(Integer idUsuario) {
         List<Solicitud> datos = new ArrayList<>();
@@ -279,9 +338,13 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Solicitudes cuyo estado está dentro de la lista, o fuera de ella si
-     * incluir es false. Los nombres de estado viajan como parámetros; lo único
-     * que se concatena son los signos de interrogación, uno por estado.
+     * Método auxiliar privado para filtrar solicitudes por un conjunto dinámico de nombres de estado.
+     *
+     * @param incluir {@code true} para usar cláusula {@code IN}, {@code false} para {@code NOT IN}.
+     * @param estados varargs con los nombres de estado a comparar.
+     * @return la lista de solicitudes filtradas.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private List<Solicitud> getPorEstados(boolean incluir, String... estados) {
         List<Solicitud> datos = new ArrayList<>();
@@ -311,7 +374,15 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return datos;
     }
 
-    /** Cambio simple de estado (ej. Pendiente → En revisión al enviar). */
+    /**
+     * Actualiza únicamente el estado de una solicitud.
+     *
+     * @param idSolicitud el identificador de la solicitud.
+     * @param nombreEstado el nombre del nuevo estado al que se transicionará.
+     * @return {@code true} si la actualización fue exitosa; {@code false} en caso contrario.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     public boolean cambiarEstado(int idSolicitud, String nombreEstado) {
         String sql = "UPDATE solicitud SET id_estado = "
                 + "(SELECT id_estado FROM estado_solicitud WHERE nombre_estado = ?) "
@@ -329,8 +400,16 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Decisión de Estadías: aprueba o rechaza guardando quién autorizó y el
-     * motivo (RF-05).
+     * Registra el dictamen administrativo de Estadías (aprobación o rechazo),
+     * guardando el usuario autorizador y el motivo justificante (RF-05).
+     *
+     * @param idSolicitud el ID de la solicitud.
+     * @param nombreEstado el nuevo estado dictaminado ('Aprobada' o 'Rechazada').
+     * @param motivo la justificación o detalle de la decisión.
+     * @param idUsuarioAutoriza el ID del usuario administrativo que dictamina.
+     * @return {@code true} si el registro fue exitoso; {@code false} en caso de error.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     public boolean decidir(int idSolicitud, String nombreEstado, String motivo, int idUsuarioAutoriza) {
         String sql = "UPDATE solicitud SET id_estado = "
@@ -351,14 +430,13 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Actualiza la solicitud completa (datos + desglose por programa +
-     * asignaturas). Los hijos se reemplazan en la misma transacción para que
-     * queden igual que como se capturaron.
+     * Actualiza de manera transaccional una solicitud existente y recrea sus relaciones hijas.
+     * Reinicia el estado a 'Pendiente' y limpia las autorizaciones previas al ser modificada.
      *
-     * Siempre deja el estado en Pendiente, igual que ReporteDao.guardarFormulario:
-     * si venía Rechazada, corregirla la reabre y hay que firmar el FO otra vez.
-     * También se borra la decisión anterior, o el nombre de quien la rechazó
-     * saldría en la firma "Autoriza" del formato impreso.
+     * @param entidad el objeto {@link Solicitud} con los nuevos datos.
+     * @return {@code true} si la actualización fue correcta; {@code false} en caso contrario.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     @Override
     public boolean update(Solicitud entidad) {
@@ -422,6 +500,14 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         }
     }
 
+    /**
+     * Elimina una solicitud y todos sus registros asociados de forma transaccional.
+     *
+     * @param id el identificador de la solicitud a eliminar.
+     * @return {@code true} si la eliminación se realizó con éxito; {@code false} en caso de error.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     @Override
     public boolean delete(Integer id) {
         Connection con = null;
@@ -467,9 +553,14 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Inserta las tablas hijas de la solicitud (desglose por programa,
-     * asignaturas y docentes acompañantes) usando la conexión de la
-     * transacción que ya viene abierta.
+     * Inserta por Lotes (Batch) las tablas hijas relacionales dentro de una transacción activa.
+     *
+     * @param con la conexión JDBC transaccional.
+     * @param idSolicitud el ID de la solicitud padre.
+     * @param entidad la solicitud con las colecciones pobladas.
+     * @throws SQLException si ocurre un error al ejecutar los batches de inserción.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private void guardarHijos(Connection con, int idSolicitud, Solicitud entidad) throws SQLException {
         if (!entidad.getProgramas().isEmpty()) {
@@ -514,8 +605,15 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
     }
 
     /**
-     * Fecha en yyyy-MM-dd, o NULL si el campo viene vacío. Los formularios
-     * mandan "" cuando el docente no elige fecha y Date.valueOf("") revienta.
+     * Asigna un parámetro de tipo fecha en un {@link PreparedStatement},
+     * manejando la conversión de cadenas vacías a valores {@code NULL} de SQL.
+     *
+     * @param ps el statement preparado.
+     * @param indice el índice del parámetro en la consulta SQL.
+     * @param iso la representación de la fecha en texto con formato ISO (yyyy-MM-dd).
+     * @throws SQLException si falla la asignación de parámetros.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
      */
     private void setFecha(PreparedStatement ps, int indice, String iso) throws SQLException {
         if (iso != null && !iso.isBlank()) {
@@ -525,7 +623,15 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         }
     }
 
-    /** Borra las tablas hijas para volver a escribirlas (update) o eliminar la solicitud. */
+    /**
+     * Elimina los registros hijos dependientes de la solicitud para preparar su actualización o borrado total.
+     *
+     * @param con la conexión JDBC con la transacción en curso.
+     * @param idSolicitud el identificador de la solicitud.
+     * @throws SQLException si ocurre un fallo al ejecutar la eliminación.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private void borrarHijos(Connection con, int idSolicitud) throws SQLException {
         String[] tablas = {"asignatura_reforzar_solicitud", "programa_educativo",
                 "solicitud_docente"};
@@ -537,6 +643,16 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         }
     }
 
+    /**
+     * Obtiene la lista de docentes acompañantes vinculados a la solicitud.
+     *
+     * @param con la conexión JDBC activa.
+     * @param idSolicitud el identificador de la solicitud.
+     * @return una lista de objetos {@link Usuario} asignados como acompañantes.
+     * @throws SQLException si falla la lectura de datos.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private List<Usuario> getDocentesAcompanantes(Connection con, int idSolicitud) throws SQLException {
         List<Usuario> docentes = new ArrayList<>();
         String sql = "SELECT u.id_usuario, u.nombre, u.correo FROM solicitud_docente sd "
@@ -557,6 +673,16 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return docentes;
     }
 
+    /**
+     * Obtiene la lista de programas educativos vinculados a la solicitud.
+     *
+     * @param con la conexión JDBC activa.
+     * @param idSolicitud el ID de la solicitud.
+     * @return la lista de programas educativos agregados.
+     * @throws SQLException si ocurre un error durante la consulta.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private List<ProgramaEducativo> getProgramas(Connection con, int idSolicitud) throws SQLException {
         List<ProgramaEducativo> programas = new ArrayList<>();
         String sql = "SELECT id_programa, id_solicitud, division_academica, cuatrimestre, grupo, no_estudiantes "
@@ -579,6 +705,16 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return programas;
     }
 
+    /**
+     * Obtiene la lista de nombres de asignaturas a reforzar ligadas a la solicitud.
+     *
+     * @param con la conexión JDBC activa.
+     * @param idSolicitud el ID de la solicitud.
+     * @return una lista de cadenas con los nombres de las asignaturas.
+     * @throws SQLException si sucede un fallo durante la consulta.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private List<String> getAsignaturas(Connection con, int idSolicitud) throws SQLException {
         List<String> asignaturas = new ArrayList<>();
         String sql = "SELECT nombre FROM asignatura_reforzar_solicitud WHERE id_solicitud = ? ORDER BY id_asignatura";
@@ -593,6 +729,15 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
         return asignaturas;
     }
 
+    /**
+     * Mapea el registro actual de un {@link ResultSet} a un nuevo objeto entidad {@link Solicitud}.
+     *
+     * @param rs el cursor activo de la consulta SQL.
+     * @return un objeto {@link Solicitud} cargado con los datos de la fila.
+     * @throws SQLException si ocurre un fallo al extraer los datos del ResultSet.
+     * @author Eder Gabriel García Vázquez
+     * @since 18/08/2026
+     */
     private Solicitud mapRow(ResultSet rs) throws SQLException {
         Solicitud s = new Solicitud();
         s.setIdSolicitud(rs.getInt("id_solicitud"));

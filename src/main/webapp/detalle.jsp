@@ -1,3 +1,16 @@
+<%--
+/**
+ * Vista JSP para la consulta detallada de una solicitud de visita académica.
+ * <p>
+ * Visualiza la información del lugar, participantes, asignaturas y desglose por división,
+ * gestiona el flujo de archivos (FO-UTEZ-EST-08, Oficio, Carta Responsiva) y ofrece
+ * las acciones correspondientes según el rol en sesión (edición, envío, aprobación/rechazo).
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 24/08/2026
+ */
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
@@ -41,14 +54,14 @@
          solicitud terminada ya no aparece en Solicitudes: se vuelve al
          Histórico, que es donde quedó. --%>
     <c:choose>
-        <c:when test="${esTerminada}">
-            <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
-            <c:set var="volverTexto" value="Volver al histórico"/>
-        </c:when>
-        <c:otherwise>
-            <c:set var="volverUrl" value="${pageContext.request.contextPath}/solicitud"/>
-            <c:set var="volverTexto" value="Volver a solicitudes"/>
-        </c:otherwise>
+    <c:when test="${esTerminada}">
+        <c:set var="volverUrl" value="${pageContext.request.contextPath}/historico"/>
+        <c:set var="volverTexto" value="Volver al histórico"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="volverUrl" value="${pageContext.request.contextPath}/solicitud"/>
+        <c:set var="volverTexto" value="Volver a solicitudes"/>
+    </c:otherwise>
     </c:choose>
 
     <%-- Volver también aquí arriba: quien entró solo a consultar no tiene por
@@ -71,13 +84,13 @@
 
     <%-- Confirmaciones: archivo subido / datos actualizados --%>
     <c:if test="${not empty param.subido}">
-        <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
-            <i class="bi bi-check-circle"></i>
-            <div>
-                <div class="instruccion-titulo">Archivo subido correctamente</div>
-                <p>Tu documento ya quedó guardado en el sistema. Lo puedes ver en la sección <strong>Archivos</strong>.</p>
-            </div>
+    <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
+        <i class="bi bi-check-circle"></i>
+        <div>
+            <div class="instruccion-titulo">Archivo subido correctamente</div>
+            <p>Tu documento ya quedó guardado en el sistema. Lo puedes ver en la sección <strong>Archivos</strong>.</p>
         </div>
+    </div>
     </c:if>
     <c:if test="${not empty param.actualizado}">
         <div class="instruccion instruccion-exito" style="margin-top: 1rem;">
@@ -87,6 +100,7 @@
                 <p>Los cambios se guardaron. Recuerda que el formato FO-UTEZ-EST-08 se genera con los datos nuevos: ${esPropia ? 'ábrelo, fírmalo y súbelo' : 'el docente tiene que abrirlo, firmarlo y subirlo otra vez'}.</p>
             </div>
         </div>
+    </div>
     </c:if>
     <%-- Corregir una solicitud rechazada la regresa a Pendiente: el aviso lo
          dice, porque el cambio de estado es lo que más sorprende al docente --%>
@@ -103,6 +117,7 @@
                 </p>
             </div>
         </div>
+    </div>
     </c:if>
 
     <%-- Errores de la subida de archivos (RN-07) y de las acciones de la página
@@ -110,36 +125,36 @@
     <c:if test="${not empty param.error}">
         <c:set var="errorDeArchivo"
                value="${param.error == 'tipo' || param.error == 'tamano' || param.error == 'vacio'}"/>
-        <div class="instruccion instruccion-rechazo" style="margin-top: 1rem;">
-            <i class="bi bi-exclamation-triangle"></i>
-            <div>
-                <div class="instruccion-titulo">
+    <div class="instruccion instruccion-rechazo" style="margin-top: 1rem;">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div>
+            <div class="instruccion-titulo">
                     ${errorDeArchivo ? 'No se pudo subir el archivo' : 'No se pudo completar la operación'}
-                </div>
-                <p>
-                    <c:choose>
-                        <c:when test="${param.error == 'tipo'}">Solo se permiten archivos PDF.</c:when>
-                        <c:when test="${param.error == 'tamano'}">El archivo supera el tamaño máximo de 10 MB.</c:when>
-                        <c:when test="${param.error == 'vacio'}">Selecciona un archivo antes de subir.</c:when>
-                        <c:when test="${param.error == 'sinfirmado'}">
-                            Primero sube el formato FO-UTEZ-EST-08 firmado: sin él la solicitud no se puede enviar a revisión.
-                        </c:when>
-                        <c:when test="${param.error == 'enviada'}">
-                            Esta solicitud ya se había enviado a Estadías, así que no se envió otra vez.
-                        </c:when>
-                        <c:when test="${param.error == 'sinmotivo'}">
-                            Para rechazar una solicitud es obligatorio escribir el motivo, porque es lo que se le notifica al docente.
-                        </c:when>
-                        <c:when test="${param.error == 'yaevaluada'}">
-                            Esta solicitud ya fue evaluada por alguien más: recarga la página para ver en qué estado quedó.
-                        </c:when>
-                        <c:otherwise>
-                            Ocurrió un problema al guardar en la base de datos y no se registró ningún cambio. Intenta de nuevo.
-                        </c:otherwise>
-                    </c:choose>
-                </p>
             </div>
+            <p>
+                <c:choose>
+                    <c:when test="${param.error == 'tipo'}">Solo se permiten archivos PDF.</c:when>
+                    <c:when test="${param.error == 'tamano'}">El archivo supera el tamaño máximo de 10 MB.</c:when>
+                    <c:when test="${param.error == 'vacio'}">Selecciona un archivo antes de subir.</c:when>
+                    <c:when test="${param.error == 'sinfirmado'}">
+                        Primero sube el formato FO-UTEZ-EST-08 firmado: sin él la solicitud no se puede enviar a revisión.
+                    </c:when>
+                    <c:when test="${param.error == 'enviada'}">
+                        Esta solicitud ya se había enviado a Estadías, así que no se envió otra vez.
+                    </c:when>
+                    <c:when test="${param.error == 'sinmotivo'}">
+                        Para rechazar una solicitud es obligatorio escribir el motivo, porque es lo que se le notifica al docente.
+                    </c:when>
+                    <c:when test="${param.error == 'yaevaluada'}">
+                        Esta solicitud ya fue evaluada por alguien más: recarga la página para ver en qué estado quedó.
+                    </c:when>
+                    <c:otherwise>
+                        Ocurrió un problema al guardar en la base de datos y no se registró ningún cambio. Intenta de nuevo.
+                    </c:otherwise>
+                </c:choose>
+            </p>
         </div>
+    </div>
     </c:if>
 
 
@@ -667,16 +682,6 @@
                 </div>
             </form>
         </div>
-    </c:if>
-
-    <%-- ===================== Barra final: Volver ===================== --%>
-    <div class="acciones-form">
-        <a href="${volverUrl}" class="btn-volver-detalle">
-            <i class="bi bi-arrow-left"></i> ${volverTexto}
-        </a>
-    </div>
-
-    <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>
-</main>
-
-<%@ include file="layout/footer.jsp" %>
+        </c:when>
+        <c:otherwise>
+        <div>

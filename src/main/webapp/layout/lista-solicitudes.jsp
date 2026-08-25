@@ -1,3 +1,16 @@
+<%--
+/**
+ * Componente reutilizable para la renderización de tarjetas de solicitudes.
+ * <p>
+ * Muestra el listado de solicitudes activas asociadas al usuario o rol en sesión,
+ * incluyendo información básica del lugar, total de alumnos, fechas clave,
+ * indicador de estado mediante stepper compacto y acciones condicionales según el rol.
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 24/08/2026
+ */
+--%>
 <%@ page pageEncoding="UTF-8" %>
 <%-- Fragmento reutilizable: tarjetas de solicitudes (usado por index.jsp y solicitudes.jsp).
      Espera el atributo "listaSolicitudes" en el request. --%>

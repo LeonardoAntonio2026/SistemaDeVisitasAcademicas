@@ -1,15 +1,40 @@
-/* ============================================================
-   Feedback de carga (sin librerías):
-   1) Spinner en el botón al enviar un formulario.
-   2) Barra fina de progreso al navegar entre páginas.
-   Objetivo: que la app server-rendered no se sienta "congelada"
-   entre el click y la nueva página.
-   ============================================================ */
+/**
+ * @file loading.js — Feedback de carga (sin librerías).
+ *
+ * Hace dos cosas:
+ *   1) Spinner en el botón al enviar un formulario.
+ *   2) Barra fina de progreso al navegar entre páginas.
+ *
+ * Objetivo: que la app server-rendered no se sienta "congelada"
+ * entre el click y la nueva página.
+ *
+ * Se carga desde layout/header.jsp con `defer`, así que corre en todas las
+ * páginas con sesión. Todo va dentro de una IIFE: no expone nada al ámbito
+ * global, se engancha solo a eventos de `document` y `window`.
+ *
+ * Depende del marcado: espera un elemento con id "barra-carga" (lo pinta
+ * header.jsp) y usa la clase CSS "activa" para animarlo.
+ *
+ * @author Leonardo Antonio Arroyo Rodriguez
+ * @since 24/08/2026
+ */
 (function () {
     "use strict";
 
+    /**
+     * Temporizador que oculta la barra si la navegación nunca ocurrió.
+     * @type {?number}
+     */
     var timeoutSeguridad = null;
 
+    /**
+     * Muestra la barra de progreso y reinicia su animación.
+     *
+     * Si el elemento #barra-carga no existe, no hace nada: así una página que
+     * no lo pinte no truena.
+     *
+     * @returns {void}
+     */
     function mostrarBarra() {
         var barra = document.getElementById("barra-carga");
         if (barra) {
@@ -26,6 +51,14 @@
         }
     }
 
+    /**
+     * Oculta la barra de progreso.
+     *
+     * La llaman el temporizador de seguridad y el evento pageshow (al volver
+     * con el botón "atrás" del navegador).
+     *
+     * @returns {void}
+     */
     function ocultarBarra() {
         var barra = document.getElementById("barra-carga");
         if (barra) {

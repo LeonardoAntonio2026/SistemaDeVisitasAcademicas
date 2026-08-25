@@ -6,11 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Catálogo de divisiones académicas y programas educativos de la UTEZ.
+ * Catálogo centralizado de divisiones académicas y programas educativos de la UTEZ.
+ * <p>
+ * Funciona como la fuente única de verdad para el desglose académico de las solicitudes.
+ * Evita la captura libre por parte del docente, permitiendo deducir automáticamente la división
+ * a partir del programa educativo seleccionado y garantizando la integridad de los datos para
+ * la impresión del formato oficial FO-UTEZ-EST-08.
+ * </p>
  *
- * Es la fuente única de verdad del desglose de la solicitud: el docente ya no
- * escribe a mano el nombre del programa ni cuadra los totales por división, los
- * elige de una lista y la división se deduce del programa.
+ * @author Eder Gabriel García Vázquez
+ * @since 20/08/2026
  */
 public final class CatalogoAcademico {
 
@@ -58,8 +63,23 @@ public final class CatalogoAcademico {
                 "Licenciatura en Diseño Digital"));
     }
 
+    /**
+     * Constructor privado para prevenir la instanciación de esta clase de utilidades estáticas.
+     *
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     private CatalogoAcademico() {}
 
+    /**
+     * Registra una división académica en los mapas estáticos de catálogo e índice inverso.
+     *
+     * @param sigla la sigla identificadora de la división (ej. DACEA).
+     * @param nombre el nombre completo descriptivo de la división.
+     * @param programas la lista de programas educativos pertenecientes a dicha división.
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     private static void registrar(String sigla, String nombre, List<String> programas) {
         NOMBRES.put(sigla, nombre);
         PROGRAMAS.put(sigla, programas);
@@ -68,17 +88,37 @@ public final class CatalogoAcademico {
         }
     }
 
-    /** Mapa sigla -> nombre completo (para los <option> y los encabezados). */
+    /**
+     * Obtiene el mapa que asocia las siglas de las divisiones con sus nombres completos.
+     * Utilizado para poblar elementos {@code <option>} y encabezados en las vistas.
+     *
+     * @return un {@link Map} con las siglas como clave y el nombre completo de la división como valor.
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     public static Map<String, String> getNombres() {
         return NOMBRES;
     }
 
-    /** Mapa sigla -> programas educativos de esa división. */
+    /**
+     * Obtiene la estructura jerárquica de programas educativos agrupados por división académica.
+     *
+     * @return un {@link Map} estructurado con las siglas como clave y las listas de programas como valor.
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     public static Map<String, List<String>> getProgramas() {
         return PROGRAMAS;
     }
 
-    /** Todos los programas del catálogo, agrupados por división en el orden del mapa. */
+    /**
+     * Retorna una lista plana con la totalidad de los programas educativos registrados en el catálogo,
+     * respetando el orden de inserción de las divisiones.
+     *
+     * @return una {@link List} de cadenas con todos los programas académicos.
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     public static List<String> todosLosProgramas() {
         List<String> todos = new ArrayList<>();
         for (List<String> programas : PROGRAMAS.values()) {
@@ -88,19 +128,38 @@ public final class CatalogoAcademico {
     }
 
     /**
-     * División a la que pertenece un programa educativo, o null si el nombre no
-     * está en el catálogo (solicitudes viejas capturadas con texto libre).
+     * Determina la sigla de la división académica a la que pertenece un programa educativo determinado.
+     *
+     * @param programa el nombre del programa educativo a consultar.
+     * @return las siglas de la división académica correspondiente, o {@code null} si el programa
+     *         no existe en el catálogo (por ejemplo, en registros legados).
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
      */
     public static String divisionDe(String programa) {
         return programa != null ? DIVISION_POR_PROGRAMA.get(programa.trim()) : null;
     }
 
-    /** true si el programa existe tal cual en el catálogo. */
+    /**
+     * Evalúa si un programa educativo existe formalmente dentro del catálogo vigente.
+     *
+     * @param programa el nombre del programa académico a verificar.
+     * @return {@code true} si el programa se encuentra registrado; {@code false} en caso contrario.
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     public static boolean existePrograma(String programa) {
         return divisionDe(programa) != null;
     }
 
-    /** Nombre completo de la división; devuelve las siglas si no la conocemos. */
+    /**
+     * Obtiene el nombre completo de una división académica a partir de sus siglas.
+     *
+     * @param sigla la sigla identificadora de la división académica.
+     * @return el nombre completo registrado, o la misma sigla si no se encuentra en el mapa.
+     * @author Eder Gabriel García Vázquez
+     * @since 20/08/2026
+     */
     public static String nombreDe(String sigla) {
         return NOMBRES.getOrDefault(sigla, sigla);
     }
