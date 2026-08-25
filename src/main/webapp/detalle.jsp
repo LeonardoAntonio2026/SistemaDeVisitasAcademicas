@@ -485,6 +485,13 @@
                class="btn-editar-datos" title="Corregir los datos antes de enviar">
                 <i class="bi bi-pencil"></i> Editar datos
             </a>
+            <%-- El desglose se corrige aparte: "Editar datos" vuelve a abrir el
+                 formulario completo, y para subirle dos estudiantes a un grupo
+                 no hace falta recapturar la solicitud entera. --%>
+            <a href="${pageContext.request.contextPath}/desglose?id=${s.idSolicitud}"
+               class="btn-editar-datos" title="Agregar o corregir grupos, asignaturas y acompañantes">
+                <i class="bi bi-list-check"></i> Editar desglose
+            </a>
             <c:if test="${esPropia}">
             <form action="${pageContext.request.contextPath}/detalle" method="POST" style="margin: 0;"
                   data-confirmar="La solicitud pasa al área de Estadías para su revisión."
@@ -682,6 +689,16 @@
                 </div>
             </form>
         </div>
-        </c:when>
-        <c:otherwise>
-        <div>
+    </c:if>
+
+    <%-- ===================== Barra final: Volver ===================== --%>
+    <div class="acciones-form">
+        <a href="${volverUrl}" class="btn-volver-detalle">
+            <i class="bi bi-arrow-left"></i> ${volverTexto}
+        </a>
+    </div>
+
+    <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>
+</main>
+
+<%@ include file="layout/footer.jsp" %>

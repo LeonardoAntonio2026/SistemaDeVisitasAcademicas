@@ -1,0 +1,94 @@
+/* ============================================================
+   desglose.css — Lo propio de la pantalla de desglose académico.
+
+   La pantalla reusa el marcado del formulario de la solicitud
+   (.programa-row, .tag-chip, .division-table), así que su estilo
+   vive en form.css y aquí no se toca nada de eso. Lo que se
+   agrega es lo que el formulario no necesita: la pantalla
+   guarda contra la base en cada cambio, y eso hay que verlo.
+
+   @author Leonardo Antonio Arroyo Rodriguez
+   @since 25/08/2026
+   ============================================================ */
+
+/* ---------- Estado de la pantalla ----------
+   Va debajo del título, no al pie: mientras se captura, la vista
+   está arriba, y un aviso hasta abajo no se alcanza a ver. */
+.desglose-estado {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--color-texto-3);
+    /* Altura reservada: el texto entra y sale a cada rato y sin esto
+       la página brincaría en cada guardado */
+    min-height: 24px;
+    margin-bottom: 12px;
+}
+
+.desglose-estado--exito { color: var(--color-verde); }
+.desglose-estado--error { color: var(--color-rojo); }
+
+/* El icono de "guardando" gira mientras dura la petición */
+.desglose-estado .girando {
+    animation: desglose-giro 0.9s linear infinite;
+}
+
+@keyframes desglose-giro {
+    to { transform: rotate(360deg); }
+}
+
+/* Quien prefiere no ver animaciones se queda con el icono quieto:
+   el texto de al lado ya dice lo que está pasando */
+@media (prefers-reduced-motion: reduce) {
+    .desglose-estado .girando { animation: none; }
+}
+
+/* ---------- Mientras el servidor contesta ----------
+   El contenido se atenúa y deja de aceptar clics: se ve que algo
+   está pasando y de paso no se puede tocar otra fila con un
+   cambio a medio guardar. */
+#desglose {
+    transition: opacity 0.15s ease;
+}
+
+#desglose.ocupado {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ---------- Listas vacías ----------
+   Sin esto, una lista sin renglones y una lista que todavía no
+   carga se ven igual: en blanco. */
+.desglose-vacio {
+    padding: 14px 12px;
+    font-size: 0.85rem;
+    color: var(--color-texto-tenue);
+    text-align: center;
+}
+
+/* ---------- Chips que se pueden corregir ----------
+   En el formulario el chip es texto plano porque nada está
+   guardado todavía; aquí se le hace clic para corregir la
+   asignatura o cambiar al docente sin sacarlo de la lista.
+   Es un <span> y no un <button> a propósito: un botón arrastra
+   el borde y el fondo que le pone el navegador, y dentro de un
+   chip eso se ve como un error. */
+.chip-texto {
+    cursor: pointer;
+}
+
+.chip-texto:hover,
+.chip-texto:focus-visible {
+    text-decoration: underline;
+}
+
+/* Mientras se corrige, el chip se convierte en su propio campo */
+.chip-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    min-width: 60px;
+}
