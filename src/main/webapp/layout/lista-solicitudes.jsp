@@ -16,13 +16,12 @@
      Espera el atributo "listaSolicitudes" en el request. --%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
-<c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
-
+<%-- esRevisor lo define layout/header.jsp, que ya se incluyó --%>
 <c:choose>
     <c:when test="${empty listaSolicitudes}">
         <div class="solicitud-vacia">
             <c:choose>
-                <c:when test="${esDocente}">
+                <c:when test="${!esRevisor}">
                     <h5>No tienes ninguna solicitud</h5>
                     <p>Usa el botón <strong>Nueva Solicitud</strong> de arriba para crear una</p>
                 </c:when>
@@ -71,11 +70,14 @@
                             </div>
                         </c:if>
                     </div>
-                        <%-- Una rechazada solo le aparece al docente dueño, y lo que
-                             le toca hacer con ella es corregirla: el botón lo dice --%>
+                    <%-- Lo que toca hacer con una rechazada propia es corregirla,
+                         y el botón lo dice. Se mira el dueño de cada solicitud y
+                         no el rol, porque el Administrador ve en la misma lista
+                         las suyas y las de los demás. --%>
+                    <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
                     <a class="btn-ver-detalles" style="text-decoration: none;"
                        href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">
-                            ${esDocente && s.nombreEstado == 'Rechazada' ? 'Corregir solicitud' : 'Ver detalles'}
+                        ${esPropia && s.nombreEstado == 'Rechazada' ? 'Corregir solicitud' : 'Ver detalles'}
                     </a>
                 </div>
             </div>

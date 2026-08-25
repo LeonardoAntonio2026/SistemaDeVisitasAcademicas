@@ -86,10 +86,8 @@
     });
 
     // ---- 3) Cada página abre desde arriba ----
-    // El navegador restaura el scroll al navegar, así que al entrar al
-    // formulario o al detalle se caía a media página y el docente se perdía
-    // los avisos y las instrucciones del principio. Aquí siempre empieza
-    // arriba y baja leyendo hasta los botones del pie.
+    // El navegador restaura el scroll al navegar y se entraba a media página,
+    // sin ver los avisos ni las instrucciones del principio
     if ("scrollRestoration" in history) {
         history.scrollRestoration = "manual";
     }

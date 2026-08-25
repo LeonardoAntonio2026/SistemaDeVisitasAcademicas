@@ -18,17 +18,12 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
             + "FROM usuario u JOIN rol r ON r.id_rol = u.id_rol";
 
     /**
-     * Crea el usuario y guarda el hash de su contraseña en la tabla CONTRASENA,
-     * todo en una misma transacción. Si la entidad no trae id_rol se usa Docente
-     * (registro público); la gestión de usuarios sí lo manda explícito (RF-12).
+     * Crea el usuario y su hash en CONTRASENA, en una misma transacción. El rol
+     * viene siempre de la gestión de usuarios, que ya lo validó (RF-12).
      */
     @Override
     public boolean create(Usuario entidad) {
-        boolean conRolExplicito = entidad.getIdRol() > 0;
-        String sqlUsuario = conRolExplicito
-                ? "INSERT INTO usuario (id_rol, nombre, correo) VALUES (?, ?, ?)"
-                : "INSERT INTO usuario (id_rol, nombre, correo) "
-                        + "VALUES ((SELECT id_rol FROM rol WHERE nombre_rol = 'Docente'), ?, ?)";
+        String sqlUsuario = "INSERT INTO usuario (id_rol, nombre, correo) VALUES (?, ?, ?)";
         String sqlContrasena = "INSERT INTO contrasena (id_usuario, hash_password) VALUES (?, ?)";
 
         Connection con = null;
@@ -38,12 +33,9 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
 
             int idUsuario;
             try (PreparedStatement ps = con.prepareStatement(sqlUsuario, new String[]{"ID_USUARIO"})) {
-                int i = 1;
-                if (conRolExplicito) {
-                    ps.setInt(i++, entidad.getIdRol());
-                }
-                ps.setString(i++, entidad.getNombre());
-                ps.setString(i, entidad.getCorreo());
+                ps.setInt(1, entidad.getIdRol());
+                ps.setString(2, entidad.getNombre());
+                ps.setString(3, entidad.getCorreo());
                 ps.executeUpdate();
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -141,15 +133,12 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Da de baja la cuenta y borra TODO lo que el usuario generó: sus solicitudes
-     * con su desglose, sus reportes, y los documentos e imágenes de ambos. Es
-     * irreversible; todo va en una transacción, así que o se borra completo o no
-     * se borra nada.
+     * Borra la cuenta y lo que el usuario generó (solicitudes, reportes y sus
+     * documentos e imágenes), todo en una transacción.
      *
-     * Lo que NO destruye es el trabajo de OTROS: si evaluó solicitudes ajenas
-     * solo se quita su firma (id_usuario_autoriza queda en NULL) y si acompañó
-     * visitas de otro docente solo se quita de la lista de acompañantes. Borrar
-     * un coordinador de Estadías no puede llevarse las solicitudes de los demás.
+     * El trabajo de otros no se borra, solo se desliga: si evaluó solicitudes
+     * ajenas se quita su firma (id_usuario_autoriza queda en NULL) y si acompañó
+     * visitas se quita de la lista de acompañantes.
      *
      * Usa {@link #contarHistorial(int)} antes para advertir qué se va a perder.
      */
@@ -158,10 +147,7 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return eliminarConDetalle(id).ok();
     }
 
-    /**
-     * Resultado de una baja: si se pudo y, cuando no, la clave del motivo para
-     * que el servlet arme el mensaje que ve el administrador.
-     */
+    /** Resultado de una baja: si se pudo y, cuando no, la clave del motivo. */
     public record Baja(boolean ok, String error) {
         static Baja exitosa() {
             return new Baja(true, null);
@@ -176,13 +162,12 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     private static final int ORA_HIJO_ENCONTRADO = 2292;
 
     /**
-     * Igual que {@link #delete(Integer)}, pero explica por qué falló. Si alguna
-     * tabla que no contempla el borrado en cascada sigue apuntando al usuario,
-     * Oracle responde ORA-02292 y eso se traduce a "está ligado a otra
-     * información" en lugar de un "no se pudo" genérico.
+     * Igual que {@link #delete(Integer)}, pero explica por qué falló: si una
+     * tabla no contemplada aquí sigue apuntando al usuario, Oracle responde
+     * ORA-02292 y se devuelve el error "ligado".
      */
     public Baja eliminarConDetalle(Integer id) {
-        // Subconsulta reutilizada: las solicitudes de las que el usuario es dueño
+        // Las solicitudes de las que el usuario es dueño
         final String SUS_SOLICITUDES = "SELECT id_solicitud FROM solicitud WHERE id_usuario_solicitante = ?";
 
         Connection con = null;
@@ -213,7 +198,6 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
                 "DELETE FROM documento WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM programa_educativo WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM estudiantes_division WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM solicitud_docente WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
                 "DELETE FROM solicitud WHERE id_usuario_solicitante = ?"
             };
@@ -267,11 +251,11 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
 
     /**
      * Lo que hay detrás de un usuario. {@code solicitudes} y {@code reportes} se
-     * DESTRUYEN al darlo de baja; {@code autorizaciones} y {@code acompanamientos}
-     * son trabajo de otros y solo se desligan.
+     * borran al darlo de baja; {@code autorizaciones} y {@code acompanamientos}
+     * solo se desligan.
      */
     public record Historial(int solicitudes, int reportes, int autorizaciones, int acompanamientos) {
-        /** Hay algo que se perdería para siempre al borrar la cuenta. */
+        /** Hay algo que se perdería al borrar la cuenta. */
         public boolean destruyeDatos() {
             return solicitudes + reportes > 0;
         }
@@ -304,8 +288,8 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Devuelve el usuario si las credenciales coinciden, o null si no existe.
-     * La comparación se hace contra el hash SHA-256 guardado en CONTRASENA.
+     * Devuelve el usuario si las credenciales coinciden, o null si no.
+     * Compara contra el hash SHA-256 guardado en CONTRASENA.
      */
     public Usuario login(String correo, String contrasena) {
         String sql = SELECT_BASE
@@ -329,9 +313,7 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return null;
     }
 
-    /**
-     * Indica si ya existe un usuario registrado con ese correo (para no duplicar cuentas).
-     */
+    /** Indica si ya existe un usuario registrado con ese correo. */
     public boolean existeCorreo(String correo) {
         String sql = "SELECT COUNT(*) FROM usuario WHERE correo = ?";
         try (Connection con = SQLConnector.getConnection();
@@ -348,13 +330,11 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         }
         return false;
     }
+
     /**
-     * Trae el usuario por correo, con todos sus datos (para RF-02: generar el
-     * token de recuperación necesitamos su id, sin exponerlo en la vista).
-     *
-     * Compara sin distinguir mayúsculas: quien escribe "Docente@utez.edu.mx"
-     * para recuperar su cuenta no debe quedarse esperando un correo que nunca
-     * se envió sólo por la capitalización.
+     * Trae el usuario por correo (RF-02: se necesita su id para generar el
+     * token de recuperación). Compara sin distinguir mayúsculas para que la
+     * capitalización no impida recuperar la cuenta.
      */
     public Usuario getByCorreo(String correo) {
         String sql = SELECT_BASE + " WHERE UPPER(u.correo) = UPPER(?)";
@@ -377,13 +357,8 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
      * Guarda el nuevo hash en CONTRASENA tras un restablecimiento (RF-02).
      *
      * Es un MERGE y no un UPDATE porque no todo usuario tiene ya su fila en
-     * CONTRASENA (los dados de alta directo en la BD no la tienen): con UPDATE
-     * el restablecimiento afectaba 0 filas y el usuario quedaba atorado viendo
-     * "hubo un problema" sin poder entrar nunca.
-     *
-     * TODO(coordinar con Dev C): si CONTRASENA agrega columna de salt, aquí es
-     * donde hay que generarlo y guardarlo junto con el hash (hoy es solo SHA-256
-     * plano, igual que en create() y login()).
+     * CONTRASENA (los dados de alta directo en la BD no la tienen) y el UPDATE
+     * afectaba 0 filas.
      */
     public boolean actualizarContrasena(int idUsuario, String nuevaContrasenaPlano) {
         String sql = "MERGE INTO contrasena c "
@@ -407,8 +382,7 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
 
     /**
      * Docentes cuyo nombre o correo empatan con el texto escrito, para el
-     * autocompletado de docentes acompañantes. Se excluye al usuario indicado
-     * (el responsable no se acompaña a sí mismo).
+     * autocompletado de acompañantes. Se excluye al usuario indicado.
      */
     public List<Usuario> buscarDocentes(String texto, Integer excluirIdUsuario, int limite) {
         List<Usuario> datos = new ArrayList<>();

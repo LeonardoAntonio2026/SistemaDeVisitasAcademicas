@@ -113,8 +113,21 @@ la base, el JSP solo pinta. Un JSP nunca abre una conexión.
 ## Roles y flujo
 
 Hay tres roles (tabla `ROL`): **Docente**, **Estadias** y **Administrador**.
-Estadías y Administrador ven lo mismo en el proceso de visitas; el
-Administrador además entra a la gestión de usuarios.
+Estadías y Administrador revisan lo mismo en el proceso de visitas; el
+Administrador además entra a la gestión de usuarios **y puede levantar sus
+propias solicitudes como un docente**.
+
+Por eso el permiso sobre UNA solicitud no se decide por el rol sino por si es
+suya: con las propias hace lo del docente (firmar, subir, enviar, corregir) y
+con las ajenas lo del revisor (aprobar o rechazar).
+
+El Administrador además **corrige los datos de las solicitudes y los reportes de
+los demás**, siempre que el estado todavía lo permita (solicitud **Pendiente** o
+**Rechazada**, reporte **Pendiente** o **Rechazado**). Corregir tiene la misma
+consecuencia que si lo hiciera el docente: el formato se regenera con los datos
+nuevos, se borra el PDF firmado que hubiera y hay que volver a firmarlo. **Firmar,
+subir el firmado, enviar y borrar siguen siendo del dueño**, porque el que firma
+el papel es el docente.
 
 ```
 Docente crea solicitud            → Pendiente
@@ -140,6 +153,9 @@ Por eso cada rol ve cosas distintas:
 - **Estadías / Administrador**: en su bandeja solo lo que le toca atender, así
   que lo rechazado (solicitudes y reportes) no aparece ahí; queda en el
   **Histórico** y en el detalle de la solicitud.
+- **Administrador**: además de lo anterior, en su bandeja salen también las
+  solicitudes que él mismo levantó, incluso **Pendientes** (que a Estadías no le
+  aparecen), porque si no no tendría dónde firmarlas y enviarlas.
 
 ## Notas para quien le siga
 

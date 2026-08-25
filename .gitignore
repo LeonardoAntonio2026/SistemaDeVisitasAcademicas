@@ -49,3 +49,4 @@
 
 *.md
 !README.md
+/out/

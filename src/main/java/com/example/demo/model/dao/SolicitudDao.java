@@ -12,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Objeto de Acceso a Datos (DAO) para la gestión persistence de solicitudes de visita académica.
@@ -188,7 +187,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
 
             solicitud.setProgramas(getProgramas(con, id));
             solicitud.setAsignaturas(getAsignaturas(con, id));
-            solicitud.setEstudiantesPorDivision(getEstudiantesPorDivision(con, id));
+            // El desglose por división no se guarda: se suma de los programas ya cargados
+            solicitud.recalcularEstudiantesPorDivision();
             solicitud.setDocentesAcompanantes(getDocentesAcompanantes(con, id));
             return solicitud;
 
@@ -264,8 +264,34 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * @author Eder Gabriel García Vázquez
      * @since 18/08/2026
      */
-    public List<Solicitud> getActivasParaRevision() {
-        return getPorEstados(true, "En revisión", "Aprobada");
+    public List<Solicitud> getActivasParaRevision(Integer idPropias) {
+        if (idPropias == null) {
+            return getPorEstados(true, "En revisión", "Aprobada");
+        }
+
+        List<Solicitud> datos = new ArrayList<>();
+        String sql = SELECT_BASE
+                + " WHERE e.nombre_estado IN (?, ?)"
+                // Las propias son las mismas que vería como docente: todas
+                // menos las Completadas, que ya viven en el histórico
+                + " OR (s.id_usuario_solicitante = ? AND e.nombre_estado <> ?)"
+                + " ORDER BY s.fecha_creacion DESC";
+        try (Connection con = SQLConnector.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, "En revisión");
+            ps.setString(2, "Aprobada");
+            ps.setInt(3, idPropias);
+            ps.setString(4, "Completada");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    datos.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return datos;
     }
 
     /**
@@ -565,26 +591,6 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
             }
         }
 
-        // Solo se guardan las divisiones con estudiantes; las que van en 0 no ocupan fila
-        String sqlDivision = "INSERT INTO estudiantes_division (id_solicitud, division, no_estudiantes) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = con.prepareStatement(sqlDivision)) {
-            boolean hayFilas = false;
-            for (Map.Entry<String, Integer> e : entidad.getEstudiantesPorDivision().entrySet()) {
-                int cantidad = e.getValue() != null ? e.getValue() : 0;
-                if (cantidad <= 0) {
-                    continue;
-                }
-                ps.setInt(1, idSolicitud);
-                ps.setString(2, e.getKey());
-                ps.setInt(3, cantidad);
-                ps.addBatch();
-                hayFilas = true;
-            }
-            if (hayFilas) {
-                ps.executeBatch();
-            }
-        }
-
         if (!entidad.getDocentesAcompanantes().isEmpty()) {
             String sql = "INSERT INTO solicitud_docente (id_solicitud, id_usuario) VALUES (?, ?)";
             try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -628,37 +634,13 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      */
     private void borrarHijos(Connection con, int idSolicitud) throws SQLException {
         String[] tablas = {"asignatura_reforzar_solicitud", "programa_educativo",
-                "estudiantes_division", "solicitud_docente"};
+                "solicitud_docente"};
         for (String tabla : tablas) {
             try (PreparedStatement ps = con.prepareStatement("DELETE FROM " + tabla + " WHERE id_solicitud = ?")) {
                 ps.setInt(1, idSolicitud);
                 ps.executeUpdate();
             }
         }
-    }
-
-    /**
-     * Carga el desglose de estudiantes distribuidos por divisiones académicas.
-     *
-     * @param con la conexión JDBC activa.
-     * @param idSolicitud el identificador de la solicitud.
-     * @return un mapa estructurado con las divisiones y su conteo correspondiente.
-     * @throws SQLException si sucede un error de lectura.
-     * @author Eder Gabriel García Vázquez
-     * @since 18/08/2026
-     */
-    private Map<String, Integer> getEstudiantesPorDivision(Connection con, int idSolicitud) throws SQLException {
-        Map<String, Integer> divisiones = Solicitud.divisionesEnCero();
-        String sql = "SELECT division, no_estudiantes FROM estudiantes_division WHERE id_solicitud = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idSolicitud);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    divisiones.put(rs.getString("division"), rs.getInt("no_estudiantes"));
-                }
-            }
-        }
-        return divisiones;
     }
 
     /**

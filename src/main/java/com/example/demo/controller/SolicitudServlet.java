@@ -66,10 +66,10 @@ public class SolicitudServlet extends HttpServlet {
         }
 
         // Editar: el mismo formulario de nueva solicitud pero precargado.
-        // Solo el docente dueño, y solo si está Pendiente (aún no se envía) o
-        // Rechazada (corregirla la reabre)
+        // El dueño (o el Administrador, que corrige las de los demás), y solo
+        // si está Pendiente (aún no se envía) o Rechazada (corregirla la reabre)
         if ("editar".equals(request.getParameter("action"))) {
-            Solicitud solicitud = cargarEditablePorDueno(request);
+            Solicitud solicitud = cargarEditable(request);
             if (solicitud == null) {
                 // O no es suya, o está en un estado que ya no se edita
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -81,7 +81,8 @@ public class SolicitudServlet extends HttpServlet {
             return;
         }
 
-        // Lista de solicitudes: el docente ve las suyas, Estadías/Administrador las de todos
+        // Lista de solicitudes: el docente ve las suyas, Estadías las de todos
+        // y el Administrador las de todos MÁS las suyas (también solicita)
         Integer idUsuario = SesionUtils.idUsuario(request);
 
         // Mismas consultas que el inicio (IndexSv): solo las ACTIVAS. Antes se
@@ -92,7 +93,8 @@ public class SolicitudServlet extends HttpServlet {
         if (idUsuario == null) {
             solicitudes = new ArrayList<>();
         } else if (SesionUtils.esRevisor(request)) {
-            solicitudes = solicitudDao.getActivasParaRevision();
+            solicitudes = solicitudDao.getActivasParaRevision(
+                    SesionUtils.puedeSolicitar(request) ? idUsuario : null);
         } else {
             solicitudes = solicitudDao.getActivasBySolicitante(idUsuario);
         }
@@ -163,7 +165,7 @@ public class SolicitudServlet extends HttpServlet {
             regresarAlFormulario(request, response, solicitud, errores, false);
             return;
         } else if ("update".equals(action)) {
-            Solicitud solicitud = cargarEditablePorDueno(request);
+            Solicitud solicitud = cargarEditable(request);
             if (solicitud == null) {
                 // O no es suya, o está en un estado que ya no se edita
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -404,8 +406,8 @@ public class SolicitudServlet extends HttpServlet {
      * @author Eder Gabriel García Vázquez
      * @since 18/08/2026
      */
-    private Solicitud cargarEditablePorDueno(HttpServletRequest request) {
-        return cargarPorDuenoEnEstados(request, "Pendiente", "Rechazada");
+    private Solicitud cargarEditable(HttpServletRequest request) {
+        return cargarEnEstados(request, false, "Pendiente", "Rechazada");
     }
 
     /**
@@ -417,19 +419,21 @@ public class SolicitudServlet extends HttpServlet {
      * @since 18/08/2026
      */
     private Solicitud cargarBorrablePorDueno(HttpServletRequest request) {
-        return cargarPorDuenoEnEstados(request, "Pendiente");
+        return cargarEnEstados(request, true, "Pendiente");
     }
 
     /**
      * Obtiene una solicitud de la base de datos validando la propiedad de la misma, así cómo su estado actual.
      *
      * @param request petición HTTP con el parámetro Id
+     * @param soloDueno {@code true} para restringirla al dueño; {@code false} deja pasar también al Administrador
      * @param estadosPermitidos lista de nombres de estados con los que es válido recuperar la contraseña
      * @return la {@link Solicitud} si existe, pertenece al usuarui actual y coincide con el estado de la solicitud, de lo contrario {@code null}
      * @author Eder Gabriel García Vázquez
      * @since 18/08/2026
      */
-    private Solicitud cargarPorDuenoEnEstados(HttpServletRequest request, String... estadosPermitidos) {
+    private Solicitud cargarEnEstados(HttpServletRequest request, boolean soloDueno,
+                                      String... estadosPermitidos) {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             return null;
@@ -443,7 +447,12 @@ public class SolicitudServlet extends HttpServlet {
         }
 
         Solicitud solicitud = solicitudDao.getById(id);
-        if (solicitud == null || solicitud.getIdUsuarioSolicitante() != idUsuario) {
+        if (solicitud == null) {
+            return null;
+        }
+        boolean puedeTocarla = solicitud.getIdUsuarioSolicitante() == idUsuario.intValue()
+                || (!soloDueno && SesionUtils.esAdministrador(request));
+        if (!puedeTocarla) {
             return null;
         }
         for (String estado : estadosPermitidos) {

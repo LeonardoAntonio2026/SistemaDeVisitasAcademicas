@@ -4,6 +4,7 @@ import com.example.demo.model.Usuario;
 import com.example.demo.model.dao.TokenRecuperacionDao;
 import com.example.demo.model.dao.UsuarioDao;
 import com.example.demo.utils.EmailSender;
+import com.example.demo.utils.EnlaceContrasena;
 import com.example.demo.utils.Validador;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,9 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.text.MessageFormat;
-import java.util.Base64;
 
 @WebServlet(name = "OlvideContrasenaServlet", value = "/olvide-contrasena")
 public class OlvideContrasenaServlet extends HttpServlet {
@@ -24,7 +23,6 @@ public class OlvideContrasenaServlet extends HttpServlet {
 
     private final UsuarioDao usuarioDao = new UsuarioDao();
     private final TokenRecuperacionDao tokenDao = new TokenRecuperacionDao();
-    private final SecureRandom random = new SecureRandom();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -44,7 +42,7 @@ public class OlvideContrasenaServlet extends HttpServlet {
         if (Validador.correoValido(correo)) {
             Usuario usuario = usuarioDao.getByCorreo(Validador.limpiar(correo));
             if (usuario != null) {
-                String token = generarToken();
+                String token = EnlaceContrasena.generarToken();
                 boolean guardado = tokenDao.crear(usuario.getId(), token);
                 if (guardado) {
                     enviarCorreoRecuperacion(request, usuario, token);
@@ -56,14 +54,8 @@ public class OlvideContrasenaServlet extends HttpServlet {
         request.getRequestDispatcher("olvide-contrasena.jsp").forward(request, response);
     }
 
-    private String generarToken() {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
     private void enviarCorreoRecuperacion(HttpServletRequest request, Usuario usuario, String token) {
-        String enlace = urlBase(request) + "/restablecer-contrasena?token=" + token;
+        String enlace = EnlaceContrasena.construirUrl(request, token);
 
         String plantillaHtml = """
         <html>
@@ -85,11 +77,5 @@ public class OlvideContrasenaServlet extends HttpServlet {
         } catch (RuntimeException e) {
             System.err.println("No se pudo enviar el correo de recuperación: " + e.getMessage());
         }
-    }
-
-    private String urlBase(HttpServletRequest request) {
-        int puerto = request.getServerPort();
-        String sufijoPuerto = (puerto == 80 || puerto == 443) ? "" : ":" + puerto;
-        return request.getScheme() + "://" + request.getServerName() + sufijoPuerto + request.getContextPath();
     }
 }

@@ -1,11 +1,8 @@
 // Búsqueda y filtros del histórico (RF-09).
 //
-// El JSP ya pintó TODAS las solicitudes terminadas; aquí solo se esconden las
+// El JSP ya pintó todas las solicitudes terminadas; aquí solo se esconden las
 // filas que no coinciden. El filtrado es en pantalla, sin volver al servidor:
-// el histórico son decenas de filas, no miles, así que escribir en la búsqueda
-// responde en el mismo instante y no se pierde el scroll ni la sesión de
-// lectura. Si algún día la tabla crece de verdad, esto se cambia por una
-// consulta con WHERE en SolicitudDao.getHistorico.
+// el histórico son decenas de filas, no miles.
 document.addEventListener("DOMContentLoaded", function () {
     var tbody = document.getElementById("filas-historico");
     if (!tbody) {
@@ -26,25 +23,21 @@ document.addEventListener("DOMContentLoaded", function () {
     var sinResultados = document.getElementById("sin-resultados");
     var paginador = document.getElementById("paginacion");
 
-    // Cuántas filas se ven a la vez. La tabla se pinta completa desde el
-    // servidor, pero mostrarla completa es lo que se siente lento: con el
-    // histórico de varios años son cientos de filas maquetadas de golpe y un
-    // scroll que no termina. De diez en diez la pantalla siempre pesa igual.
+    // Cuántas filas se ven a la vez: pintar el histórico completo de golpe es
+    // lo que se siente lento, no el filtrado
     var POR_PAGINA = 10;
     var pagina = 1;
     // Botón al que hay que devolverle el foco después de repintar el paginador
     var focoPendiente = null;
 
-    // "Reducción" y "reduccion" tienen que encontrarse igual, y nadie escribe
-    // los acentos en un buscador: se comparan las dos partes en minúsculas y
-    // sin marcas diacríticas (NFD separa la letra de su acento y el reemplazo
-    // se lleva el acento).
+    // "Reducción" y "reduccion" tienen que encontrarse igual: se comparan las
+    // dos partes en minúsculas y sin acentos (NFD separa la letra del acento)
     function normalizar(texto) {
         return (texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
 
-    // El texto en el que se busca no cambia nunca, así que se normaliza una
-    // sola vez al entrar y no en cada tecla que se escribe.
+    // El texto en el que se busca no cambia: se normaliza una sola vez al
+    // entrar y no en cada tecla
     filas.forEach(function (fila) {
         fila.dataset.busqueda = normalizar(fila.dataset.busqueda);
     });
@@ -98,10 +91,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         coincidencias = filas.filter(function (fila) {
             var datos = fila.dataset;
-            // Las fechas son yyyy-MM-dd, el mismo formato que devuelve un
-            // <input type="date">: ordenadas así, compararlas como texto da el
-            // mismo resultado que compararlas como fechas. Una solicitud sin
-            // fecha de visita queda fuera en cuanto se pide un rango.
+            // Las fechas son yyyy-MM-dd, igual que las del <input type="date">:
+            // en ese formato compararlas como texto equivale a compararlas
+            // como fechas
             return (!texto || datos.busqueda.indexOf(texto) !== -1)
                 && (!estado || datos.estado === estado)
                 && (!docente || datos.docente === docente)
@@ -109,8 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 && (!hasta || (datos.fecha && datos.fecha <= hasta));
         });
 
-        // Cambiar un filtro cambia el conjunto entero: la página 4 del
-        // resultado anterior no significa nada en el nuevo.
+        // Cambiar un filtro cambia el conjunto entero: se vuelve a la página 1
         pagina = 1;
         pintarPagina();
     }
@@ -141,8 +132,8 @@ document.addEventListener("DOMContentLoaded", function () {
         var texto = "Mostrando " + (desde + 1) + "–" + hasta
                 + " de " + coincidencias.length
                 + (coincidencias.length === 1 ? " solicitud" : " solicitudes");
-        // Con filtros puestos hay dos totales distintos y conviene ver los dos:
-        // cuántas coinciden y cuántas hay en el histórico completo.
+        // Con filtros puestos se enseñan los dos totales: las que coinciden y
+        // las que hay en el histórico completo
         if (coincidencias.length !== filas.length) {
             texto += " (de " + filas.length + " en el histórico)";
         }
@@ -153,9 +144,8 @@ document.addEventListener("DOMContentLoaded", function () {
         pagina = n;
         focoPendiente = foco;
         pintarPagina();
-        // Al pasar de página se está leyendo desde el final de la tabla; sin
-        // esto las primeras filas de la página nueva quedan arriba, fuera de
-        // la pantalla, y parece que no pasó nada.
+        // Se cambia de página desde el final de la tabla: sin esto las filas
+        // nuevas quedan arriba, fuera de la pantalla
         cardTabla.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -175,9 +165,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return boton;
     }
 
-    // Con muchas páginas, listarlas todas llenaría el renglón: se ven la
-    // actual con su vecina de cada lado, más la primera y la última para poder
-    // saltar a los extremos.
+    // Con muchas páginas listarlas todas llenaría el renglón: se ven la actual
+    // con su vecina de cada lado, más la primera y la última
     function numerosVisibles(totalPaginas) {
         var numeros = [];
         for (var i = 1; i <= totalPaginas; i++) {
@@ -213,9 +202,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         paginador.appendChild(botonPagina("Siguiente ›", pagina + 1, pagina === totalPaginas, false, "siguiente"));
 
-        // El botón que se acaba de pulsar desapareció al repintar y el foco se
-        // habría ido al <body>: se le devuelve al equivalente de la página
-        // nueva para poder seguir avanzando con el teclado.
+        // El botón que se pulsó desapareció al repintar y el foco se habría ido
+        // al <body>: se le devuelve al equivalente de la página nueva
         if (focoPendiente) {
             var destino = paginador.querySelector('[data-foco="' + focoPendiente + '"]:not(:disabled)')
                     || paginador.querySelector('[aria-current="page"]');
@@ -226,8 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Un rango al revés (desde después de hasta) no devuelve nada y parece un
-    // error del sistema: el navegador avisa antes con min/max.
+    // Un rango al revés no devuelve nada: con min/max el navegador avisa antes
     function ajustarRango() {
         inputHasta.min = inputDesde.value;
         inputDesde.max = inputHasta.value;

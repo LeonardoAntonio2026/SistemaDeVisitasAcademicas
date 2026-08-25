@@ -261,8 +261,7 @@
 .btn-descargar:hover { background-color: var(--color-azul-hover); }
 
 /* Ver el archivo y reemplazarlo son las acciones secundarias de cada fila:
-   van en contorno para que no compitan con Descargar (y para que el recuadro
-   de carga no tenga que estar siempre a la vista). */
+   van en contorno para que no compitan con Descargar. */
 .btn-ver,
 .btn-recargar {
     display: inline-flex;
@@ -443,17 +442,15 @@
 .btn-aprobar:hover { background-color: var(--color-azul-hover); }
 
 /* Barra de acciones que cuelga de una card (Enviar solicitud debajo de
-   Archivos, Generar/Enviar reporte debajo de su card) en vez de ir al pie de
-   la página. Se pega a la card de arriba y guarda con la de abajo la misma
-   separación que hay entre cards, para que se lea como parte de esa card. */
+   Archivos, Generar/Enviar reporte debajo de la suya) en vez de ir al pie de
+   la página. Se pega a la card de arriba para que se lea como parte de ella. */
 .acciones-tras-card {
     margin-top: 0;
     margin-bottom: 20px;
 }
 
-/* Volver también al principio de la página: quien solo entró a consultar la
-   solicitud tenía que recorrerla entera para encontrar el botón del pie.
-   Va como enlace y no como botón para no competir con las acciones reales. */
+/* Volver también al principio de la página, para no recorrerla entera. Va como
+   enlace y no como botón para no competir con las acciones reales. */
 .volver-arriba {
     display: inline-flex;
     align-items: center;

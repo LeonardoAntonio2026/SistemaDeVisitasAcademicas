@@ -43,7 +43,7 @@ public class Solicitud implements Serializable {
     private int totalEstudiantes;
     private List<ProgramaEducativo> programas = new ArrayList<>();
     private List<String> asignaturas = new ArrayList<>();
-    // Estudiantes por división académica (ESTUDIANTES_DIVISION), siempre con las 4 llaves
+    // Estudiantes por división académica; no se guarda, se suma de los programas
     private Map<String, Integer> estudiantesPorDivision = divisionesEnCero();
     // Docentes acompañantes (SOLICITUD_DOCENTE); solo se usan id y nombre
     private List<Usuario> docentesAcompanantes = new ArrayList<>();

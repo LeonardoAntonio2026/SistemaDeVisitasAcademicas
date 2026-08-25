@@ -7,8 +7,7 @@
      El FO, la carta responsiva y el reporte calcan los formatos oficiales del
      sistema de calidad (FO-UTEZ-EST-08 Rev. 08, la carta responsiva grupal y el
      reporte de visita académica): mismos rótulos, mismo orden y mismos textos
-     legales, para que lo que se imprime aquí sea aceptado tal cual. El oficio no
-     es un formato controlado, lo redacta el sistema. --%>
+     legales. El oficio no es un formato controlado, lo redacta el sistema. --%>
 <c:set var="s" value="${solicitud}"/>
 <c:set var="r" value="${reporte}"/>
 <% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>
@@ -74,11 +73,10 @@
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
             box-sizing: border-box;
         }
-        /* Los documentos que llevan banda institucional se arman como columna
-           flexible para empujarla al pie con margin-top:auto, en vez de fijarla
-           con position:fixed (que la repetía en cada hoja y dejaba que el texto
-           le pasara por debajo). La carta responsiva NO usa esto: su tabla de
-           firmas tiene que poder partirse entre hojas, y el flex estorba. */
+        /* Los documentos con banda institucional se arman como columna flexible
+           para empujarla al pie con margin-top:auto; con position:fixed se
+           repetía en cada hoja. La carta responsiva no usa esto: su tabla de
+           firmas tiene que poder partirse entre hojas y el flex lo estorba. */
         .hoja.con-pie {
             display: flex;
             flex-direction: column;
@@ -212,11 +210,10 @@
         table.firmantes thead tr { page-break-after: avoid; }
 
         /* ---------- Anexo de evidencia fotográfica del reporte ---------- */
-        /* Dos fotos por renglón. Ojo con dos detalles que las tiraban a una por
-           renglón: el borde suma al ancho si el box-sizing es el de por defecto
-           (de ahí el border-box), y ancho + hueco no deben empatar en 100%
-           exacto porque el redondeo desborda. La altura es fija y no max-height
-           porque object-fit necesita altura definida para recortar. */
+        /* Dos fotos por renglón: el border-box evita que el borde sume al ancho,
+           y ancho + hueco no empatan en 100% exacto porque el redondeo desborda.
+           La altura es fija y no max-height porque object-fit necesita una
+           altura definida para recortar. */
         .fotos-reporte {
             display: flex;
             flex-wrap: wrap;

@@ -65,8 +65,7 @@ public class ReporteDao {
     /**
      * Bandeja de reportes de Estadías: solo los que le toca atender. Quedan
      * fuera los Aprobados (ya terminaron) y los Rechazados, que están en manos
-     * del docente hasta que los corrija y los vuelva a enviar; los dos siguen
-     * accesibles desde el Histórico y desde el detalle de la solicitud.
+     * del docente hasta que los corrija.
      */
     public List<Reporte> getAll() {
         List<Reporte> datos = new ArrayList<>();

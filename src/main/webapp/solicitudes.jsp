@@ -30,13 +30,14 @@
         <h2>Solicitudes</h2>
         <p>
             <c:choose>
-                <c:when test="${sessionScope.rol == null || sessionScope.rol == 'Docente'}">Consulta el estado de tus solicitudes de visita</c:when>
+                <c:when test="${!esRevisor}">Consulta el estado de tus solicitudes de visita</c:when>
+                <c:when test="${puedeSolicitar}">Solicitudes por revisar de los docentes, junto con las tuyas</c:when>
                 <c:otherwise>Solicitudes activas y pendientes por revisar enviadas por los docentes</c:otherwise>
             </c:choose>
         </p>
     </div>
 
-    <c:if test="${sessionScope.rol == null || sessionScope.rol == 'Docente'}">
+    <c:if test="${puedeSolicitar}">
         <a href="${pageContext.request.contextPath}/solicitud?action=nueva" class="botonnueva">Nueva Solicitud</a>
     </c:if>
 

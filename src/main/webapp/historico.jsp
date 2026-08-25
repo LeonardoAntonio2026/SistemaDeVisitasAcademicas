@@ -15,16 +15,17 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/form.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/detalle.css">
 
-    <c:set var="esDocente" value="${sessionScope.rol == null || sessionScope.rol == 'Docente'}"/>
-
+    <%-- esRevisor lo define layout/header.jsp --%>
     <%-- El docente no ve aquí sus rechazadas: las puede corregir, así que le
-         siguen apareciendo en Solicitudes y no se repiten en el histórico --%>
+         siguen apareciendo en Solicitudes y no se repiten en el histórico.
+         Al revisor sí le salen todas las rechazadas (para él ya están
+         cerradas), incluidas las suyas si es el Administrador. --%>
     <%-- No todo lo de aquí está terminado: una solicitud cerrada puede seguir
          esperando su reporte. El subtítulo lo dice, en vez de prometer que
          "ya se completó todo" y contradecirse con los badges de abajo. --%>
     <div class="superior">
         <h2>Histórico</h2>
-        <p>${esDocente ? 'Solicitudes cerradas: el estado indica cómo va el reporte de cada visita'
+        <p>${!esRevisor ? 'Solicitudes cerradas: el estado indica cómo va el reporte de cada visita'
                        : 'Solicitudes cerradas (con su reporte en curso) y rechazadas'}</p>
     </div>
 
@@ -32,25 +33,22 @@
         <c:when test="${empty listaHistorico}">
             <div class="solicitud-vacia">
                 <h5>Aún no hay solicitudes cerradas</h5>
-                <p>${esDocente ? 'Cuando una solicitud se complete aparecerá aquí'
+                <p>${!esRevisor ? 'Cuando una solicitud se complete aparecerá aquí'
                                : 'Cuando una solicitud se complete o se rechace aparecerá aquí'}</p>
             </div>
         </c:when>
         <c:otherwise>
-            <%-- Los filtros van fuera de la tarjeta de la tabla: cuando una
-                 búsqueda no encuentra nada, la tabla se oculta y la barra
-                 tiene que seguir ahí para poder corregir o limpiar. --%>
+            <%-- Los filtros van fuera de la tarjeta de la tabla: si la búsqueda
+                 no encuentra nada la tabla se oculta y la barra debe seguir ahí --%>
             <div class="filtros" role="search">
                 <div class="filtro-campo filtro-campo--busqueda">
                     <label class="form-label" for="filtro-texto">Buscar</label>
                     <input id="filtro-texto" class="form-control" type="search" autocomplete="off"
-                           placeholder="${esDocente ? 'Empresa o actividad' : 'Empresa, actividad o docente'}">
+                           placeholder="${!esRevisor ? 'Empresa o actividad' : 'Empresa, actividad o docente'}">
                 </div>
 
                 <%-- Las opciones de estos dos selects las llena
-                     filtros-historico.js con lo que de verdad hay en la tabla:
-                     ofrecer un estado del que no existe ninguna solicitud solo
-                     lleva a búsquedas vacías. --%>
+                     filtros-historico.js con lo que hay en la tabla --%>
                 <div class="filtro-campo">
                     <label class="form-label" for="filtro-estado">Estado</label>
                     <select id="filtro-estado" class="form-control">
@@ -58,7 +56,7 @@
                     </select>
                 </div>
 
-                <c:if test="${!esDocente}">
+                <c:if test="${esRevisor}">
                     <div class="filtro-campo">
                         <label class="form-label" for="filtro-docente">Docente</label>
                         <select id="filtro-docente" class="form-control">
@@ -68,8 +66,7 @@
                 </c:if>
 
                 <%-- Las dos fechas comparten etiqueta porque son un solo dato:
-                     el rango en el que cayó la visita. Cada campo lleva su
-                     aria-label para que se distingan al leerlos en voz alta. --%>
+                     el rango de la visita. El aria-label las distingue. --%>
                 <div class="filtro-campo filtro-campo--rango">
                     <label class="form-label" for="filtro-desde">Fecha de visita</label>
                     <div class="rango-fechas">
@@ -92,7 +89,7 @@
                     <thead>
                     <tr>
                         <th>Empresa o actividad</th>
-                        <c:if test="${!esDocente}"><th>Docente</th></c:if>
+                        <c:if test="${esRevisor}"><th>Docente</th></c:if>
                         <th>Alumnos</th>
                         <th>Fecha de visita</th>
                         <th>Estado</th>
@@ -100,37 +97,36 @@
                     </tr>
                     </thead>
                     <tbody id="filas-historico">
-                    <%-- Cada fila lleva pegado lo que se filtra: el texto en el
-                         que se busca, el estado tal como se lee en el badge, el
-                         docente y la fecha en yyyy-MM-dd (así se compara con lo
-                         que devuelve un <input type="date">). --%>
+                    <%-- Cada fila lleva pegado lo que se filtra: el texto de la
+                         búsqueda, el estado del badge, el docente y la fecha en
+                         yyyy-MM-dd, igual que la del <input type="date"> --%>
                     <c:forEach var="s" items="${listaHistorico}">
                         <tr data-busqueda="<c:out value="${s.nombreEmpresaActividad} ${s.nombreSolicitante}"/>"
                             data-estado="<c:out value="${s.estadoLegible}"/>"
                             data-docente="<c:out value="${s.nombreSolicitante}"/>"
                             data-fecha="<c:out value="${s.fechaInicio}"/>">
                             <td><c:out value="${s.nombreEmpresaActividad}"/></td>
-                            <c:if test="${!esDocente}"><td><c:out value="${s.nombreSolicitante}"/></td></c:if>
+                            <c:if test="${esRevisor}"><td><c:out value="${s.nombreSolicitante}"/></td></c:if>
                             <td>${s.totalEstudiantes}</td>
                             <td>${empty s.fechaInicio ? '—' : s.fechaInicio}</td>
                             <td>
-                                <%-- El texto sale del modelo: "Completada" se lee como "ya no hay
-                                     nada que hacer" y mientras falte el reporte sí lo hay --%>
+                                <%-- El texto sale del modelo, no de la BD: mientras falte
+                                     el reporte, "Completada" no es lo que se muestra --%>
                                 <span class="badge-estado estado-${s.claseEstado}">${s.estadoLegible}</span>
                             </td>
                             <td style="white-space: nowrap;">
-                                <%-- Consultar va en contorno; solo cuando al docente le toca
-                                     hacer algo con el reporte el botón se vuelve sólido y lo
-                                     dice ("Completar"/"Corregir"), igual que en Reportes. --%>
+                                <%-- Consultar va en contorno; el botón se vuelve sólido solo
+                                     cuando al docente le toca hacer algo con el reporte --%>
                                 <a class="btn-descargar btn-contorno" style="margin-right: 6px;"
                                    href="${pageContext.request.contextPath}/detalle?id=${s.idSolicitud}">Ver solicitud</a>
                                 <c:if test="${s.nombreEstado == 'Completada' && s.idReporte != null}">
+                                    <c:set var="esPropia" value="${sessionScope.idUsuario == s.idUsuarioSolicitante}"/>
                                     <c:choose>
-                                        <c:when test="${esDocente && s.estadoReporte == 'Pendiente'}">
+                                        <c:when test="${esPropia && s.estadoReporte == 'Pendiente'}">
                                             <a class="btn-descargar"
                                                href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Completar reporte</a>
                                         </c:when>
-                                        <c:when test="${esDocente && s.estadoReporte == 'Rechazado'}">
+                                        <c:when test="${esPropia && s.estadoReporte == 'Rechazado'}">
                                             <a class="btn-descargar"
                                                href="${pageContext.request.contextPath}/reporte?id=${s.idReporte}">Corregir reporte</a>
                                         </c:when>
