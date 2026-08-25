@@ -13,12 +13,32 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
+/**
+ * Servlet encargado de procesar el restablecimiento de contraseñas de los usuarios.
+ * Valida los tokens de seguridad enviados por enlace, verifica los requisitos de las
+ * nuevas credenciales y actualiza la información en el sistema.
+ *
+ * @author Hugo Alberto Ramirez Martinez
+ * @since 25/08/2026
+ */
 @WebServlet(name = "RestablecerContrasenaServlet", value = "/restablecer-contrasena")
 public class RestablecerContrasenaServlet extends HttpServlet {
 
+    /** Instancia de TokenRecuperacionDao para consultar y actualizar el estado de los tokens. */
     private final TokenRecuperacionDao tokenDao = new TokenRecuperacionDao();
+
+    /** Instancia de UsuarioDao para actualizar las credenciales del usuario. */
     private final UsuarioDao usuarioDao = new UsuarioDao();
 
+    /**
+     * Procesa las peticiones GET verificando si el token adjunto en la URL es válido.
+     * Carga la vista del formulario para la nueva contraseña.
+     *
+     * @param request  Objeto {@link HttpServletRequest} que contiene el parámetro "token".
+     * @param response Objeto {@link HttpServletResponse} con la respuesta del servidor.
+     * @throws ServletException Si ocurre un error interno en el Servlet.
+     * @throws IOException      Si ocurre un error de entrada/salida al despachar la vista.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -32,6 +52,16 @@ public class RestablecerContrasenaServlet extends HttpServlet {
         request.getRequestDispatcher("restablecer-contrasena.jsp").forward(request, response);
     }
 
+    /**
+     * Procesa el cambio de contraseña enviando las nuevas credenciales vía POST.
+     * Valida la vigencia del token, las reglas de complejidad de la contraseña,
+     * actualiza la base de datos, invalida el token y finaliza cualquier sesión previa.
+     *
+     * @param request  Objeto {@link HttpServletRequest} con los parámetros "token", "contra1" y "contra2".
+     * @param response Objeto {@link HttpServletResponse} para redirigir al login o volver a la vista.
+     * @throws ServletException Si ocurre un error interno en el Servlet.
+     * @throws IOException      Si ocurre un error de entrada/salida.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -82,6 +112,13 @@ public class RestablecerContrasenaServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Método auxiliar encargado de comprobar la integridad y vigencia de un token.
+     *
+     * @param token Cadena con la clave única a evaluar.
+     * @return Objeto {@link TokenRecuperacion} si el token existe, no ha sido usado ni está vencido;
+     *         {@code null} en caso contrario.
+     */
     private TokenRecuperacion validarToken(String token) {
         if (token == null || token.isBlank()) {
             return null;
