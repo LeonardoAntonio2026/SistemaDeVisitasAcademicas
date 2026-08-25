@@ -1,5 +1,32 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%--
+    header.jsp — Cabecera común de todas las páginas con sesión iniciada.
+
+    Abre el documento (<html>, <head> y el <div id="wrapper">) y lo cierra
+    layout/footer.jsp. Toda página que incluya este archivo tiene que incluir
+    también el footer, o el HTML queda sin cerrar.
+
+    De qué se encarga:
+      1. Calcula las banderas de rol (esRevisor, esAdministrador,
+         puedeSolicitar) una sola vez, para que las vistas no repitan la
+         comparación con los nombres de los roles.
+      2. Carga los estilos y los scripts comunes: Bootstrap local, los tokens
+         de color, loading.js y modales.js.
+      3. Incluye el menú lateral (layout/sidebar.jsp) y su botón de abrir en
+         celular.
+
+    Variables que puede recibir del JSP que lo incluye:
+      pageTitle  título de la pestaña (si falta, usa el nombre del sistema)
+      activeNav  entrada del menú que se pinta activa (la usa sidebar.jsp)
+
+    OJO: los archivos de /layout NO pasan por FiltroAutenticacion, porque se
+    insertan con la directiva include y se resuelven al compilar el JSP. La
+    sesión ya la validó el servlet que sirvió la página.
+
+    @author Leonardo Antonio Arroyo Rodriguez
+    @since 24/08/2026
+--%>
 <%-- Rol de la sesión, leído en un solo lugar (es el SesionUtils de las vistas).
      Antes cada página repetía la comparación con los nombres de los roles.
 

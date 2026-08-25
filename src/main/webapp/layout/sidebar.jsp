@@ -1,5 +1,26 @@
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%--
+    sidebar.jsp — Menú lateral de navegación, incluido por layout/header.jsp.
+
+    Se compone de dos partes:
+      1. La tarjeta de identidad: nombre y rol del usuario en sesión. Si no
+         hay sesión muestra "Invitado / Docente" en vez de quedar en blanco.
+      2. Las entradas del menú: Solicitudes, Reportes e Histórico para todos,
+         más Gestión de usuarios solo para el Administrador.
+
+    Espera del JSP que lo incluye la variable "activeNav", que marca cuál
+    entrada se pinta como activa. Los valores que reconoce son:
+    inicio, solicitudes, reportes, historico y usuarios ("inicio" y
+    "solicitudes" iluminan la misma entrada).
+
+    El div #sidebar-backdrop del final es la capa oscura que tapa el
+    contenido cuando el menú se abre en celular; lo controla el script
+    de header.jsp.
+
+    @author Leonardo Antonio Arroyo Rodriguez
+    @since 24/08/2026
+--%>
 <aside id="sidebar" class="d-flex flex-column">
     <div class="fw-semibold text-light p-3 m-2 rounded-4"
          style="background: var(--color-azul);">

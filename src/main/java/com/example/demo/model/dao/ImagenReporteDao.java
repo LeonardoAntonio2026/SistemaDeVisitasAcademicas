@@ -43,7 +43,7 @@ public class ImagenReporteDao {
         return datos;
     }
 
-    /** Trae la imagen completa (con contenido) para mostrarla en <img>. */
+    /** Trae la imagen completa (con contenido) para mostrarla en {@code <img>}. */
     public ImagenReporte getById(int idImagen) {
         String sql = "SELECT id_imagen, id_reporte, "
         + "TO_CHAR(fecha_carga, 'YYYY-MM-DD HH24:MI') AS fecha_carga, "

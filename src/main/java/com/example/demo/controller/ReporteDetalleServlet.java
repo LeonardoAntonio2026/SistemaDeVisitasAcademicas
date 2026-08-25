@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Detalle y flujo completo del reporte de visita (RF-08):
  *  - GET  ?id=N             detalle del reporte según estado/rol/sub-fase.
- *  - GET  ?imagen=N         sirve una imagen del reporte (para <img src>).
+ *  - GET  ?imagen=N         sirve una imagen del reporte (para {@code <img src>}).
  *  - POST action=generar    guarda resultados/observaciones + 3 imágenes y
  *                           deja el reporte listo para firmar (Pendiente).
  *  - POST action=enviar     con el PDF firmado ya subido: Pendiente -> Completado.
@@ -317,7 +317,7 @@ public class ReporteDetalleServlet extends HttpServlet {
         return (tipoValido && extensionValida) ? null : "tipo";
     }
 
-    /** Sirve el binario de una imagen para <img src="reporte?imagen=ID">. */
+    /** Sirve el binario de una imagen para {@code <img src="reporte?imagen=ID">}. */
     private void mostrarImagen(String idParam, HttpServletRequest request, HttpServletResponse response)
     throws IOException {
         int idImagen;

@@ -24,14 +24,14 @@ import java.util.Base64;
 /**
  * Archivos del proceso:
  *  - GET  ?id=N               descarga un documento subido (PDF en Base64).
- *  - GET  ?id=N&inline=1      sirve ese mismo PDF para verlo dentro del visor.
+ *  - GET  ?id=N&amp;inline=1  sirve ese mismo PDF para verlo dentro del visor.
  *  - GET  ?ver=N              página del visor: muestra el PDF subido sin
  *    descargarlo, para comprobar que se cargó el archivo correcto.
- *  - GET  ?gen=fo|oficio|responsiva&solicitud=N  vista imprimible del formato
+ *  - GET  ?gen=fo|oficio|responsiva&amp;solicitud=N  vista imprimible del formato
  *    generado a partir de los datos (se imprime o guarda como PDF y se firma).
- *  - GET  ?gen=reporte&reporte=N  vista imprimible del reporte de visita.
+ *  - GET  ?gen=reporte&amp;reporte=N  vista imprimible del reporte de visita.
  *  - POST action=firmado|responsiva  sube el PDF firmado de la solicitud.
- *  - POST action=reporteFirmado&reporte=N  sube el PDF firmado del reporte.
+ *  - POST action=reporteFirmado&amp;reporte=N  sube el PDF firmado del reporte.
  */
 @WebServlet(name = "DocumentoServlet", value = "/documento")
 // El tope del contenedor va A PROPOSITO por encima de MAX_PDF_BYTES: si fueran
