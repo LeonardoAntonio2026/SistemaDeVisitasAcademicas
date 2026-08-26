@@ -11,11 +11,23 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Acceso a datos de los enlaces de recuperación de contraseña (RF-02).
+ * Cada usuario solo puede tener un token vigente a la vez: al generar uno
+ * nuevo, cualquier token anterior sin usar se invalida automáticamente.
+ */
+
 public class TokenRecuperacionDao {
 
     /** Horas que vive un enlace de recuperación; el correo anuncia este mismo número. */
     public static final int HORAS_VIGENCIA = 24;
-
+    /**
+     * Genera un nuevo token de recuperación para el usuario, con vigencia de
+     * {@link #HORAS_VIGENCIA} horas a partir de este momento. Antes de
+     * insertarlo, invalida cualquier token anterior del usuario que siguiera
+     * sin usarse, para que solo exista uno vigente a la vez. Ambas
+     * operaciones van en una sola transacción.
+     */
     public boolean crear(int idUsuario, String token) {
         String sqlInvalidar = "UPDATE token_recuperacion SET usado = 'S' WHERE id_usuario = ? AND usado = 'N'";
         String sqlInsert = "INSERT INTO token_recuperacion (id_usuario, token, fecha_expiracion, usado) "
@@ -64,7 +76,11 @@ public class TokenRecuperacionDao {
             }
         }
     }
-
+    /**
+     * Busca un token por su valor exacto. Devuelve el registro completo
+     * (incluyendo si ya fue usado y su fecha de expiración) o null si no
+     * existe ningún token con ese valor.
+     */
     public TokenRecuperacion buscarPorToken(String token) {
         String sql = "SELECT id_token, id_usuario, token, fecha_expiracion, usado "
                 + "FROM token_recuperacion WHERE token = ?";
@@ -88,7 +104,11 @@ public class TokenRecuperacionDao {
         }
         return null;
     }
-
+    /**
+     * Marca el token como usado, para que no pueda volver a emplearse en un
+     * segundo restablecimiento. Devuelve true si el token existía y se marcó
+     * correctamente.
+     */
     public boolean marcarUsado(String token) {
         String sql = "UPDATE token_recuperacion SET usado = 'S' WHERE token = ?";
         try (Connection con = SQLConnector.getConnection();
