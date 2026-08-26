@@ -76,6 +76,8 @@ public class Reporte implements Serializable {
     // --- Getters y Setters ---
 
     /**
+     * Devuelve el identificador único del reporte.
+     *
      * @return el identificador único del reporte
      */
     public int getIdReporte() {
@@ -83,6 +85,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el identificador único del reporte.
+     *
      * @param idReporte identificador único del reporte
      */
     public void setIdReporte(int idReporte) {
@@ -90,6 +94,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el identificador de la solicitud a la que está vinculado el reporte.
+     *
      * @return el identificador de la solicitud a la que está vinculado el reporte
      */
     public int getIdSolicitud() {
@@ -97,6 +103,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el identificador de la solicitud a la que está vinculado el reporte.
+     *
      * @param idSolicitud identificador de la solicitud a la que está vinculado el reporte
      */
     public void setIdSolicitud(int idSolicitud) {
@@ -104,6 +112,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve la fecha de realización del reporte o visita.
+     *
      * @return la fecha de realización del reporte o visita
      */
     public String getFecha() {
@@ -111,6 +121,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna la fecha de realización del reporte o visita.
+     *
      * @param fecha fecha de realización del reporte o visita
      */
     public void setFecha(String fecha) {
@@ -118,6 +130,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve los resultados obtenidos durante la visita.
+     *
      * @return los resultados obtenidos durante la visita
      */
     public String getResultados() {
@@ -125,6 +139,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna los resultados obtenidos durante la visita.
+     *
      * @param resultados resultados obtenidos durante la visita
      */
     public void setResultados(String resultados) {
@@ -132,6 +148,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve las observaciones adicionales capturadas por el docente.
+     *
      * @return las observaciones adicionales capturadas por el docente
      */
     public String getObservaciones() {
@@ -139,6 +157,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna las observaciones adicionales capturadas por el docente.
+     *
      * @param observaciones observaciones adicionales capturadas por el docente
      */
     public void setObservaciones(String observaciones) {
@@ -146,6 +166,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve la fecha de creación del registro en el sistema.
+     *
      * @return la fecha de creación del registro en el sistema
      */
     public String getFechaCreacion() {
@@ -153,6 +175,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna la fecha de creación del registro en el sistema.
+     *
      * @param fechaCreacion fecha de creación del registro en el sistema
      */
     public void setFechaCreacion(String fechaCreacion) {
@@ -160,6 +184,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el identificador del estado actual del reporte.
+     *
      * @return el identificador del estado actual del reporte
      */
     public int getIdEstado() {
@@ -167,6 +193,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el identificador del estado actual del reporte.
+     *
      * @param idEstado identificador del estado actual del reporte
      */
     public void setIdEstado(int idEstado) {
@@ -174,6 +202,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el motivo en caso de rechazo o aclaración del estado.
+     *
      * @return el motivo en caso de rechazo o aclaración del estado
      */
     public String getMotivo() {
@@ -181,6 +211,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el motivo en caso de rechazo o aclaración del estado.
+     *
      * @param motivo motivo en caso de rechazo o aclaración del estado
      */
     public void setMotivo(String motivo) {
@@ -188,6 +220,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el nombre del estado original del reporte, tal como está en la base de datos.
+     *
      * @return el nombre del estado original del reporte, tal como está en la base de datos
      */
     public String getNombreEstado() {
@@ -236,6 +270,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el nombre del estado original del reporte, tal como está en la base de datos.
+     *
      * @param nombreEstado nombre del estado original del reporte
      */
     public void setNombreEstado(String nombreEstado) {
@@ -243,6 +279,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el nombre de la empresa o actividad asociada a la visita.
+     *
      * @return el nombre de la empresa o actividad asociada a la visita
      */
     public String getNombreEmpresaActividad() {
@@ -250,6 +288,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el nombre de la empresa o actividad asociada a la visita.
+     *
      * @param nombreEmpresaActividad nombre de la empresa o actividad asociada a la visita
      */
     public void setNombreEmpresaActividad(String nombreEmpresaActividad) {
@@ -257,6 +297,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve la dirección o lugar donde se realizó la visita.
+     *
      * @return la dirección o lugar donde se realizó la visita
      */
     public String getLugarDireccion() {
@@ -264,6 +306,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna la dirección o lugar donde se realizó la visita.
+     *
      * @param lugarDireccion dirección o lugar donde se realizó la visita
      */
     public void setLugarDireccion(String lugarDireccion) {
@@ -271,6 +315,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el identificador del usuario docente que realizó la solicitud.
+     *
      * @return el identificador del usuario docente que realizó la solicitud
      */
     public int getIdUsuarioSolicitante() {
@@ -278,6 +324,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el identificador del usuario docente que realizó la solicitud.
+     *
      * @param idUsuarioSolicitante identificador del usuario docente que realizó la solicitud
      */
     public void setIdUsuarioSolicitante(int idUsuarioSolicitante) {
@@ -285,6 +333,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el nombre completo del docente solicitante.
+     *
      * @return el nombre completo del docente solicitante
      */
     public String getNombreSolicitante() {
@@ -292,6 +342,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el nombre completo del docente solicitante.
+     *
      * @param nombreSolicitante nombre completo del docente solicitante
      */
     public void setNombreSolicitante(String nombreSolicitante) {
@@ -299,6 +351,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el total de estudiantes que asistieron o participan en la visita.
+     *
      * @return el total de estudiantes que asistieron o participan en la visita
      */
     public int getTotalEstudiantes() {
@@ -306,6 +360,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el total de estudiantes que asistieron o participan en la visita.
+     *
      * @param totalEstudiantes total de estudiantes que asistieron o participan en la visita
      */
     public void setTotalEstudiantes(int totalEstudiantes) {
@@ -313,6 +369,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve el correo electrónico del docente solicitante.
+     *
      * @return el correo electrónico del docente solicitante
      */
     public String getCorreoSolicitante() {
@@ -320,6 +378,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna el correo electrónico del docente solicitante.
+     *
      * @param correoSolicitante correo electrónico del docente solicitante
      */
     public void setCorreoSolicitante(String correoSolicitante) {
@@ -327,6 +387,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Devuelve la fecha en la que se creó la solicitud original.
+     *
      * @return la fecha en la que se creó la solicitud original
      */
     public String getFechaSolicitud() {
@@ -334,6 +396,8 @@ public class Reporte implements Serializable {
     }
 
     /**
+     * Asigna la fecha en la que se creó la solicitud original.
+     *
      * @param fechaSolicitud fecha en la que se creó la solicitud original
      */
     public void setFechaSolicitud(String fechaSolicitud) {

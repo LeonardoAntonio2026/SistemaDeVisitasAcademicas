@@ -10,6 +10,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Solicitud de visita académica: el formato FO-UTEZ-EST-08 llevado a objeto.
+ * <p>
+ * Además de las columnas de la tabla SOLICITUD carga campos de apoyo para la
+ * vista (nombre del estado, del solicitante, el reporte ligado) y las tablas
+ * hijas: programas educativos, docentes acompañantes y asignaturas a reforzar.
+ * </p>
+ *
+ * @author Leonardo Antonio Arroyo Rodriguez
+ * @since 25/08/2026
+ */
 public class Solicitud implements Serializable {
 
     /**

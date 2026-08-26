@@ -27,6 +27,10 @@ public class TokenRecuperacionDao {
      * insertarlo, invalida cualquier token anterior del usuario que siguiera
      * sin usarse, para que solo exista uno vigente a la vez. Ambas
      * operaciones van en una sola transacción.
+     *
+     * @param idUsuario id del usuario que pidió restablecer su contraseña
+     * @param token     cadena aleatoria que viajará en el enlace del correo
+     * @return {@code true} si el token quedó guardado, {@code false} si falló la transacción
      */
     public boolean crear(int idUsuario, String token) {
         String sqlInvalidar = "UPDATE token_recuperacion SET usado = 'S' WHERE id_usuario = ? AND usado = 'N'";
@@ -80,6 +84,9 @@ public class TokenRecuperacionDao {
      * Busca un token por su valor exacto. Devuelve el registro completo
      * (incluyendo si ya fue usado y su fecha de expiración) o null si no
      * existe ningún token con ese valor.
+     *
+     * @param token cadena del token, tal como llegó en la URL de restablecimiento
+     * @return el token encontrado, o {@code null} si no existe o si falló la consulta
      */
     public TokenRecuperacion buscarPorToken(String token) {
         String sql = "SELECT id_token, id_usuario, token, fecha_expiracion, usado "
@@ -108,6 +115,9 @@ public class TokenRecuperacionDao {
      * Marca el token como usado, para que no pueda volver a emplearse en un
      * segundo restablecimiento. Devuelve true si el token existía y se marcó
      * correctamente.
+     *
+     * @param token cadena del token que acaba de usarse
+     * @return {@code true} si el token existía y quedó marcado como usado
      */
     public boolean marcarUsado(String token) {
         String sql = "UPDATE token_recuperacion SET usado = 'S' WHERE token = ?";
