@@ -10,11 +10,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Acceso a datos para los documentos PDF (tabla DOCUMENTO): consulta de
+ * metadatos, descarga de contenido y guardado/eliminación de archivos
+ * asociados a una solicitud o a un reporte.
+ *
+ * @author Alan Esteban Zarinana Arizmendi
+ * @since 2026-08-25
+ */
 public class DocumentoDao {
 
     /**
      * Metadatos de los documentos de una solicitud (sin el contenido Base64,
      * que puede pesar varios MB; ese solo se trae al descargar).
+     *
+     * @param idSolicitud id de la solicitud dueña de los documentos
+     * @return lista de documentos (sin contenido); vacía si no hay o si falla la consulta
      */
     public List<Documento> getBySolicitud(int idSolicitud) {
         List<Documento> datos = new ArrayList<>();
@@ -38,7 +49,12 @@ public class DocumentoDao {
         return datos;
     }
 
-    /** Trae el documento completo (con contenido) para descargarlo. */
+    /**
+     * Trae el documento completo (con contenido) para descargarlo.
+     *
+     * @param idDocumento id del documento a buscar
+     * @return el documento con su contenido Base64, o {@code null} si no existe o falla la consulta
+     */
     public Documento getById(int idDocumento) {
         String sql = "SELECT d.id_documento, d.id_solicitud, d.id_reporte, d.id_tipo_documento, "
                 + "t.nombre_tipo, TO_CHAR(d.fecha_carga, 'YYYY-MM-DD') AS fecha_carga, "
@@ -64,6 +80,9 @@ public class DocumentoDao {
      * Metadatos de un documento (sin el contenido). Los usa la página del
      * visor, que solo necesita el nombre, el tamaño y de qué solicitud o
      * reporte cuelga: el PDF lo pide aparte el visor del navegador.
+     *
+     * @param idDocumento id del documento a buscar
+     * @return el documento sin contenido, o {@code null} si no existe o falla la consulta
      */
     public Documento getMetadataById(int idDocumento) {
         String sql = "SELECT d.id_documento, d.id_solicitud, d.id_reporte, d.id_tipo_documento, "
@@ -86,7 +105,12 @@ public class DocumentoDao {
         return null;
     }
 
-    /** Metadatos de los documentos de un reporte (mismo criterio que getBySolicitud). */
+    /**
+     * Metadatos de los documentos de un reporte (mismo criterio que getBySolicitud).
+     *
+     * @param idReporte id del reporte dueño de los documentos
+     * @return lista de documentos (sin contenido); vacía si no hay o si falla la consulta
+     */
     public List<Documento> getByReporte(int idReporte) {
         List<Documento> datos = new ArrayList<>();
         String sql = "SELECT d.id_documento, d.id_solicitud, d.id_reporte, d.id_tipo_documento, "
@@ -112,6 +136,11 @@ public class DocumentoDao {
     /**
      * Guarda un documento de la solicitud. Si ya existía uno del mismo tipo se
      * reemplaza (el docente puede volver a subir el archivo si se equivocó).
+     *
+     * @param idSolicitud     id de la solicitud dueña del documento
+     * @param nombreTipo      nombre del tipo de documento (ej. "FO firmado")
+     * @param contenidoBase64 contenido del PDF codificado en Base64
+     * @return {@code true} si se guardó correctamente; {@code false} si falló (con rollback)
      */
     public boolean guardarParaSolicitud(int idSolicitud, String nombreTipo, String contenidoBase64) {
         String sqlDelete = "DELETE FROM documento WHERE id_solicitud = ? AND id_tipo_documento = "
@@ -164,6 +193,11 @@ public class DocumentoDao {
     /**
      * Guarda un documento del reporte (el PDF firmado). Igual que
      * guardarParaSolicitud: si ya existía uno del mismo tipo se reemplaza.
+     *
+     * @param idReporte       id del reporte dueño del documento
+     * @param nombreTipo      nombre del tipo de documento (ej. "Reporte firmado")
+     * @param contenidoBase64 contenido del PDF codificado en Base64
+     * @return {@code true} si se guardó correctamente; {@code false} si falló (con rollback)
      */
     public boolean guardarParaReporte(int idReporte, String nombreTipo, String contenidoBase64) {
         String sqlDelete = "DELETE FROM documento WHERE id_reporte = ? AND id_tipo_documento = "
@@ -217,6 +251,10 @@ public class DocumentoDao {
      * Elimina el documento de un tipo del reporte. Se usa al corregir el
      * formulario: el reporte firmado anterior queda obsoleto porque el
      * formato se regenera con la información nueva.
+     *
+     * @param idReporte  id del reporte del que se elimina el documento
+     * @param nombreTipo nombre del tipo de documento a eliminar
+     * @return {@code true} si se eliminó al menos un registro
      */
     public boolean eliminarTipoDeReporte(int idReporte, String nombreTipo) {
         String sql = "DELETE FROM documento WHERE id_reporte = ? AND id_tipo_documento = "
@@ -233,7 +271,13 @@ public class DocumentoDao {
         }
     }
 
-    /** Indica si el reporte ya tiene un documento de ese tipo (ej. el firmado). */
+    /**
+     * Indica si el reporte ya tiene un documento de ese tipo (ej. el firmado).
+     *
+     * @param idReporte  id del reporte a consultar
+     * @param nombreTipo nombre del tipo de documento a buscar
+     * @return {@code true} si existe al menos un documento de ese tipo
+     */
     public boolean existeTipoEnReporte(int idReporte, String nombreTipo) {
         String sql = "SELECT COUNT(*) FROM documento d "
                 + "JOIN tipo_documento t ON t.id_tipo_documento = d.id_tipo_documento "
@@ -258,6 +302,10 @@ public class DocumentoDao {
      * Elimina el documento de un tipo de la solicitud. Se usa al editar los
      * datos: el FO firmado que ya estaba subido queda obsoleto porque el
      * formato se regenera con la información nueva.
+     *
+     * @param idSolicitud id de la solicitud de la que se elimina el documento
+     * @param nombreTipo  nombre del tipo de documento a eliminar
+     * @return {@code true} si se eliminó al menos un registro
      */
     public boolean eliminarTipoDeSolicitud(int idSolicitud, String nombreTipo) {
         String sql = "DELETE FROM documento WHERE id_solicitud = ? AND id_tipo_documento = "
@@ -274,7 +322,13 @@ public class DocumentoDao {
         }
     }
 
-    /** Indica si la solicitud ya tiene un documento de ese tipo (ej. el FO firmado). */
+    /**
+     * Indica si la solicitud ya tiene un documento de ese tipo (ej. el FO firmado).
+     *
+     * @param idSolicitud id de la solicitud a consultar
+     * @param nombreTipo  nombre del tipo de documento a buscar
+     * @return {@code true} si existe al menos un documento de ese tipo
+     */
     public boolean existeTipoEnSolicitud(int idSolicitud, String nombreTipo) {
         String sql = "SELECT COUNT(*) FROM documento d "
                 + "JOIN tipo_documento t ON t.id_tipo_documento = d.id_tipo_documento "
@@ -295,6 +349,14 @@ public class DocumentoDao {
         return false;
     }
 
+    /**
+     * Convierte una fila del ResultSet en un {@link Documento}.
+     *
+     * @param rs           fila actual del resultado de la consulta
+     * @param conContenido si {@code true}, también carga el contenido Base64
+     * @return el documento mapeado a partir de la fila
+     * @throws SQLException si falla la lectura de alguna columna
+     */
     private Documento mapRow(ResultSet rs, boolean conContenido) throws SQLException {
         Documento d = new Documento();
         d.setIdDocumento(rs.getInt("id_documento"));

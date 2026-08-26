@@ -682,6 +682,5 @@
                 </div>
             </form>
         </div>
-        </c:when>
-        <c:otherwise>
-        <div>
+    </c:if>
+</main>

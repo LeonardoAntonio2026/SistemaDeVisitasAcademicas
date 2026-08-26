@@ -40,7 +40,11 @@ public class UsuarioServlet extends HttpServlet {
     private final RolDao rolDao = new RolDao();
     private final TokenRecuperacionDao tokenDao = new TokenRecuperacionDao();
     private final Gson gson = new Gson();
-
+    /**
+     * Muestra el panel de gestión de usuarios, o responde en JSON los datos
+     * que piden sus modales (editar/confirmar baja) cuando viene con action.
+     * Solo el Administrador puede entrar; cualquier otro rol recibe 403.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -253,6 +257,11 @@ public class UsuarioServlet extends HttpServlet {
         return Respuesta.exito("Usuario actualizado correctamente.", usuario);
     }
 
+    /**
+     * Baja de cuenta (irreversible): primero cuenta lo que se perdería,
+     * intenta el borrado en cascada y traduce el motivo de un posible
+     * rechazo (por ejemplo, si el usuario sigue ligado a otros registros).
+     */
     private Respuesta eliminar(HttpServletRequest request) {
         Integer id = parseId(request.getParameter("id"));
         if (id == null) {
