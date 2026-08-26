@@ -1,3 +1,11 @@
+<%--
+  * Archivo: reporte-detalle.jsp
+  * Autor: Alan Esteban Zarinana
+  * Fecha: 25 de Agosto de 2026
+  * Descripción: Vista detallada de un reporte. Funciona como un asistente multi-fase para el
+  *              docente (captura de formulario, firma/subida de evidencia y envío) y como
+  *              pantalla de revisión/evaluación (aprobación o rechazo) para los administradores.
+  --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>

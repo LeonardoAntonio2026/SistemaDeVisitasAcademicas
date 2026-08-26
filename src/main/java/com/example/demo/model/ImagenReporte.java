@@ -10,9 +10,8 @@ import java.io.Serializable;
  * sino que se detecta dinámicamente mediante los magic bytes (JPG/PNG) al momento de servir el archivo.
  * </p>
  *
- * @author Alan Esteban Zariñana Arizmendi
- * @version 1.0
- * @since 25/08/2026
+ * @author Alan Esteban Zarinana Arizmendi
+ * @since 2026-08-25
  */
 public class ImagenReporte implements Serializable {
 

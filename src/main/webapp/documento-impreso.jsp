@@ -7,7 +7,10 @@
      El FO, la carta responsiva y el reporte calcan los formatos oficiales del
      sistema de calidad (FO-UTEZ-EST-08 Rev. 08, la carta responsiva grupal y el
      reporte de visita académica): mismos rótulos, mismo orden y mismos textos
-     legales. El oficio no es un formato controlado, lo redacta el sistema. --%>
+     legales. El oficio no es un formato controlado, lo redacta el sistema.
+
+     Autor: Alan Esteban Zarinana Arizmendi
+     Fecha: 2026-08-25 --%>
 <c:set var="s" value="${solicitud}"/>
 <c:set var="r" value="${reporte}"/>
 <% request.setAttribute("divisiones", com.example.demo.model.CatalogoAcademico.DIVISIONES); %>

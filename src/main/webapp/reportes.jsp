@@ -1,3 +1,11 @@
+<%--
+  * Archivo: reportes.jsp
+  * Autor: Alan Esteban Zarinana
+  * Fecha: 25 de Agosto de 2026
+  * Descripción: Bandeja principal del módulo de reportes. Muestra las tarjetas de reportes
+  *              recientes y pendientes. Adapta los mensajes y acciones dependiendo de si
+  *              el usuario en sesión es el dueño de la visita o un revisor (administrador).
+  --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%-- Mismo guardado que en index.jsp: entrar directo al JSP (sin el servlet)
