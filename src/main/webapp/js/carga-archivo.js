@@ -1,3 +1,13 @@
+/**
+ * Script para la gestión de las zonas de carga de archivos (detalle de solicitud y reporte).
+ * Maneja la validación de tamaño y formato en el cliente (PDF, máximo 10MB) para
+ * evitar tiempos de espera innecesarios, y controla la visibilidad de los avisos y
+ * formularios de reemplazo de archivos.
+ *
+ * @author Alan
+ * @since 25/08/2026
+ */
+
 /* ============================================================
    Zonas de carga de archivos (detalle de la solicitud y del
    reporte). Dos cosas:

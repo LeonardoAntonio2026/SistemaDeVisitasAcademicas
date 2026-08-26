@@ -11,15 +11,87 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase de Acceso a Datos (DAO) para gestionar las operaciones relativas a los usuarios.
+ * Administra la persistencia de datos en Oracle DB, transacciones complejas de alta y baja,
+ * autenticación de credenciales y consulta de relaciones.
+ *
+ * @author Hugo Alberto Ramirez Martinez
+ * @since 25/08/2026
+ */
 public class UsuarioDao implements Dao<Usuario, Integer> {
 
+    /** Consulta SQL base que realiza un JOIN entre las tablas USUARIO y ROL. */
     private static final String SELECT_BASE =
             "SELECT u.id_usuario, u.id_rol, u.nombre, u.correo, r.nombre_rol "
-            + "FROM usuario u JOIN rol r ON r.id_rol = u.id_rol";
+                    + "FROM usuario u JOIN rol r ON r.id_rol = u.id_rol";
+
+    /** Código de error de Oracle cuando una restricción de llave foránea impide eliminar un registro padre. */
+    private static final int ORA_HIJO_ENCONTRADO = 2292;
 
     /**
-     * Crea el usuario y su hash en CONTRASENA, en una misma transacción. El rol
-     * viene siempre de la gestión de usuarios, que ya lo validó (RF-12).
+     * Registro auxiliar que representa el resultado detallado del proceso de eliminación de un usuario.
+     *
+     * @param ok    Indica si la eliminación se realizó con éxito.
+     * @param error Clave del motivo del fallo si la operación no fue exitosa.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
+    public record Baja(boolean ok, String error) {
+        /**
+         * Retorna un objeto Baja representando éxito.
+         *
+         * @return Instancia de {@link Baja} exitosa.
+         * @author Hugo Alberto Ramirez Martinez
+         * @since 25/08/2026
+         */
+        static Baja exitosa() {
+            return new Baja(true, null);
+        }
+
+        /**
+         * Retorna un objeto Baja representando fallo.
+         *
+         * @param error Clave del error.
+         * @return Instancia de {@link Baja} fallida.
+         * @author Hugo Alberto Ramirez Martinez
+         * @since 25/08/2026
+         */
+        static Baja fallida(String error) {
+            return new Baja(false, error);
+        }
+    }
+
+    /**
+     * Registro que contiene el conteo de entidades asociadas al historial de un usuario.
+     *
+     * @param solicitudes     Total de solicitudes creadas por el usuario.
+     * @param reportes        Total de reportes asociados a las solicitudes del usuario.
+     * @param autorizaciones  Total de solicitudes autorizadas por el usuario.
+     * @param acompanamientos Total de visitas en las que participó como acompañante.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
+    public record Historial(int solicitudes, int reportes, int autorizaciones, int acompanamientos) {
+        /**
+         * Evalúa si la eliminación provocará la pérdida permanente de datos de solicitudes o reportes.
+         *
+         * @return {@code true} si se destruyen solicitudes o reportes; {@code false} en caso contrario.
+         * @author Hugo Alberto Ramirez Martinez
+         * @since 25/08/2026
+         */
+        public boolean destruyeDatos() {
+            return solicitudes + reportes > 0;
+        }
+    }
+
+    /**
+     * Crea un usuario y su correspondiente hash de contraseña dentro de una misma transacción base de datos.
+     *
+     * @param entidad Objeto {@link Usuario} que contiene la información a registrar.
+     * @return {@code true} si la transacción fue exitosa; {@code false} si ocurrió un error y se ejecutó un rollback.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     @Override
     public boolean create(Usuario entidad) {
@@ -80,6 +152,13 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         }
     }
 
+    /**
+     * Obtiene la lista completa de usuarios registrados.
+     *
+     * @return Lista de objetos {@link Usuario}.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
     @Override
     public List<Usuario> getAll() {
         List<Usuario> datos = new ArrayList<>();
@@ -96,6 +175,14 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return datos;
     }
 
+    /**
+     * Busca un usuario por su identificador único.
+     *
+     * @param id Identificador único del usuario.
+     * @return Objeto {@link Usuario} encontrado o {@code null} si no existe.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
     @Override
     public Usuario getById(Integer id) {
         String sql = SELECT_BASE + " WHERE u.id_usuario = ?";
@@ -114,6 +201,14 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return null;
     }
 
+    /**
+     * Actualiza la información personal y el rol de un usuario existente.
+     *
+     * @param entidad Objeto {@link Usuario} con los datos actualizados.
+     * @return {@code true} si se actualizó el registro; {@code false} en caso contrario.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
     @Override
     public boolean update(Usuario entidad) {
         String sql = "UPDATE usuario SET id_rol = ?, nombre = ?, correo = ? WHERE id_usuario = ?";
@@ -133,41 +228,28 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Borra la cuenta y lo que el usuario generó (solicitudes, reportes y sus
-     * documentos e imágenes), todo en una transacción.
+     * Elimina a un usuario y sus entidades dependientes de la base de datos.
      *
-     * El trabajo de otros no se borra, solo se desliga: si evaluó solicitudes
-     * ajenas se quita su firma (id_usuario_autoriza queda en NULL) y si acompañó
-     * visitas se quita de la lista de acompañantes.
-     *
-     * Usa {@link #contarHistorial(int)} antes para advertir qué se va a perder.
+     * @param id Identificador único del usuario.
+     * @return {@code true} si la eliminación se realizó con éxito.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     @Override
     public boolean delete(Integer id) {
         return eliminarConDetalle(id).ok();
     }
 
-    /** Resultado de una baja: si se pudo y, cuando no, la clave del motivo. */
-    public record Baja(boolean ok, String error) {
-        static Baja exitosa() {
-            return new Baja(true, null);
-        }
-
-        static Baja fallida(String error) {
-            return new Baja(false, error);
-        }
-    }
-
-    /** Código de Oracle cuando una llave foránea impide borrar el registro padre. */
-    private static final int ORA_HIJO_ENCONTRADO = 2292;
-
     /**
-     * Igual que {@link #delete(Integer)}, pero explica por qué falló: si una
-     * tabla no contemplada aquí sigue apuntando al usuario, Oracle responde
-     * ORA-02292 y se devuelve el error "ligado".
+     * Realiza el borrado en cascada de la cuenta del usuario y sus registros relacionados,
+     * desligando autorizaciones o acompañamientos de terceros dentro de una sola transacción.
+     *
+     * @param id Identificador del usuario a eliminar.
+     * @return Objeto {@link Baja} con la confirmación o el detalle del fallo.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     public Baja eliminarConDetalle(Integer id) {
-        // Las solicitudes de las que el usuario es dueño
         final String SUS_SOLICITUDES = "SELECT id_solicitud FROM solicitud WHERE id_usuario_solicitante = ?";
 
         Connection con = null;
@@ -187,19 +269,18 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
                 ps.executeUpdate();
             }
 
-            // 2. Borrar su árbol de solicitudes, de la hoja a la raíz por las FKs:
-            //    imagen/documento -> reporte -> documento/hijos -> solicitud
+            // 2. Borrar su árbol de solicitudes, de la hoja a la raíz por las FKs
             String[] enCascada = {
-                "DELETE FROM imagen WHERE id_reporte IN "
-                    + "(SELECT id_reporte FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + "))",
-                "DELETE FROM documento WHERE id_reporte IN "
-                    + "(SELECT id_reporte FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + "))",
-                "DELETE FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM documento WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM programa_educativo WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM solicitud_docente WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
-                "DELETE FROM solicitud WHERE id_usuario_solicitante = ?"
+                    "DELETE FROM imagen WHERE id_reporte IN "
+                            + "(SELECT id_reporte FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + "))",
+                    "DELETE FROM documento WHERE id_reporte IN "
+                            + "(SELECT id_reporte FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + "))",
+                    "DELETE FROM reporte WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                    "DELETE FROM documento WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                    "DELETE FROM asignatura_reforzar_solicitud WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                    "DELETE FROM programa_educativo WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                    "DELETE FROM solicitud_docente WHERE id_solicitud IN (" + SUS_SOLICITUDES + ")",
+                    "DELETE FROM solicitud WHERE id_usuario_solicitante = ?"
             };
             for (String sql : enCascada) {
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -224,7 +305,6 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
             }
 
             con.commit();
-            // Si no borró ninguna fila es que la cuenta ya no existía
             return filas > 0 ? Baja.exitosa() : Baja.fallida("noexiste");
 
         } catch (SQLException e) {
@@ -250,18 +330,14 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Lo que hay detrás de un usuario. {@code solicitudes} y {@code reportes} se
-     * borran al darlo de baja; {@code autorizaciones} y {@code acompanamientos}
-     * solo se desligan.
+     * Realiza un conteo del historial del usuario (solicitudes, reportes, autorizaciones y acompañamientos)
+     * para advertir sobre los datos que serán removidos o modificados.
+     *
+     * @param idUsuario Identificador único del usuario.
+     * @return Objeto {@link Historial} con la cantidad de registros por categoría.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
-    public record Historial(int solicitudes, int reportes, int autorizaciones, int acompanamientos) {
-        /** Hay algo que se perdería al borrar la cuenta. */
-        public boolean destruyeDatos() {
-            return solicitudes + reportes > 0;
-        }
-    }
-
-    /** Cuenta lo que se perdería al dar de baja al usuario, para poder advertirlo. */
     public Historial contarHistorial(int idUsuario) {
         String sql = "SELECT "
                 + " (SELECT COUNT(*) FROM solicitud WHERE id_usuario_solicitante = ?),"
@@ -288,8 +364,13 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Devuelve el usuario si las credenciales coinciden, o null si no.
-     * Compara contra el hash SHA-256 guardado en CONTRASENA.
+     * Valida el acceso de un usuario comparando su correo y el hash SHA-256 de su contraseña.
+     *
+     * @param correo     Correo electrónico ingresado.
+     * @param contrasena Contraseña en texto plano a verificar.
+     * @return Objeto {@link Usuario} correspondiente a las credenciales o {@code null} si son inválidas.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     public Usuario login(String correo, String contrasena) {
         String sql = SELECT_BASE
@@ -313,7 +394,14 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return null;
     }
 
-    /** Indica si ya existe un usuario registrado con ese correo. */
+    /**
+     * Comprueba la existencia previa de un correo electrónico en la base de datos.
+     *
+     * @param correo Correo electrónico a consultar.
+     * @return {@code true} si ya se encuentra registrado; {@code false} en caso contrario.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
     public boolean existeCorreo(String correo) {
         String sql = "SELECT COUNT(*) FROM usuario WHERE correo = ?";
         try (Connection con = SQLConnector.getConnection();
@@ -332,9 +420,12 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Trae el usuario por correo (RF-02: se necesita su id para generar el
-     * token de recuperación). Compara sin distinguir mayúsculas para que la
-     * capitalización no impida recuperar la cuenta.
+     * Consulta un usuario mediante su correo electrónico ignorando mayúsculas y minúsculas.
+     *
+     * @param correo Correo electrónico a buscar.
+     * @return Objeto {@link Usuario} si existe coincidencia o {@code null} si no.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     public Usuario getByCorreo(String correo) {
         String sql = SELECT_BASE + " WHERE UPPER(u.correo) = UPPER(?)";
@@ -354,11 +445,13 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Guarda el nuevo hash en CONTRASENA tras un restablecimiento (RF-02).
+     * Actualiza o inserta mediante un {@code MERGE} la contraseña hash de un usuario determinado.
      *
-     * Es un MERGE y no un UPDATE porque no todo usuario tiene ya su fila en
-     * CONTRASENA (los dados de alta directo en la BD no la tienen) y el UPDATE
-     * afectaba 0 filas.
+     * @param idUsuario            Identificador único del usuario.
+     * @param nuevaContrasenaPlano Nueva contraseña en texto plano.
+     * @return {@code true} si la operación fue ejecutada con éxito.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     public boolean actualizarContrasena(int idUsuario, String nuevaContrasenaPlano) {
         String sql = "MERGE INTO contrasena c "
@@ -381,8 +474,14 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
     }
 
     /**
-     * Docentes cuyo nombre o correo empatan con el texto escrito, para el
-     * autocompletado de acompañantes. Se excluye al usuario indicado.
+     * Realiza búsquedas de usuarios con el rol 'Docente' cuyo nombre o correo coincidan con un criterio dado.
+     *
+     * @param texto             Texto de búsqueda.
+     * @param excluirIdUsuario  ID del usuario que se desea ignorar en los resultados.
+     * @param limite            Límite de registros a retornar.
+     * @return Lista de objetos {@link Usuario} tipo Docente.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
      */
     public List<Usuario> buscarDocentes(String texto, Integer excluirIdUsuario, int limite) {
         List<Usuario> datos = new ArrayList<>();
@@ -414,6 +513,15 @@ public class UsuarioDao implements Dao<Usuario, Integer> {
         return datos;
     }
 
+    /**
+     * Mapea el registro actual de un {@link ResultSet} a una instancia de {@link Usuario}.
+     *
+     * @param rs Cursor {@link ResultSet} posicionado en la fila actual.
+     * @return Instancia poblada de {@link Usuario}.
+     * @throws SQLException Si ocurre un error al extraer las columnas.
+     * @author Hugo Alberto Ramirez Martinez
+     * @since 25/08/2026
+     */
     private Usuario mapRow(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
         u.setId(rs.getInt("id_usuario"));

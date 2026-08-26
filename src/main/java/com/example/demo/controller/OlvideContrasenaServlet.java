@@ -15,21 +15,51 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.MessageFormat;
 
+/**
+ * Servlet encargado de gestionar la solicitud de recuperación de contraseña.
+ * Genera tokens temporales de seguridad y envía los correos electrónicos correspondientes
+ * para el restablecimiento de credenciales sin revelar la existencia previa del correo en la base de datos.
+ *
+ * @author Hugo Alberto Ramirez Martinez
+ * @since 25/08/2026
+ */
 @WebServlet(name = "OlvideContrasenaServlet", value = "/olvide-contrasena")
 public class OlvideContrasenaServlet extends HttpServlet {
 
+    /** Mensaje de respuesta unificado para evitar la enumeración de usuarios registrados. */
     private static final String MENSAJE_GENERICO =
             "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.";
 
+    /** Instancia de UsuarioDao para consultar la existencia del usuario. */
     private final UsuarioDao usuarioDao = new UsuarioDao();
+
+    /** Instancia de TokenRecuperacionDao para gestionar la persistencia de tokens de recuperación. */
     private final TokenRecuperacionDao tokenDao = new TokenRecuperacionDao();
 
+    /**
+     * Redirige al usuario hacia la vista del formulario de recuperación de contraseña.
+     *
+     * @param request  Objeto {@link HttpServletRequest} con la petición del cliente.
+     * @param response Objeto {@link HttpServletResponse} con la respuesta del servidor.
+     * @throws ServletException Si ocurre un error interno en el Servlet.
+     * @throws IOException      Si ocurre un error de entrada/salida al despachar la vista.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.getRequestDispatcher("olvide-contrasena.jsp").forward(request, response);
     }
 
+    /**
+     * Procesa la solicitud de recuperación enviada desde el formulario.
+     * Valida la estructura del correo, busca la coincidencia en la base de datos,
+     * genera el token seguro y notifica al usuario por correo sin dar pistas de existencia en caso fallido.
+     *
+     * @param request  Objeto {@link HttpServletRequest} que contiene el parámetro "correo".
+     * @param response Objeto {@link HttpServletResponse} para retornar la vista con la confirmación.
+     * @throws ServletException Si ocurre un error interno en el Servlet.
+     * @throws IOException      Si ocurre un error de entrada/salida.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -54,6 +84,13 @@ public class OlvideContrasenaServlet extends HttpServlet {
         request.getRequestDispatcher("olvide-contrasena.jsp").forward(request, response);
     }
 
+    /**
+     * Construye la plantilla HTML del correo e invoca el servicio de envío de correos.
+     *
+     * @param request Objeto {@link HttpServletRequest} utilizado para construir la URL dinámica.
+     * @param usuario Objeto {@link Usuario} receptor del mensaje.
+     * @param token   Cadena de texto con el token asignado para el restablecimiento.
+     */
     private void enviarCorreoRecuperacion(HttpServletRequest request, Usuario usuario, String token) {
         String enlace = EnlaceContrasena.construirUrl(request, token);
 

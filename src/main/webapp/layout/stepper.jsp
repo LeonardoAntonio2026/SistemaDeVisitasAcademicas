@@ -1,3 +1,16 @@
+<%--
+/**
+ * Componente reutilizable para visualizar la línea de tiempo (stepper) del trámite de visita.
+ * <p>
+ * Muestra el progreso secuencial de 5 etapas del flujo (Llenado, Envío, Revisión, Carta responsiva y Reporte)
+ * calculando los estados visuales (completado, actual o rechazado) a partir de los atributos
+ * <code>stepperEstado</code> y <code>stepperEstadoReporte</code>.
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 24/08/2026
+ */
+--%>
 <%@ page pageEncoding="UTF-8" %>
 <%-- Línea de tiempo del trámite completo. Componente reutilizable: se usa en la
      card de resumen de detalles y en las tarjetas de solicitud.

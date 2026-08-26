@@ -1,3 +1,12 @@
+<%--
+  Vista de Recuperar Contraseña.
+  Renderiza el formulario donde el usuario captura su correo para recibir el
+  enlace de restablecimiento. La procesa OlvideContrasenaServlet.
+  Muestra alertas de error o éxito según lo que deje el servlet.
+
+  @author Hugo Alberto Ramirez Martinez
+  @since 25/08/2026
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%-- Misma plantilla visual que login.jsp (auth.css): antes esta pantalla usaba

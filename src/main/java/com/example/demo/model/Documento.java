@@ -5,6 +5,9 @@ import java.io.Serializable;
 /**
  * Archivo asociado a una solicitud (o a un reporte). El contenido se guarda
  * en Base64 dentro de la tabla DOCUMENTO (columna CONTENIDO_BASE64).
+ *
+ * @author Alan Esteban Zarinana Arizmendi
+ * @since 2026-08-25
  */
 public class Documento implements Serializable {
     private int idDocumento;
@@ -84,7 +87,11 @@ public class Documento implements Serializable {
         this.tamanoBytes = tamanoBytes;
     }
 
-    /** Tamaño legible para la vista, ej. "1.8 MB". */
+    /**
+     * Tamaño legible para la vista, ej. "1.8 MB".
+     *
+     * @return el tamaño formateado en KB o MB, o cadena vacía si no hay dato
+     */
     public String getTamanoLegible() {
         if (tamanoBytes <= 0) {
             return "";

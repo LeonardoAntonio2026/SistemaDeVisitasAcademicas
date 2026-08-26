@@ -10,10 +10,30 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-// El filtro se aplica a todas las URLs de la app
+/**
+ * Filtro de seguridad encargado de interceptar todas las peticiones HTTP de la aplicación.
+ * Evalúa el estado de autenticación de las sesiones y controla el acceso a rutas protegidas,
+ * recursos estáticos y vistas públicas como el inicio de sesión y recuperación de contraseña.
+ *
+ * @author Hugo Alberto Ramirez Martinez
+ * @since 25/08/2026
+ */
 @WebFilter("/*")
 public class FiltroAutenticacion extends HttpFilter {
 
+    /**
+     * Intercepta la petición HTTP y determina si el cliente tiene acceso al recurso solicitado.
+     * <p>
+     * Utiliza {@link HttpServletRequest#getServletPath()} para obtener la ruta normalizada y prevenir
+     * vulnerabilidades de salto de directorio (Path Traversal).
+     * </p>
+     *
+     * @param request  Objeto {@link HttpServletRequest} con la petición del cliente.
+     * @param response Objeto {@link HttpServletResponse} para controlar redirecciones de acceso.
+     * @param chain    Objeto {@link FilterChain} para invocar el siguiente filtro o servlet en la cadena.
+     * @throws IOException      Si ocurre un error de entrada/salida durante la redirección o filtrado.
+     * @throws ServletException Si ocurre un error interno dentro del contenedor de servlets.
+     */
     @Override
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -59,9 +79,9 @@ public class FiltroAutenticacion extends HttpFilter {
         // (<%@ include %>) que se resuelven al compilar, así que el filtro nunca los ve.
         boolean isResource =
                 path.startsWith("/css/") ||
-                path.startsWith("/js/") ||
-                path.startsWith("/img/") ||
-                path.startsWith("/fonts/");
+                        path.startsWith("/js/") ||
+                        path.startsWith("/img/") ||
+                        path.startsWith("/fonts/");
 
         if (loggedIn) {
             // CON sesión: si intenta ir al login, lo mandamos al inicio.
@@ -80,5 +100,5 @@ public class FiltroAutenticacion extends HttpFilter {
                 response.sendRedirect(request.getContextPath() + "/login.jsp");
             }
         }
-   }
+    }
 }

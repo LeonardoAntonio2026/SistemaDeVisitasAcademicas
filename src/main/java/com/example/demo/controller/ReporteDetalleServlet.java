@@ -55,7 +55,7 @@ public class ReporteDetalleServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
+            throws ServletException, IOException {
 
         String idImagen = request.getParameter("imagen");
         if (idImagen != null) {
@@ -79,7 +79,7 @@ public class ReporteDetalleServlet extends HttpServlet {
         request.setAttribute("imagenes", imagenReporteDao.getByReporte(idReporte));
         request.setAttribute("documentos", documentoDao.getByReporte(idReporte));
         request.setAttribute("existeFirmado",
-        documentoDao.existeTipoEnReporte(idReporte, TIPO_REPORTE_FIRMADO));
+                documentoDao.existeTipoEnReporte(idReporte, TIPO_REPORTE_FIRMADO));
         request.setAttribute("subFase", calcularSubFase(request, reporte, esDueno, puedeEditar));
         request.getRequestDispatcher("reporte-detalle.jsp").forward(request, response);
     }
@@ -104,7 +104,7 @@ public class ReporteDetalleServlet extends HttpServlet {
      *  - null: no aplica (otros estados, o quien mira no lo puede tocar).
      */
     private String calcularSubFase(HttpServletRequest request, Reporte reporte,
-    boolean esDueno, boolean puedeEditar) {
+                                   boolean esDueno, boolean puedeEditar) {
         if (!puedeEditar) {
             return null;
         }
@@ -127,7 +127,7 @@ public class ReporteDetalleServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
+            throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
         // El cuerpo se lee aquí, antes que nada, y de forma controlada: si una
@@ -209,7 +209,7 @@ public class ReporteDetalleServlet extends HttpServlet {
             } else {
                 String nuevoEstado = esRechazo ? "Rechazado" : "Aprobado";
                 boolean ok = reporteDao.decidir(idReporte, nuevoEstado,
-                motivo != null ? motivo.trim() : null);
+                        motivo != null ? motivo.trim() : null);
                 if (ok) {
                     notificarDecisionReporte(reporte, nuevoEstado, motivo);
                 } else {
@@ -227,7 +227,7 @@ public class ReporteDetalleServlet extends HttpServlet {
      * que queda obsoleto porque el formato se regenera con los datos nuevos.
      */
     private void generarReporte(HttpServletRequest request, HttpServletResponse response,
-    Reporte reporte) throws ServletException, IOException {
+                                Reporte reporte) throws ServletException, IOException {
         int idReporte = reporte.getIdReporte();
 
         String resultados = request.getParameter("resultados");
@@ -295,7 +295,7 @@ public class ReporteDetalleServlet extends HttpServlet {
         }
 
         boolean ok = reporteDao.guardarFormulario(idReporte, resultados.trim(),
-        observaciones != null ? observaciones.trim() : null);
+                observaciones != null ? observaciones.trim() : null);
 
         // El firmado anterior queda obsoleto: hay que volver a firmar el formato
         documentoDao.eliminarTipoDeReporte(idReporte, TIPO_REPORTE_FIRMADO);
@@ -313,13 +313,13 @@ public class ReporteDetalleServlet extends HttpServlet {
         String nombre = imagen.getSubmittedFileName();
         boolean tipoValido = "image/jpeg".equalsIgnoreCase(tipo) || "image/png".equalsIgnoreCase(tipo);
         boolean extensionValida = nombre != null && (nombre.toLowerCase().endsWith(".jpg")
-        || nombre.toLowerCase().endsWith(".jpeg") || nombre.toLowerCase().endsWith(".png"));
+                || nombre.toLowerCase().endsWith(".jpeg") || nombre.toLowerCase().endsWith(".png"));
         return (tipoValido && extensionValida) ? null : "tipo";
     }
 
     /** Sirve el binario de una imagen para {@code <img src="reporte?imagen=ID">}. */
     private void mostrarImagen(String idParam, HttpServletRequest request, HttpServletResponse response)
-    throws IOException {
+            throws IOException {
         int idImagen;
         try {
             idImagen = Integer.parseInt(idParam);
@@ -353,7 +353,7 @@ public class ReporteDetalleServlet extends HttpServlet {
     /** PNG empieza con 0x89 'P' 'N' 'G'; cualquier otro caso aquí es JPG. */
     private String detectarTipoMime(byte[] contenido) {
         boolean esPng = contenido.length > 3 && (contenido[0] & 0xFF) == 0x89
-        && contenido[1] == 'P' && contenido[2] == 'N' && contenido[3] == 'G';
+                && contenido[1] == 'P' && contenido[2] == 'N' && contenido[3] == 'G';
         return esPng ? "image/png" : "image/jpeg";
     }
 
@@ -381,7 +381,7 @@ public class ReporteDetalleServlet extends HttpServlet {
      * Mismo patrón que DetalleSolicitudServlet.cargarSolicitudPermitida().
      */
     private Reporte cargarReportePermitido(HttpServletRequest request, HttpServletResponse response)
-    throws IOException {
+            throws IOException {
         Integer idUsuario = SesionUtils.idUsuario(request);
         if (idUsuario == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -439,18 +439,18 @@ public class ReporteDetalleServlet extends HttpServlet {
         </html>
         """;
         String bloqueMotivo = (motivo != null && !motivo.isBlank())
-        ? "<p><strong>Motivo:</strong> " + motivo + "</p>"
-        : "";
+                ? "<p><strong>Motivo:</strong> " + motivo + "</p>"
+                : "";
         String siguientePaso = aprobado
-        ? "Con esto el proceso de la visita queda cerrado. Puedes consultar el reporte desde el Histórico."
-        : "Entra al reporte en el sistema, corrígelo con \"Editar formulario\" y vuelve a enviarlo.";
+                ? "Con esto el proceso de la visita queda cerrado. Puedes consultar el reporte desde el Histórico."
+                : "Entra al reporte en el sistema, corrígelo con \"Editar formulario\" y vuelve a enviarlo.";
         String cuerpo = MessageFormat.format(plantillaHtml,
-        aprobado ? "aprobado" : "rechazado",
-        reporte.getNombreEmpresaActividad(), bloqueMotivo, siguientePaso);
+                aprobado ? "aprobado" : "rechazado",
+                reporte.getNombreEmpresaActividad(), bloqueMotivo, siguientePaso);
         // En un hilo aparte: la decisión ya quedó guardada y el SMTP tarda
         // varios segundos; el coordinador no tiene que esperar a Gmail
         EmailSender.sendMailAsync(reporte.getCorreoSolicitante(),
-        "Reporte de visita " + (aprobado ? "aprobado" : "rechazado") + " - Visitas Académicas",
-        cuerpo);
+                "Reporte de visita " + (aprobado ? "aprobado" : "rechazado") + " - Visitas Académicas",
+                cuerpo);
     }
 }

@@ -1,3 +1,14 @@
+/**
+ * Script para la gestión del formulario de captura del reporte de visita.
+ * Controla la galería de imágenes asegurando que sean exactamente 3 fotografías,
+ * validando peso (máximo 5MB) y formato (JPG/PNG). Maneja la vista previa,
+ * la eliminación de imágenes guardadas y la sincronización de archivos nuevos
+ * antes de enviar el formulario al servidor.
+ *
+ * @author Alan
+ * @since 25/08/2026
+ */
+
 // Lógica del detalle del reporte de visita (reporte-detalle.jsp).
 // Los casos del JSP son mutuamente excluyentes, así que cada bloque
 // se activa solo si sus elementos existen en la página.
@@ -121,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 window.Modales.avisar({
                     titulo: "Faltan fotografías",
                     mensaje: "El reporte debe llevar exactamente " + IMAGENES_REQUERIDAS +
-                             " imágenes de la visita.",
+                        " imágenes de la visita.",
                     tipo: "aviso"
                 }, function () {
                     btnAgregar.focus();

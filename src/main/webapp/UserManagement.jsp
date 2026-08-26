@@ -1,6 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%-- ============================================================
+     Panel de gestión de usuarios (RF-12): alta de cuentas, edición
+     de nombre/correo/rol y baja. Servido por UsuarioServlet en /usuarios.
+     Solo el Administrador puede entrar (ver candado más abajo); el resto
+     de las operaciones (crear/editar/eliminar) viajan por fetch en JSON
+     y las procesa gestion-usuarios.js, sin recargar la página.
+     ============================================================ --%>
 <%-- Esta vista se sirve desde /usuarios (UsuarioServlet). El candado de aquí es
      por si alguien escribe la URL del JSP a mano: el rol sale de la sesión.
      Manda un 403, que el contenedor convierte en la página de "No tienes permiso". --%>
@@ -108,7 +115,7 @@
     </div>
 
     <div id="card-usuarios" class="detalle-card" style="margin-top: 1rem;"
-         ${empty listaUsuarios ? 'hidden' : ''}>
+    ${empty listaUsuarios ? 'hidden' : ''}>
         <div class="tabla-scroll">
             <table class="tabla-programas">
                 <thead>
@@ -135,7 +142,7 @@
                         <td style="white-space: nowrap;">
                             <button type="button" class="btn-descargar" data-accion="editar"
                                     style="margin-right: 6px;">Editar</button>
-                            <%-- La cuenta propia no se borra: dejaría al sistema sin quien lo administre --%>
+                                <%-- La cuenta propia no se borra: dejaría al sistema sin quien lo administre --%>
                             <c:if test="${u.id != sessionScope.idUsuario}">
                                 <button type="button" class="btn-descargar btn-rojo" data-accion="eliminar">Eliminar</button>
                             </c:if>

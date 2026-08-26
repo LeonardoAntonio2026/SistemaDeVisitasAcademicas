@@ -1,3 +1,11 @@
+<%--
+  Vista de Iniciar Sesión.
+  Renderiza el formulario de autenticación de usuarios al sistema de gestión de visitas.
+  Muestra alertas de error o éxito según la redirección o el envío de atributos.
+
+  @author Hugo Alberto Ramirez Martinez
+  @since 25/08/2026
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%

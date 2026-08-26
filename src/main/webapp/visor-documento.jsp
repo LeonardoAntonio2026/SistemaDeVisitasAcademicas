@@ -3,7 +3,10 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%-- Visor de un documento subido. Se abre en una pestaña aparte desde el botón
      "Ver" de la card de Archivos, para revisarlo sin descargarlo. Lleva la
-     misma barra azul que documento-impreso.jsp. --%>
+     misma barra azul que documento-impreso.jsp.
+
+     Autor: Alan Esteban Zarinana Arizmendi
+     Fecha: 2026-08-25 --%>
 <c:set var="d" value="${documento}"/>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <%-- Un documento cuelga de una solicitud O de un reporte: el botón de volver

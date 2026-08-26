@@ -1,3 +1,21 @@
+/**
+ * Script para la gestión y validación del formulario de solicitud de visitas académicas.
+ * <p>
+ * Este módulo controla la interactividad completa del formulario de solicitud:
+ * <ul>
+ *   <li>Gestión dinámica de filas para el desglose por programa educativo (agregar, eliminar y actualizar desgloses).</li>
+ *   <li>Filtrado en tiempo real de programas educativos según la división seleccionada y descarte de grupos duplicados.</li>
+ *   <li>Cálculo automático y renderizado del resumen de estudiantes por división académica.</li>
+ *   <li>Entrada interactiva de asignaturas reforzadas mediante la generación de etiquetas (chips/tags).</li>
+ *   <li>Búsqueda con autocompletado asíncrono (fetch/AJAX) para la selección de docentes acompañantes.</li>
+ *   <li>Validación dinámica y prevención de envío de formularios incompletos o con datos obsoletos fuera de catálogo.</li>
+ *   <li>Desactivación del desplazamiento indeseado del scroll del ratón en campos de tipo numérico.</li>
+ * </ul>
+ * </p>
+ *
+ * @author Eder Gabriel García Vázquez
+ * @since 24/08/2026
+ */
 document.addEventListener("DOMContentLoaded", function () {
     var btnAgregarGrupo = document.getElementById("btn-agregar-grupo");
     var programasContainer = document.getElementById("programas-container");

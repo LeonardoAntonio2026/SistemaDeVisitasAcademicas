@@ -1,5 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- ============================================================
+     Página de inicio del sistema. Servida por IndexSv en /indexSv (y
+     también como welcome-file en la raíz "/"). Muestra únicamente las
+     solicitudes ACTIVAS: el docente ve las suyas, Estadías/Administrador
+     ven las que ya les fueron enviadas para revisión. Las solicitudes
+     terminadas viven en el histórico (RN-05).
+     ============================================================ --%>
 <%-- La raíz "/" sirve este JSP directo (welcome-file), sin pasar por IndexSv:
      la lista llega en null y la página mentía "No hay solicitudes por ahora".
      Si nadie cargó la lista, se pasa por el servlet, que sí la trae. --%>
