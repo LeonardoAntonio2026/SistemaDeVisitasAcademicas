@@ -1,28 +1,22 @@
 <%--
-  Vista de Iniciar Sesión.
-  Renderiza el formulario de autenticación de usuarios al sistema de gestión de visitas.
-  Muestra alertas de error o éxito según la redirección o el envío de atributos.
+  Vista de Recuperar Contraseña.
+  Renderiza el formulario donde el usuario captura su correo para recibir el
+  enlace de restablecimiento. La procesa OlvideContrasenaServlet.
+  Muestra alertas de error o éxito según lo que deje el servlet.
 
   @author Hugo Alberto Ramirez Martinez
   @since 25/08/2026
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%
-    request.setAttribute("pageTitle", "Iniciar Sesión");
-
-    // LoginServlet llega por forward con el texto ya armado en un atributo; el
-    // restablecimiento llega por redirect, así que trae código en la URL.
-    if ("restablecida".equals(request.getParameter("mensaje")) && request.getAttribute("mensaje") == null) {
-        request.setAttribute("mensaje", "Tu contraseña se actualizó. Ya puedes iniciar sesión.");
-    }
-%>
+<%-- Misma plantilla visual que login.jsp (auth.css): antes esta pantalla usaba
+     otra card de Bootstrap y parecía de otro sistema. --%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${pageTitle}</title>
+    <title>Recuperar Contraseña - Visitas Académicas</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap/bootstrap-icons.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/auth.css">
@@ -48,53 +42,28 @@
     <img src="${pageContext.request.contextPath}/img/Logotipo-UTEZ.png" alt="Logo UTEZ" class="auth-logo">
     <div class="auth-subtitle">UNIVERSIDAD TECNOLÓGICA<br>EMILIANO ZAPATA DEL ESTADO DE MORELOS</div>
 
-    <h1 class="auth-title">Sistema de Gestión de Visitas Académicas</h1>
+    <h1 class="auth-title">Recuperar contraseña</h1>
 
     <div class="auth-card">
-        <form action="${pageContext.request.contextPath}/login" method="POST">
+        <p class="auth-instructions">Ingresa el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.</p>
+
+        <form action="${pageContext.request.contextPath}/olvide-contrasena" method="POST">
 
             <div class="auth-field">
                 <label for="correo">Correo</label>
                 <div class="auth-input-group">
-                    <span class="auth-input-icon"><i class="bi bi-person-fill"></i></span>
-                    <input type="email" id="correo" name="correo" placeholder="correo@utez.edu.mx" required>
+                    <span class="auth-input-icon"><i class="bi bi-envelope-fill"></i></span>
+                    <input type="email" id="correo" name="correo" placeholder="correo@utez.edu.mx" required maxlength="100">
                 </div>
             </div>
 
-            <div class="auth-field">
-                <label for="contrasena">Contraseña</label>
-                <div class="auth-input-group">
-                    <span class="auth-input-icon"><i class="bi bi-lock-fill"></i></span>
-                    <input type="password" id="contrasena" name="contrasena" placeholder="introduce tu contraseña" required>
-                    <button type="button" class="auth-toggle-eye" id="toggleContrasena" aria-label="Mostrar contraseña">
-                        <i class="bi bi-eye-slash" id="toggleIcon"></i>
-                    </button>
-                </div>
-            </div>
+            <button type="submit" class="btn-auth">Enviar enlace</button>
 
-            <button type="submit" class="btn-auth">Iniciar Sesión</button>
-
-            <a href="${pageContext.request.contextPath}/olvide-contrasena" class="auth-link">Recuperar contraseña</a>
+            <a href="${pageContext.request.contextPath}/login.jsp" class="auth-link">Volver a iniciar sesión</a>
         </form>
     </div>
 
 </div>
-
-<script>
-    document.getElementById('toggleContrasena').addEventListener('click', function () {
-        var input = document.getElementById('contrasena');
-        var icon = document.getElementById('toggleIcon');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        }
-    });
-</script>
 
 </body>
 </html>

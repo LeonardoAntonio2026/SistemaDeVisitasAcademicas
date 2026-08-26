@@ -683,4 +683,8 @@
             </form>
         </div>
     </c:if>
+
+    <script src="${pageContext.request.contextPath}/js/carga-archivo.js"></script>
 </main>
+
+<%@ include file="layout/footer.jsp" %>
