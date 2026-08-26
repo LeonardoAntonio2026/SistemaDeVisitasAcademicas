@@ -260,6 +260,8 @@ public class SolicitudDao implements Dao<Solicitud, Integer> {
      * Obtiene las solicitudes enviadas que requieren la atención del coordinador de Estadías.
      * Excluye los borradores ("Pendiente") que no han sido remitidos formalmente (RN-02).
      *
+     * @param idPropias id del revisor cuando además es solicitante (el Administrador),
+     *                  para que también vea las suyas; {@code null} para traer solo las ajenas
      * @return la lista de solicitudes en estado 'En revisión' o 'Aprobada'.
      * @author Eder Gabriel García Vázquez
      * @since 18/08/2026

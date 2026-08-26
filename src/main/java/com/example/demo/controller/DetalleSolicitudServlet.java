@@ -29,7 +29,10 @@ import java.text.MessageFormat;
 @WebServlet(name = "DetalleSolicitudServlet", value = "/detalle")
 public class DetalleSolicitudServlet extends HttpServlet {
 
+    /** Nombre del tipo de documento con que se guarda el formato FO-UTEZ-EST-08 ya firmado. */
     public static final String TIPO_FO_FIRMADO = "FO-UTEZ-EST-08 firmado";
+
+    /** Nombre del tipo de documento con que se guarda la carta responsiva firmada. */
     public static final String TIPO_CARTA_RESPONSIVA = "Carta responsiva";
 
     private final SolicitudDao solicitudDao = new SolicitudDao();
